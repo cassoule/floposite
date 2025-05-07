@@ -15,4 +15,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  optimizeDeps: {
+    include: [
+      'zlib-sync',
+      'bufferutil',
+      'utf-8-validate'
+    ],
+  },
 })
