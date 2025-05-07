@@ -1,6 +1,7 @@
 <template>
   <div class="login">
-    <h1>Welcome to FlopoSite</h1>
+    <h1>FlopoSite</h1>
+    <p>Connectes-toi via <span style="color: #5865F2">Discord</span> 👇</p>
     <a :href="discordAuthUrl" class="discord-login">
       Login with Discord
     </a>

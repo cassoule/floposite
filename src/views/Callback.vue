@@ -30,6 +30,6 @@ export default {
 
 <template>
   <div class="callback">
-    <p>Processing login...</p>
+    <p>Connexion...</p>
   </div>
 </template>
