@@ -1,5 +1,5 @@
 <template>
-  <div v-if="user">
+  <div v-if="user" class="w-100">
     <div>
       <img :src="avatar" alt="avatar" width="70" style="border-radius: 50%;" />
       <h1>Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> :)</h1>
@@ -10,8 +10,8 @@
     <button class="discord-logout my-3" @click="logout">Déconnexion</button>
 
     <div style="float: right; border: 2px solid #5865F2; border-radius: 10px; padding: 5px;">
-      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 5px; border: 1px solid transparent" :style="akhy.id === discordId ? 'border: 2px solid #dee0fc55' : ''">
-        <div style="display: flex; place-content: space-between; width: 200px; padding: .5em 1em"><span style="color: #5865F2">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
+      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 5px; border: 1px solid transparent" :style="akhy.id === discordId ? 'border: 2px solid #dee0fc88' : ''">
+        <div style="display: flex; place-content: space-between; width: 200px; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
       </div>
     </div>
   </div>
