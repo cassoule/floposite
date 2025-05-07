@@ -2,7 +2,8 @@
 
 #app {
   display: flex;
-  flex-direction: column;
+  place-content: space-between;
+  place-items: center;
   width: 100%;
   margin: 0 auto;
   padding: 2rem;
@@ -30,10 +31,11 @@ a,
 
   #app {
     display: flex;
-    place-content: space-between;
-    place-items: start;
+    flex-direction: column;
+    place-content: start;
+    place-items: center;
     width: 100%;
-    max-width: 900px;
+    margin: 0 auto;
     padding: 2rem;
   }
 }
