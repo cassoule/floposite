@@ -1,29 +1,51 @@
 <template>
-  <div v-if="user" style="width: fit-content; margin-bottom: 3rem">
-    <div>
-      <img :src="avatar" alt="avatar" width="70" style="border-radius: 50%;" />
-      <h1>Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> ^_^</h1>
+  <div v-if="user" style="width: fit-content; margin-top: 5rem; margin-bottom: 3rem">
+    <div style="margin-top: 1rem">
+      <v-img :src="avatar" width="70" style="border-radius: 50%;" />
+      <h1 class="mb-3">Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> ^_^</h1>
       <p>Coins : {{ user?.coins }}</p>
       <p>Warns : {{ user?.allTimeWarns }}</p>
     </div>
 
-    <button class="discord-logout my-3" @click="logout">Déconnexion</button>
+    <div class="mt-5">
+      <v-dialog transition="dialog-bottom-transition" max-width="800">
+        <template #activator="{ props: activatorProps }">
+          <v-btn v-bind="activatorProps" text="Fonctions" color="primary" variant="flat"></v-btn>
+        </template>
+        <template #default="{ isActive }">
+          <v-card class="text-text" color="dark" variant="flat" style=" border: 1px solid #5865f222" rounded="lg">
+            <v-card-title style="background: radial-gradient(circle at -200% -300%,#5865f2,#181818 100%);">
+              Fonctions
+            </v-card-title>
+            <v-card-item>
+              Coucou
+            </v-card-item>
+            <v-card-actions>
+              <v-btn text="Fermer" @click="isActive.value = false"></v-btn>
+            </v-card-actions>
+          </v-card>
+        </template>
+      </v-dialog>
+    </div>
+
+    <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
-  <div v-else-if="users" style="width: fit-content; margin-bottom: 3rem">
+
+  <div v-else-if="users" style="width: fit-content; margin-top: 5rem; margin-bottom: 3rem">
     <div>
-      <img :src="avatar" alt="avatar" width="70" style="border-radius: 50%;" />
-      <h1>Salut <span style="color: #5865F2">{{ discordId }}</span> (⊙_⊙)？</h1>
+      <v-img :src="avatar" width="70" style="border-radius: 50%;" />
+      <h1 class="mb-3">Salut <span style="color: #5865F2">{{ discordId }}</span> (⊙_⊙)？</h1>
       <p>Je crois qu'on ne se connait pas...</p>
     </div>
 
-    <button class="discord-logout my-3" @click="logout">Déconnexion</button>
+    <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
 
-  <div v-if="users" style="width: fit-content">
-    <h2 style="display: flex; place-content: space-between">Classement <button style="border: none; background: transparent; text-decoration: none; cursor: pointer" @click="getUsers">🔄️</button></h2>
-    <div style="float: right; border: 2px solid #dee0fc88; border-radius: 10px; padding: 5px; max-height: 600px; overflow-y: scroll;">
-      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 5px; border: 1px solid transparent" :style="akhy.id === discordId ? 'border: 2px solid #5865F2' : ''">
-        <div style="display: flex; place-content: space-between; width: 250px; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
+  <div v-if="users" class="leaderboard-container">
+    <h2 style="display: flex; place-content: space-between">Classement</h2>
+    <div class="leaderboard">
+      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 10px;" :style="akhy.id === discordId ? 'background: radial-gradient(circle at -100% -300%,#5865f2,#181818 100%)' : ''">
+        <div style="display: flex; place-content: space-between; min-width: 300px; width: 100%; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
       </div>
     </div>
   </div>
@@ -139,18 +161,41 @@ export default {
 
 <style>
 .discord-logout {
+  position: fixed;
+  top: 2em;
+  right: 2em;
   background: #A12829;
   color: white;
-  padding: 12px 24px;
-  border-radius: 4px;
+  padding: 7px 17px;
+  border-radius: 10px;
   border: none;
   text-decoration: none;
   display: inline-block;
-  margin-top: 20px;
   cursor: pointer;
   transition: 0.2s;
 }
 .discord-logout:hover {
   background: #aa3e3e;
+}
+.leaderboard-container {
+  width: fit-content;
+  margin-top: 5rem
+}
+.leaderboard {
+  float: right;
+  border: 2px solid #dee0fc88;
+  border-radius: 15px;
+  padding: 6px 5px;
+  max-height: 600px;
+  overflow-y: scroll;
+}
+@media (max-width: 850px) {
+  .leaderboard {
+    width: 100%;
+  }
+  .leaderboard-container {
+    width: 100%;
+    margin-top: 0;
+  }
 }
 </style>
