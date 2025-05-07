@@ -105,6 +105,7 @@ export default {
   display: inline-block;
   margin-top: 20px;
   cursor: pointer;
+  transition: 0.2s;
 }
 .discord-logout:hover {
   background: #aa3e3e;
