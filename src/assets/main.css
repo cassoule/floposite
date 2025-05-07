@@ -1,9 +1,14 @@
 @import './base.css';
 
+body {
+  display: flex;
+  place-items: center;
+}
+
 #app {
   display: flex;
   place-content: space-between;
-  place-items: center;
+  max-width: 900px;
   width: 100%;
   margin: 0 auto;
   padding: 2rem;
@@ -25,17 +30,12 @@ a,
 
 @media (max-width: 700px) {
   body {
-    display: flex;
-    place-items: center;
+    place-items: start;
   }
 
   #app {
-    display: flex;
     flex-direction: column;
     place-content: start;
-    place-items: center;
-    width: 100%;
-    margin: 0 auto;
-    padding: 2rem;
+    place-items: start;
   }
 }
