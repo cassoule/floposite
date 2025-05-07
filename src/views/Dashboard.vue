@@ -11,14 +11,6 @@
 
 <script>
 import axios from 'axios'
-import { Client, GatewayIntentBits } from 'discord.js'
-
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages
-  ]
-});
 
 export default {
   computed: {
@@ -30,6 +22,7 @@ export default {
     return {
       discordId: null,
       users: null,
+      avatar: null,
     }
   },
   async mounted() {
@@ -59,8 +52,20 @@ export default {
       }
     },
     async getAvatar(id) {
-      const user = await client.users.fetch(id);
-      return user.displayAvatarURL({ format: 'png', size: 256 });
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json'
+          },
+          withCredentials: false
+        })
+        this.avatar = response.data
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
     }
   }
 }
