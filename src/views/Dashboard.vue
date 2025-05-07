@@ -106,4 +106,7 @@ export default {
   margin-top: 20px;
   cursor: pointer;
 }
+.discord-logout:hover {
+  background: #511415;
+}
 </style>
