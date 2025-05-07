@@ -29,7 +29,11 @@ export default {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
         console.log(fetchUrl)
-        const response = await axios.get(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        })
         console.log('flAPI users :')
         console.log(response.data)
       } catch (e) {
