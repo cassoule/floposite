@@ -1,6 +1,6 @@
 <template>
   <div class="login">
-    <h1 style="font-size: 1.8em"><span style="color: #5865F2">Flopo</span>Site</h1>
+    <h1 style="font-size: 3em"><span style="color: #5865F2">Flopo</span>Site</h1>
     <p>Connectes-toi via <span style="color: #5865F2">Discord</span> 👇</p>
     <a :href="discordAuthUrl" class="discord-login">
       Connexion
