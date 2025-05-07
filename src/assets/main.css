@@ -1,5 +1,9 @@
 @import './base.css';
 
+::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   display: flex;
   place-items: center;

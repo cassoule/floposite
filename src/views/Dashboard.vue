@@ -2,7 +2,7 @@
   <div v-if="user" style="width: fit-content; margin-bottom: 3rem">
     <div>
       <img :src="avatar" alt="avatar" width="70" style="border-radius: 50%;" />
-      <h1>Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> /ᐠ｡ꞈ｡ᐟ\</h1>
+      <h1>Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> ^_^</h1>
       <p>Coins : {{ user?.coins }}</p>
       <p>Warns : {{ user?.allTimeWarns }}</p>
     </div>
@@ -21,7 +21,7 @@
 
   <div v-if="users" style="width: fit-content">
     <h2>Classement</h2>
-    <div style="float: right; border: 2px solid #dee0fc88; border-radius: 10px; padding: 5px; max-height: 600px; overflow: scroll;">
+    <div style="float: right; border: 2px solid #dee0fc88; border-radius: 10px; padding: 5px; max-height: 600px; overflow-y: scroll;">
       <div v-for="akhy in users" :key="akhy.id" style="border-radius: 5px; border: 1px solid transparent" :style="akhy.id === discordId ? 'border: 2px solid #5865F2' : ''">
         <div style="display: flex; place-content: space-between; width: 250px; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
       </div>
