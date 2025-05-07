@@ -1,9 +1,10 @@
 <template>
   <div v-if="user">
-    <h1>Salut @{{ user?.globalName }} :)</h1>
+    <img :src="avatar" alt="avatar" width="70" style="border-radius: 50%;" />
+    <h1>Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> :)</h1>
     <p>Coins : {{ user?.coins }}</p>
     <p>Warns : {{ user?.allTimeWarns }}</p>
-    <img :src="avatar" alt="avatar" />
+
     <!-- Add your user-specific content here -->
     <button @click="logout">Logout</button>
   </div>
@@ -65,7 +66,6 @@ export default {
           },
           withCredentials: false
         })
-        console.log(response.data.avatarUrl)
         this.avatar = response.data.avatarUrl
       } catch (e) {
         console.error('flAPI error:', e)
