@@ -63,7 +63,7 @@ export default {
           withCredentials: false
         })
         console.log(response.data)
-        this.avatar = response.data
+        this.avatar = response.data.avatarUrl
       } catch (e) {
         console.error('flAPI error:', e)
       }
