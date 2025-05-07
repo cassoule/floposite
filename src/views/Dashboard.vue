@@ -31,6 +31,7 @@
 
 <script>
 import axios from 'axios'
+import { io } from 'socket.io-client';
 
 export default {
   computed: {
@@ -40,25 +41,58 @@ export default {
       return this.users?.filter(u => u.id === this.discordId)[0]
     },
   },
+
   data() {
     return {
       discordId: null,
       users: null,
       avatar: null,
+      socket: null,
     }
   },
+
   async mounted() {
     this.discordId = localStorage.getItem('discordId');
     if (!this.discordId) this.$router.push('/');
+
     await this.getUsers()
     await this.getAvatar()
     if (!this.users) this.$router.push('/');
+
+    this.initSocket();
   },
+
   methods: {
+    initSocket() {
+      // Connect to your bot's Socket.IO server
+      this.socket = io(import.meta.env.VITE_FLAPI_URL, {
+        withCredentials: false,
+        extraHeaders: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+
+      // Handle connection events
+      this.socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+      });
+
+      // Listen for data updates
+      this.socket.on('data-updated', (data) => {
+        console.log('Database updated:', data);
+        this.getUsers(); // Refresh data when updates occur
+      });
+
+      this.socket.on('disconnect', () => {
+        console.log('Disconnected from WebSocket server');
+      });
+    },
+
     logout() {
       localStorage.removeItem('discordId');
       this.$router.push('/');
     },
+
     async getUsers() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
@@ -75,6 +109,7 @@ export default {
         console.error('flAPI error:', e)
       }
     },
+
     async getAvatar() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/avatar'
       try {
@@ -90,6 +125,13 @@ export default {
       } catch (e) {
         console.error('flAPI error:', e)
       }
+    }
+  },
+
+  beforeUnmount() {
+    // Clean up socket connection when component is destroyed
+    if (this.socket) {
+      this.socket.disconnect();
     }
   }
 }
