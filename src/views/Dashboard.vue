@@ -52,6 +52,7 @@ export default {
     if (!this.discordId) this.$router.push('/');
     await this.getUsers()
     await this.getAvatar()
+    if (!this.users) this.$router.push('/');
   },
   methods: {
     logout() {
