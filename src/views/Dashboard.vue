@@ -3,6 +3,7 @@
     <h1>Salut @{{ user?.globalName }} :)</h1>
     <p>Coins : {{ user?.coins }}</p>
     <p>Warns : {{ user?.allTimeWarns }}</p>
+    <img :src="getAvatar(discordId)" alt="avatar" />
     <!-- Add your user-specific content here -->
     <button @click="logout">Logout</button>
   </div>
@@ -10,6 +11,17 @@
 
 <script>
 import axios from 'axios'
+import { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,             // For guild events
+    GatewayIntentBits.GuildMessages,      // For messages in guilds
+    GatewayIntentBits.MessageContent, // For reading message content (privileged intent)
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildPresences,
+  ]
+});
 
 export default {
   computed: {
@@ -48,6 +60,10 @@ export default {
       } catch (e) {
         console.error('flAPI error:', e)
       }
+    },
+    async getAvatar(id) {
+      const user = await client.users.fetch(id);
+      return user.displayAvatarURL({ format: 'png', size: 256 });
     }
   }
 }
