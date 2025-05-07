@@ -31,8 +31,10 @@ export default {
         console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
-            'ngrok-skip-browser-warning': 'true'
-          }
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json'
+          },
+          withCredentials: false
         })
         console.log('flAPI users :')
         console.log(response.data)
