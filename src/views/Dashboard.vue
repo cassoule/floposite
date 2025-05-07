@@ -10,7 +10,7 @@
     <div class="mt-5">
       <v-dialog transition="dialog-bottom-transition" max-width="800">
         <template #activator="{ props: activatorProps }">
-          <v-btn v-bind="activatorProps" text="Fonctions" color="primary" variant="flat"></v-btn>
+          <v-btn v-bind="activatorProps" text="Fonctions" class="text-capitalize" color="primary" variant="flat" rounded="lg"></v-btn>
         </template>
         <template #default="{ isActive }">
           <v-card class="text-text" color="dark" variant="flat" style=" border: 1px solid #5865f222" rounded="lg">
