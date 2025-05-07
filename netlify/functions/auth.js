@@ -30,6 +30,8 @@ export const handler = async (event) => {
       headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
     })
 
+    console.log(userResponse.data)
+
     return {
       statusCode: 200,
       body: JSON.stringify({
