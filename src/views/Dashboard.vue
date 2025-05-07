@@ -26,9 +26,12 @@ export default {
       this.$router.push('/');
     },
     async getUsers() {
-      const fetchUrl = import.meta.env.FLAPI_URL + '/users'
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
         console.log(fetchUrl)
+        console.log(import.meta.env.VITE_REDIRECT_URI)
+        console.log(import.meta.env.VITE_FLAPI_URL)
+        console.log(import.meta.env.FLAPI_URL)
         const response = await axios.get(fetchUrl)
         console.log('flAPI users :')
         console.log(response)
