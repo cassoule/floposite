@@ -31,8 +31,6 @@ export default {
         console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
-            'Access-Control-Allow-Origin': 'true',
-            'Content-Type': 'application/json',
             'ngrok-skip-browser-warning': 'true'
           }
         })
