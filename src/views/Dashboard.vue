@@ -1,6 +1,8 @@
 <template>
-  <div>
-    <h1>Salut {{ discordId }} :)</h1>
+  <div v-if="users">
+    <h1>Salut @{{ user?.globalName }} :)</h1>
+    <p>Coins : {{ user?.coins }}</p>
+    <p>Warns : {{ user?.allTimeWarns }}</p>
     <!-- Add your user-specific content here -->
     <button @click="logout">Logout</button>
   </div>
@@ -10,9 +12,15 @@
 import axios from 'axios'
 
 export default {
+  computed: {
+    user() {
+      return this.users?.filter(u => u.id === this.discordId)[0]
+    }
+  },
   data() {
     return {
-      discordId: null
+      discordId: null,
+      users: null,
     }
   },
   async mounted() {
@@ -36,8 +44,7 @@ export default {
           },
           withCredentials: false
         })
-        console.log('flAPI users :')
-        console.log(response.data)
+        this.users = response.data
       } catch (e) {
         console.error('flAPI error:', e)
       }
