@@ -1,12 +1,18 @@
 <template>
   <div v-if="user">
-    <img :src="avatar" alt="avatar" width="70" style="border-radius: 50%;" />
-    <h1>Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> :)</h1>
-    <p>Coins : {{ user?.coins }}</p>
-    <p>Warns : {{ user?.allTimeWarns }}</p>
+    <div>
+      <img :src="avatar" alt="avatar" width="70" style="border-radius: 50%;" />
+      <h1>Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> :)</h1>
+      <p>Coins : {{ user?.coins }}</p>
+      <p>Warns : {{ user?.allTimeWarns }}</p>
+    </div>
+    <div style="float: right; border: 2px solid #5865F2; border-radius: 10px; padding: 5px;">
+      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 5px; border: 2px solid transparent" :style="akhy.id === discordId ? 'border: 2px solid #dee0fc' : ''">
+        <p>{{ akhy.globalName }} - {{ akhy.coins }}</p>
+      </div>
+    </div>
 
-    <!-- Add your user-specific content here -->
-    <button @click="logout">Logout</button>
+    <button class="discord-logout" @click="logout">Logout</button>
   </div>
 </template>
 
@@ -74,3 +80,15 @@ export default {
   }
 }
 </script>
+
+<style>
+.discord-logout {
+  background: #A12829;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 4px;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 20px;
+}
+</style>
