@@ -7,6 +7,8 @@
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   data() {
     return {
@@ -25,18 +27,14 @@ export default {
     },
     async getUsers() {
       const fetchUrl = process.env.FLAPI_URL + '/users'
-      const response = await fetch(fetchUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Error fetching flAPI users')
-          }
-          return response.json()
-        })
-        .catch(err => {
-          console.error('Error with flAPI:', err)
-        })
-      console.log('flAPI users :')
-      console.log(response)
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl)
+        console.log('flAPI users :')
+        console.log(response)
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
     }
   }
 }
