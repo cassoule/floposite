@@ -20,7 +20,7 @@
   </div>
 
   <div v-if="users" style="width: fit-content">
-    <h2>Classement</h2>
+    <h2 style="display: flex; place-content: space-between">Classement <button style="border: none; background: transparent; text-decoration: none; cursor: pointer" @click="getUsers">🔄️</button></h2>
     <div style="float: right; border: 2px solid #dee0fc88; border-radius: 10px; padding: 5px; max-height: 600px; overflow-y: scroll;">
       <div v-for="akhy in users" :key="akhy.id" style="border-radius: 5px; border: 1px solid transparent" :style="akhy.id === discordId ? 'border: 2px solid #5865F2' : ''">
         <div style="display: flex; place-content: space-between; width: 250px; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
