@@ -10,9 +10,9 @@
     <button class="discord-logout my-3" @click="logout">Déconnexion</button>
   </div>
   <div v-if="users" style="width: fit-content">
-    <div style="float: right; border: 2px solid #5865F2; border-radius: 10px; padding: 5px;">
-      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 5px; border: 1px solid transparent" :style="akhy.id === discordId ? 'border: 2px solid #dee0fc88' : ''">
-        <div style="display: flex; place-content: space-between; width: 200px; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
+    <div style="float: right; border: 2px solid #dee0fc88; border-radius: 10px; padding: 5px;">
+      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 5px; border: 1px solid transparent" :style="akhy.id === discordId ? 'border: 2px solid #5865F2' : ''">
+        <div style="display: flex; place-content: space-between; width: 250px; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
       </div>
     </div>
   </div>
