@@ -31,9 +31,6 @@ export default {
         console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
-            'Access-Control-Allow-Origin': 'https://floposite.netlify.app',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, ngrok-skip-browser-warning',
             'ngrok-skip-browser-warning': 'true',
             'Content-Type': 'application/json'
           },
