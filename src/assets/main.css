@@ -26,12 +26,6 @@ a,
   padding: 3px;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: #6974f3;
-  }
-}
-
 @media (max-width: 850px) {
   body {
     place-items: start;
