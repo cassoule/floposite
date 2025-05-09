@@ -12,9 +12,13 @@
     </div>
   </div>
 
-    <div class="flopo-img">
-      <v-img class="flopobot" src="flopobot.webp"></v-img>
-    </div>
+  <div class="flopo-img">
+    <v-img class="flopobot" src="flopobot.webp"></v-img>
+  </div>
+
+  <div class="flopo-img-sm">
+    <v-img class="flopobot" src="flopobot.webp"></v-img>
+  </div>
 
 
 </template>
@@ -31,7 +35,7 @@ export default {
 
   mounted() {
     let card = document.querySelector('.flopo-img')
-    card.addEventListener('mousemove', (e) => {
+    window.addEventListener('mousemove', (e) => {
       let rect = card.getBoundingClientRect()
       let x = e.clientX - rect.left - rect.width / 2
       let y = e.clientY - rect.top - rect.height / 2
@@ -141,10 +145,10 @@ export default {
 .flopo-img {
   position: fixed;
   top: -50vh;
-  right: -25vw;
+  right: -50vw;
   width: 150vw;
   height: 200vh;
-  background: linear-gradient(90deg, #5865f255, transparent);
+  background: linear-gradient(-90deg, #5865f255, transparent);
   background-position: center;
   background-size: cover;
   border-radius: 20px;
@@ -160,12 +164,20 @@ export default {
   transform: translate(-50%, -50%) translateZ(175px);
 }
 
+.flopo-img-sm {
+  position: absolute;
+  bottom: 0;
+  right: -25px;
+  display: none;
+}
+
 @media (max-width: 850px) {
   html {
     height: 100vh !important;
     overflow: hidden !important;
   }
   .flopo-img {
+    display: none;
     position: absolute;
     background: transparent;
     top: -10vh;
@@ -176,6 +188,10 @@ export default {
     position: absolute;
     top: 70%;
     left: 70%;
+  }
+
+  .flopo-img-sm {
+    display: flex;
   }
 }
 
