@@ -1,7 +1,7 @@
 <template>
   <div v-if="user" style="width: fit-content; margin-top: 5rem; margin-bottom: 3rem">
     <div style="margin-top: 1rem">
-      <v-img :src="avatar" width="70" style="border-radius: 50%;" />
+      <v-img :src="avatar" lazy-src="flopo.png" width="70" style="border-radius: 50%; width: 70px; height: 70px" />
       <h1 class="mb-3">Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> ^_^</h1>
       <p>Coins : {{ user?.coins }}</p>
       <p>Warns : {{ user?.allTimeWarns }}</p>
@@ -33,7 +33,7 @@
 
   <div v-else-if="users" style="width: fit-content; margin-top: 5rem; margin-bottom: 3rem">
     <div>
-      <v-img :src="avatar" width="70" style="border-radius: 50%;" />
+      <v-img v-if="avatar" :src="avatar" lazy-src="flopo.png" width="70" style="border-radius: 50%;" />
       <h1 class="mb-3">Salut <span style="color: #5865F2">{{ discordId }}</span> (⊙_⊙)？</h1>
       <p>Je crois qu'on ne se connait pas...</p>
     </div>
@@ -44,7 +44,7 @@
   <div v-if="users" class="leaderboard-container">
     <h2 style="display: flex; place-content: space-between">Classement</h2>
     <div class="leaderboard">
-      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 10px;" :style="akhy.id === discordId ? 'background: radial-gradient(circle at -100% -300%,#5865f2,#181818 100%)' : ''">
+      <div v-for="akhy in users" :key="akhy.id" style="border-radius: 10px;" :style="akhy.id === discordId ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)' : ''">
         <div style="display: flex; place-content: space-between; min-width: 300px; width: 100%; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
       </div>
     </div>
@@ -183,6 +183,10 @@ export default {
 }
 .leaderboard {
   float: right;
+  background: rgba( 255, 255, 255, 0.2 );
+  box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+  backdrop-filter: blur( 20px );
+  -webkit-backdrop-filter: blur( 20px );
   border: 2px solid #dee0fc88;
   border-radius: 15px;
   padding: 6px 5px;

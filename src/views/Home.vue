@@ -17,7 +17,7 @@
   </div>
 
   <div class="flopo-img-sm">
-    <v-img class="flopobot" src="flopobot.webp"></v-img>
+    <v-img src="flopobot.webp" width="200px"></v-img>
   </div>
 
 
@@ -40,8 +40,8 @@ export default {
       let x = e.clientX - rect.left - rect.width / 2
       let y = e.clientY - rect.top - rect.height / 2
 
-      let rotateX = (x / rect.height) * -20
-      let rotateY = (y / rect.width) * -20
+      let rotateX = (x / rect.height) * -30
+      let rotateY = (y / rect.width) * -30
 
       card.style.transform = `perspective(1000px) rotateX(${rotateY}deg) rotateY(${-rotateX}deg)`
 
@@ -145,7 +145,7 @@ export default {
 .flopo-img {
   position: fixed;
   top: -50vh;
-  right: -50vw;
+  right: -25vw;
   width: 150vw;
   height: 200vh;
   background: linear-gradient(-90deg, #5865f255, transparent);
@@ -159,21 +159,22 @@ export default {
 .flopobot {
   position: absolute;
   top: 50%;
-  left: 50%;
+  left: 65%;
   width: 300px;
   transform: translate(-50%, -50%) translateZ(175px);
 }
 
 .flopo-img-sm {
   position: absolute;
-  bottom: 0;
-  right: -25px;
+  bottom: 50px;
+  right: 10px;
   display: none;
 }
 
 @media (max-width: 850px) {
   html {
     height: 100vh !important;
+    width: 100vw !important;
     overflow: hidden !important;
   }
   .flopo-img {
@@ -192,6 +193,10 @@ export default {
 
   .flopo-img-sm {
     display: flex;
+  }
+
+  .login {
+    margin-top: 10rem;
   }
 }
 
