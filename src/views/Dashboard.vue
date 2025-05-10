@@ -1,39 +1,119 @@
 <template>
-  <div v-if="user" style="width: fit-content; margin-top: 5rem; margin-bottom: 3rem">
+  <div v-if="user" class="user-tab">
     <div style="margin-top: 1rem">
-      <v-img :src="avatar" lazy-src="flopo.png" width="70" style="border-radius: 50%; width: 70px; height: 70px" />
-      <h1 class="mb-3">Salut <span style="color: #5865F2">@{{ user?.globalName }}</span> ^_^</h1>
-      <p>Coins : {{ user?.coins }}</p>
-      <p>Warns : {{ user?.allTimeWarns }}</p>
+      <v-img :src="avatar" lazy-src="anon.png" width="70" color="transparent" style="border-radius: 50%; width: 70px; height: 70px" />
+      <h1 class="mb-3">Salut <span style="color: #5865F2">@{{ user?.globalName }}</span></h1>
+      <p>{{ user?.coins }} coins</p>
+      <p>{{ user_inventory?.length }} skins <span style="color: rgba( 255, 255, 255, 0.3 )">({{ inventoryValue }}€)</span></p>
+      <p>{{ user?.warns }} warns <span style="color: rgba( 255, 255, 255, 0.3 )">({{ user?.allTimeWarns }} ever)</span></p>
     </div>
 
-    <div class="mt-5">
-      <v-dialog transition="dialog-bottom-transition" max-width="800">
-        <template #activator="{ props: activatorProps }">
-          <v-btn v-bind="activatorProps" text="Fonctions" class="text-capitalize" color="primary" variant="flat" rounded="lg"></v-btn>
-        </template>
-        <template #default="{ isActive }">
-          <v-card class="text-text" color="dark" variant="flat" style=" border: 1px solid #5865f222" rounded="lg">
-            <v-card-title style="background: radial-gradient(circle at -200% -300%,#5865f2,#181818 100%);">
-              Fonctions
-            </v-card-title>
-            <v-card-item>
-              Coucou
-            </v-card-item>
-            <v-card-actions>
-              <v-btn text="Fermer" @click="isActive.value = false"></v-btn>
-            </v-card-actions>
-          </v-card>
-        </template>
-      </v-dialog>
+    <div v-if="discordId === devId" class="mt-5 d-flex align-center" style="gap: 1rem">
+      <v-text-field v-model="message" variant="outlined" placeholder="Envoyer un message" density="compact" rounded="lg" hide-details></v-text-field>
+      <v-btn text="10 coins" append-icon="mdi mdi-play" class="text-capitalize" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10 || !message" @click="sendMessage"></v-btn>
     </div>
+
+    <v-tabs
+      v-model="tab"
+      variant="tonal"
+      color="white"
+      align-tabs="center"
+      grow
+      class="tabs mt-5"
+    >
+      <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box"/></v-tab>
+      <v-tab value="items" icon><i class="mdi mdi-package-variant"/></v-tab>
+      <v-tab value="skins" icon><i class="mdi mdi-pistol"/></v-tab>
+      <v-tab value="polls" icon><i class="mdi mdi-timer-outline"/></v-tab>
+    </v-tabs>
+
+    <v-tabs-window v-model="tab">
+      <v-tabs-window-item value="commandes">
+        <div class="actions-container">
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Modif Pseudo</v-card-title>
+            <v-card-subtitle>
+              <p>Modifie le pseudo de quelqu'un pendant 1h</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <p style="color: #ddd;" class="mr-5 mt-2">Bientôt disponible...</p>
+              <v-btn text="1K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 1000"/>
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Spam Ping</v-card-title>
+            <v-card-subtitle>
+              <p>Spam quelqu'un pendant 1 minute (1 ping par seconde)</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <p style="color: #ddd;" class="mr-5 mt-2">Bientôt disponible...</p>
+              <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000"/>
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Slow Mode</v-card-title>
+            <v-card-subtitle>
+              <p>Limite quelqu'un à un message par minute pendant 1 heure</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <p style="color: #ddd;" class="mr-5 mt-2">Bientôt disponible...</p>
+              <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000"/>
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Time-Out</v-card-title>
+            <v-card-subtitle>
+              <p>Time-out quelqu'un pendant 6 heures</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <p style="color: #ddd;" class="mr-5 mt-2">Bientôt disponible...</p>
+              <v-btn text="100K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 100000"/>
+            </v-card-text>
+          </v-card>
+        </div>
+      </v-tabs-window-item>
+
+      <v-tabs-window-item value="items">
+        <div style="height: 390px;">
+          <p class="pt-5">Bientôt disponible...</p>
+        </div>
+      </v-tabs-window-item>
+
+      <v-tabs-window-item value="skins">
+        <div class="inventory">
+          <div v-for="skin in user_inventory" :key="skin.id" class="inventory-item" :style="`border-radius: 10px; background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 70%);`">
+            <div style="display: flex; place-content: space-between; min-width: 300px; width: 100%; padding: .5em 1em">
+              <div style="display: flex; width: 70%; gap: 1em">
+                <v-img :src="skin.displayIcon" height="25" min-width="70" max-width="70"/>
+                <span style="color: #ddd; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{ skin.displayName }}</span>
+              </div>
+              <span style="font-weight: bold">{{ skin.currentPrice.toFixed(2)}}€</span>
+            </div>
+          </div>
+        </div>
+      </v-tabs-window-item>
+
+      <v-tabs-window-item value="polls">
+        <div style="height: 390px;">
+          <p class="pt-5">Bientôt disponible...</p>
+          <div v-for="poll in active_polls" :key="poll.id">
+            Timeout {{ poll.toUsername.username }} pendant {{ poll.time_display.replaceAll('*', '') }}
+          </div>
+        </div>
+      </v-tabs-window-item>
+    </v-tabs-window>
+    <p v-if="tab === 'skins'" class="mt-2">Valeur totale : {{ inventoryValue }}€</p>
+    <p v-else class="mt-2">{{ user?.coins }} coins</p>
 
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
 
   <div v-else-if="users" style="width: fit-content; margin-top: 5rem; margin-bottom: 3rem">
     <div>
-      <v-img v-if="avatar" :src="avatar" lazy-src="flopo.png" width="70" style="border-radius: 50%;" />
+      <v-img v-if="avatar" :src="avatar" lazy-src="anon.webp" width="70" style="border-radius: 50%;" />
       <h1 class="mb-3">Salut <span style="color: #5865F2">{{ discordId }}</span> (⊙_⊙)？</h1>
       <p>Je crois qu'on ne se connait pas...</p>
     </div>
@@ -49,27 +129,75 @@
       </div>
     </div>
   </div>
+  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 </template>
 
 <script>
 import axios from 'axios'
 import { io } from 'socket.io-client';
+import Toast from '../components/Toast.vue'
+import { useToastStore } from '../stores/toastStore.js'
 
 export default {
+  components: {
+    Toast
+  },
+
+  setup() {
+    const toastStore = useToastStore()
+
+    const showLogoutToast = () => {
+      toastStore.showLogoutToast()
+    }
+
+    const showSendingToast = () => {
+      toastStore.showSendingToast()
+    }
+
+    const showSentToast = () => {
+      toastStore.showSentToast()
+    }
+
+    const showErrorToast = (message) => {
+      toastStore.showErrorToast(message)
+    }
+
+    return {
+      toastStore: toastStore.$state,
+      showLogoutToast,
+      showSentToast,
+      showSendingToast,
+      showErrorToast,
+    }
+  },
+
   computed: {
     user() {
       const filtered = this.users?.filter(u => u.id === this.discordId)
       if (filtered?.length < 1) return null
       return this.users?.filter(u => u.id === this.discordId)[0]
     },
+    inventoryValue() {
+      if (!this.user_inventory) return null
+      let sum = 0
+      this.user_inventory.forEach(s => { sum += s.currentPrice })
+      return sum
+    },
+    devId() {
+      return import.meta.env.VITE_DEV_ID
+    }
   },
 
   data() {
     return {
+      tab: null,
+      message: null,
       discordId: null,
       users: null,
       avatar: null,
       socket: null,
+      user_inventory: null,
+      active_polls: null,
     }
   },
 
@@ -78,8 +206,11 @@ export default {
     if (!this.discordId) this.$router.push('/');
 
     await this.getUsers()
-    await this.getAvatar()
     if (!this.users) this.$router.push('/');
+
+    await this.getAvatar()
+    await this.getInventory()
+    await this.getActivePolls()
 
     this.initSocket();
   },
@@ -105,6 +236,11 @@ export default {
         this.getUsers(); // Refresh data when updates occur
       });
 
+      this.socket.on('new-poll', (data) => {
+        console.log('New Poll:', data.action);
+        this.getActivePolls()
+      })
+
       this.socket.on('disconnect', () => {
         console.log('Disconnected from WebSocket server');
       });
@@ -112,6 +248,7 @@ export default {
 
     logout() {
       localStorage.removeItem('discordId');
+      this.showLogoutToast();
       this.$router.push('/');
     },
 
@@ -147,6 +284,57 @@ export default {
       } catch (e) {
         console.error('flAPI error:', e)
       }
+    },
+
+    async getInventory() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/inventory'
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json'
+          },
+          withCredentials: false
+        })
+        this.user_inventory = response.data.inventory
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async getActivePolls() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/polls'
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json'
+          },
+          withCredentials: false
+        })
+        this.active_polls = response.data.activePolls
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async sendMessage() {
+      let msg = this.message
+      this.message = null
+      this.showSendingToast()
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/send-message', {
+          userId: this.discordId,
+          channelId: '1368908514545631262',
+          message: msg,
+        });
+        this.showSentToast()
+      } catch (e) {
+        this.showErrorToast(e.response.data.error)
+      }
+
     }
   },
 
@@ -163,7 +351,7 @@ export default {
 .discord-logout {
   position: fixed;
   top: 2em;
-  right: 2em;
+  right: 2.15em;
   background: #A12829;
   color: white;
   padding: 7px 17px;
@@ -172,10 +360,15 @@ export default {
   text-decoration: none;
   display: inline-block;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.2s ease-in-out;
 }
 .discord-logout:hover {
   background: #aa3e3e;
+  box-shadow: 0 0 32px 0 #A1282955;
+}
+.user-tab {
+  width: fit-content;
+  margin-top: 5rem;
 }
 .leaderboard-container {
   width: fit-content;
@@ -184,15 +377,55 @@ export default {
 .leaderboard {
   float: right;
   background: rgba( 255, 255, 255, 0.2 );
-  box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-  backdrop-filter: blur( 20px );
-  -webkit-backdrop-filter: blur( 20px );
-  border: 2px solid #dee0fc88;
+  box-shadow: 0 8px 32px 0 #5865f211;
   border-radius: 15px;
   padding: 6px 5px;
-  max-height: 600px;
+  height: 700px;
   overflow-y: scroll;
 }
+
+.inventory {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 0 10px 10px;
+  height: 390px;
+  gap: 5px;
+  overflow-y: scroll;
+  padding: 8px 0;
+}
+.inventory-item:hover {
+  background: radial-gradient(circle at 50% 0%, #5865f2, transparent 150%) !important;
+}
+
+.tabs {
+  background: rgba( 255, 255, 255, 0.2 );
+  border-radius: 10px 10px 0 0;
+  min-width: 800px;
+  box-shadow: 0 0 32px 0 rgba( 255, 255, 255, 0.1 );
+}
+
+.actions-container {
+  height: 390px;
+  overflow-y: scroll;
+  border-radius: 0 0 10px 10px;
+}
+
+.action-card {
+  margin-top: 10px;
+  background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%) !important;
+  border-radius: 15px !important;
+}
+.action-card:hover {
+  background: radial-gradient(circle at 50% 0%, #5865f2, transparent 150%) !important;
+}
+
+
+@media (max-width: 1200px) {
+  .tabs {
+    min-width: 450px;
+  }
+}
+
 @media (max-width: 850px) {
   .leaderboard {
     width: 100%;
@@ -200,6 +433,17 @@ export default {
   .leaderboard-container {
     width: 100%;
     margin-top: 0;
+  }
+  .user-tab {
+    width: 100%;
+    margin-top: 0;
+    margin-bottom: 3rem;
+  }
+  .inventory {
+    width: 100%;
+  }
+  .tabs {
+    min-width: auto;
   }
 }
 </style>
