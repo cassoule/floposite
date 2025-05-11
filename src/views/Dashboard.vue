@@ -14,7 +14,7 @@
         <v-btn text="10 coins" append-icon="mdi mdi-play" class="text-capitalize" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10 || !message" @click="sendMessage"></v-btn>
       </div>
       <div class="mt-5 d-flex align-center" style="gap: 1rem">
-        <v-btn text="+100" append-icon="mdi mdi-play" class="text-capitalize" color="primary" variant="flat" rounded="lg" @click="addCoins"></v-btn>
+        <v-btn text="+1000" append-icon="mdi mdi-play" class="text-capitalize" color="primary" variant="flat" rounded="lg" @click="addCoins"></v-btn>
       </div>
     </div>
 
@@ -37,7 +37,7 @@
 
     <v-tabs-window v-model="tab">
       <v-tabs-window-item value="commandes">
-        <div class="actions-container">
+        <div class="actions-container" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
           <v-card class="action-card" variant="tonal">
             <v-card-title>Modif Pseudo</v-card-title>
             <v-card-subtitle>
@@ -48,13 +48,13 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
+          <v-card class="action-card" variant="tonal">
             <v-card-title>Spam Ping</v-card-title>
             <v-card-subtitle>
-              <p>Spam quelqu'un pendant 1 minute (1 ping par seconde)</p>
+              <p>Spam quelqu'un pendant 30 secondes (~1 MP par seconde)</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-              <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000"/>
+              <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000" @click="spamPingModal = true"/>
             </v-card-text>
           </v-card>
 
@@ -81,7 +81,7 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="predictions">
-        <div style="height: 390px;">
+        <div style="height: 390px;" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
           <div class="pt-16 pl-5">
             <p class="pt-16 w-100 text-center text-h4">Prédictions</p>
             <p class="pt-8 w-100 text-center">Bientôt disponible</p>
@@ -90,7 +90,7 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="skins">
-        <div class="inventory">
+        <div class="inventory" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
           <div v-for="skin in user_inventory" :key="skin.id" class="inventory-item" :style="`border-radius: 10px;`">
             <div style="display: flex; place-content: space-between; min-width: 300px; width: 100%; padding: .5em 1em">
               <div style="display: flex; width: 70%; gap: 1em">
@@ -104,8 +104,8 @@
         </div>
       </v-tabs-window-item>
 
-      <v-tabs-window-item value="votes">
-        <div class="votes-containers">
+      <v-tabs-window-item value="votes" >
+        <div class="votes-containers" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
           <v-card v-for="poll in active_polls" :key="poll.id" class="votes-card" variant="tonal">
             <div v-if="poll.requiredMajority - poll.for > 0">
               <v-card-title><span style="font-weight: bold">{{ poll.username.username }}</span> propose de timeout <span style="font-weight: bold">{{ poll.toUsername.username }}</span></v-card-title>
@@ -163,9 +163,9 @@
       <v-card-subtitle>
         <p>Modifie le pseudo de quelqu'un</p>
       </v-card-subtitle>
-      <v-card-text class="d-flex" style="gap: 1em">
-        <v-select v-model="nicknameForm.id" placeholder="Akhy" clearable :items="users" item-value="id" item-title="globalName" variant="outlined" class="text-white w-50" rounded="lg" density="comfortable">
-          <template #item="{ props, item }" style="background: transparent !important">
+      <v-card-text>
+        <v-select v-model="nicknameForm.id" placeholder="Akhy" clearable :items="users" item-value="id" item-title="globalName" variant="outlined" class="text-white w-100" rounded="lg" density="comfortable">
+          <template #item="{ props, item }">
             <v-list-item v-bind="props" rounded="lg" color="primary">
               <template #title>
                 <div style="display: flex; place-items: center; place-content: start; gap: 1em">
@@ -177,10 +177,36 @@
           </template>
         </v-select>
 
-        <v-text-field v-model="nicknameForm.nickname" clearable placeholder="Nouveau nom" variant="outlined" rounded="lg" density="comfortable" class="text-white w-50" maxLength="20" :hint="!nicknameForm.nickname ? 'Nom par défaut' : ''" persistent-hint/>
+        <v-text-field v-model="nicknameForm.nickname" clearable placeholder="Nouveau nom" variant="outlined" rounded="lg" density="comfortable" class="text-white w-100" maxLength="20" :hint="!nicknameForm.nickname ? 'Nom par défaut' : ''" persistent-hint/>
       </v-card-text>
       <v-card-text class="d-flex justify-end">
         <v-btn text="1K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="!nicknameForm.id" @click="changeNickname" @click.stop="nicknameModal = false" />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="spamPingModal" class="modals" max-width="800">
+    <v-card class="modal-card" variant="tonal">
+      <v-card-title>Spam Ping</v-card-title>
+      <v-card-subtitle>
+        <p>Spam quelqu'un pendant 30 secondes (~1 MP par seconde)</p>
+      </v-card-subtitle>
+      <v-card-text class="d-flex" style="gap: 1em">
+        <v-select v-model="spamPingForm.id" placeholder="Akhy" clearable :items="users" item-value="id" item-title="globalName" variant="outlined" class="text-white w-50" rounded="lg" density="comfortable">
+          <template #item="{ props, item }" style="background: transparent !important">
+            <v-list-item v-bind="props" rounded="lg" color="primary">
+              <template #title>
+                <div style="display: flex; place-items: center; place-content: start; gap: 1em">
+                  <v-img :src="avatars[item.raw.id]" color="transparent" style="border-radius: 50%; max-width: 40px; height: 40px"/>
+                  <p>{{item.raw.globalName}}</p>
+                </div>
+              </template>
+            </v-list-item>
+          </template>
+        </v-select>
+      </v-card-text>
+      <v-card-text class="d-flex justify-end">
+        <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="!spamPingForm.id" @click="spamPing" @click.stop="spamPingModal = false" />
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -263,11 +289,17 @@ export default {
       socket: null,
       user_inventory: null,
       active_polls: null,
+
       nicknameModal: false,
+      spamPingModal: false,
+
       avatars: {},
       nicknameForm: {
         id: null,
         nickname: null,
+      },
+      spamPingForm: {
+        id: null,
       }
     }
   },
@@ -430,6 +462,20 @@ export default {
       }
     },
 
+    async spamPing() {
+      this.showCommandToast('Envoi de la commande')
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/spam-ping', {
+          userId: this.spamPingForm.id,
+          commandUserId: this.discordId,
+        });
+        console.log(response)
+        this.showSuccessOrWarningToast(response.data.message, false);
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+    },
+
     async addCoins() {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
@@ -492,7 +538,6 @@ export default {
   display: flex;
   flex-direction: column;
   border-radius: 0 0 10px 10px;
-  height: 390px;
   gap: 5px;
   overflow-y: scroll;
   padding: 8px 0;
