@@ -3,13 +3,15 @@
     <div>
       <h1 style="font-size: 3em"><span style="color: #5865f2">Flopo</span>Site</h1>
       <p>Connectes-toi via <span style="color: #5865f2">Discord</span> 👇</p>
-      <a :href="discordAuthUrl">
-        <button class="btn-login">
-          <span>Connexion</span>
-          <div class="shine"></div>
-        </button>
-      </a>
+
+      <v-btn class="btn-login text-capitalize px-8" style="border-radius: 10px" height="40" color="white" variant="text" :disabled="!flapi_ready" @click="handleLogin">
+        <span>Connexion</span>
+        <div class="shine"></div>
+      </v-btn>
+
+      <p v-if="!flapi_ready" class="mt-5" style="color: #ddd">FlopoBot n'est pas disponible pour le moment :(</p>
     </div>
+
   </div>
 
   <div class="flopo-img">
@@ -26,6 +28,8 @@
 <script>
 import Toast from '@/components/Toast.vue'
 import { useToastStore } from '@/stores/toastStore.js'
+import axios from 'axios'
+import { io } from 'socket.io-client'
 
 export default {
   components: { Toast },
@@ -38,6 +42,17 @@ export default {
     }
   },
 
+  data() {
+    return {
+      flapi_ready: false,
+    }
+  },
+
+  async mounted() {
+    //await this.checkFlapi()
+    this.initSocket()
+  },
+
   computed: {
     discordAuthUrl() {
       const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID
@@ -45,6 +60,51 @@ export default {
       return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify`
     },
   },
+
+  methods: {
+    initSocket() {
+      // Connect to your bot's Socket.IO server
+      this.socket = io(import.meta.env.VITE_FLAPI_URL, {
+        withCredentials: false,
+        extraHeaders: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+
+      // Handle connection events
+      this.socket.on('connect', async () => {
+        console.log('Connected to WebSocket server');
+        await this.checkFlapi();
+      });
+
+      this.socket.on('disconnect', () => {
+        console.log('Disconnected from WebSocket server');
+      });
+    },
+
+    handleLogin() {
+      window.location = this.discordAuthUrl
+    },
+
+    async checkFlapi() {
+      console.log('Checking flAPI...')
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/check'
+      try {
+        const flapiTestResponse = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json'
+          },
+          withCredentials: false
+        })
+        console.log('flAPI ready');
+        this.flapi_ready = true
+      } catch (e) {
+        console.log('flAPI not ready');
+        this.flapi_ready = false
+      }
+    }
+  }
 }
 </script>
 
@@ -97,16 +157,8 @@ export default {
   z-index: -1;
 }
 
-.btn-login:hover {
-  transform: scale(1.03);
-}
-
 .btn-login:hover::before {
   filter: blur(1px);
-}
-
-.btn-login:active {
-  transform: scale(0.95);
 }
 
 .shine {
