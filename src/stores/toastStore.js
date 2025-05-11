@@ -79,7 +79,7 @@ export const useToastStore = defineStore('toast', {
             setTimeout(() => {
                 this.key = Date.now()
                 this.text = 'o7'
-                this.icon = 'mdi mdi-check-bold'
+                this.icon = 'mdi mdi-logout'
                 this.color = '#181818'
                 this.show = true
             }, 150)

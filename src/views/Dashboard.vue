@@ -5,7 +5,7 @@
       <h1 class="mb-3">Salut <span style="color: #5865F2">@{{ user?.globalName }}</span></h1>
       <p>{{ user?.coins }} coins</p>
       <p>{{ user_inventory?.length }} skins <span style="color: rgba( 255, 255, 255, 0.3 )">({{ inventoryValue }}€)</span></p>
-      <p>{{ user?.warns }} warns <span style="color: rgba( 255, 255, 255, 0.3 )">({{ user?.allTimeWarns }} ever)</span></p>
+      <p>{{ user?.warns }} warns <span style="color: rgba( 255, 255, 255, 0.3 )">({{ user?.allTimeWarns }} all time)</span></p>
     </div>
 
     <div v-if="discordId === devId" class="mt-5 d-flex align-center" style="gap: 1rem">
@@ -22,9 +22,12 @@
       class="tabs mt-5"
     >
       <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box"/></v-tab>
-      <v-tab value="items" icon><i class="mdi mdi-package-variant"/></v-tab>
+      <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline"/></v-tab>
       <v-tab value="skins" icon><i class="mdi mdi-pistol"/></v-tab>
-      <v-tab value="polls" icon><i class="mdi mdi-timer-outline"/></v-tab>
+      <v-tab value="votes" icon>
+        <i class="mdi mdi-timer-outline"/>
+        <v-badge v-if="active_polls && Object.keys(active_polls)?.length > 0" dot color="primary" />
+      </v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab">
@@ -76,31 +79,53 @@
         </div>
       </v-tabs-window-item>
 
-      <v-tabs-window-item value="items">
+      <v-tabs-window-item value="predictions">
         <div style="height: 390px;">
-          <p class="pt-5">Bientôt disponible...</p>
+          <div class="pt-16 pl-5">
+            <p class="pt-16 w-100 text-center text-h4">Prédictions</p>
+            <p class="pt-8 w-100 text-center">Bientôt disponible</p>
+          </div>
         </div>
       </v-tabs-window-item>
 
       <v-tabs-window-item value="skins">
         <div class="inventory">
-          <div v-for="skin in user_inventory" :key="skin.id" class="inventory-item" :style="`border-radius: 10px; background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 70%);`">
+          <div v-for="skin in user_inventory" :key="skin.id" class="inventory-item" :style="`border-radius: 10px;`">
             <div style="display: flex; place-content: space-between; min-width: 300px; width: 100%; padding: .5em 1em">
               <div style="display: flex; width: 70%; gap: 1em">
-                <v-img :src="skin.displayIcon" height="25" min-width="70" max-width="70"/>
+                <v-img :src="skin.displayIcon" class="skin-img" height="25" min-width="70" max-width="70"/>
                 <span style="color: #ddd; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{ skin.displayName }}</span>
               </div>
               <span style="font-weight: bold">{{ skin.currentPrice.toFixed(2)}}€</span>
             </div>
+            <div class="skin-bg" :style="`background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 80%)`"></div>
           </div>
         </div>
       </v-tabs-window-item>
 
-      <v-tabs-window-item value="polls">
-        <div style="height: 390px;">
-          <p class="pt-5">Bientôt disponible...</p>
-          <div v-for="poll in active_polls" :key="poll.id">
-            Timeout {{ poll.toUsername.username }} pendant {{ poll.time_display.replaceAll('*', '') }}
+      <v-tabs-window-item value="votes">
+        <div class="votes-containers">
+          <v-card v-for="poll in active_polls" :key="poll.id" class="votes-card" variant="tonal">
+            <div v-if="poll.requiredMajority - poll.for > 0">
+              <v-card-title><span style="font-weight: bold">{{ poll.username.username }}</span> propose de timeout <span style="font-weight: bold">{{ poll.toUsername.username }}</span></v-card-title>
+              <v-card-subtitle>Pendant <span style="font-weight: bold">{{ poll.time_display.replaceAll('*', '') }}</span></v-card-subtitle>
+              <v-card-subtitle>Il manque {{ poll.requiredMajority - poll.for }} vote(s)</v-card-subtitle>
+              <v-card-text class="d-flex align-end">
+                {{((new Date(poll.endTime).getTime() - Date.now())/1000).toFixed()}}s restantes
+                <v-spacer/>
+                <v-btn text="Oui" color="primary" variant="flat" rounded="lg" class="mr-2" disabled/>
+                <v-btn text="Non" color="primary" variant="tonal" style="border: 1px solid #5865f2" rounded="lg" disabled/>
+              </v-card-text>
+            </div>
+            <div v-else>
+              <v-card-title><span style="font-weight: bold">{{ poll.toUsername.username }}</span> a été timeout</v-card-title>
+              <v-card-subtitle>Pendant <span style="font-weight: bold">{{ poll.time_display.replaceAll('*', '') }}</span></v-card-subtitle>
+              <v-card-subtitle class="pb-3">{{ poll.for }} ont voté pour</v-card-subtitle>
+            </div>
+
+          </v-card>
+          <div v-if="Object.keys(active_polls)?.length === 0" class="pt-16 pl-5">
+            <p class="pt-16 w-100 text-center">Aucun vote en cours</p>
           </div>
         </div>
       </v-tabs-window-item>
@@ -185,7 +210,7 @@ export default {
     },
     devId() {
       return import.meta.env.VITE_DEV_ID
-    }
+    },
   },
 
   data() {
@@ -335,6 +360,10 @@ export default {
         this.showErrorToast(e.response.data.error)
       }
 
+    },
+
+    timeLeft(end) {
+      return  Math.max(0, (new Date(end).getTime() - Date.now())/1000).toFixed()
     }
   },
 
@@ -393,15 +422,49 @@ export default {
   overflow-y: scroll;
   padding: 8px 0;
 }
-.inventory-item:hover {
-  background: radial-gradient(circle at 50% 0%, #5865f2, transparent 150%) !important;
+
+.inventory-item {
+  position: relative;
+  overflow: hidden;
+  min-height: 40px;
+  transition: .3s ease-in-out;
 }
+.skin-bg {
+  position: absolute;
+  width: 150%;
+  height: 100%;
+  top: 0;
+  left: -50%;
+  z-index: -1;
+  border-radius: 10px;
+  transition: .2s ease-in-out;
+}
+.skin-img {
+  transition: .3s ease-in-out;
+}
+
+.inventory-item:hover .skin-bg {
+  transform: translateX(30%);
+}
+
+@media (min-width: 550px) {
+  .inventory-item:hover {
+    transition-delay: .3s;
+    min-height: 100px;
+  }
+  .inventory-item:hover .skin-img {
+    transition-delay: .3s;
+    height: 85px !important;
+    min-width: 200px !important;
+  }
+}
+
+
 
 .tabs {
   background: rgba( 255, 255, 255, 0.2 );
   border-radius: 10px 10px 0 0;
   min-width: 800px;
-  box-shadow: 0 0 32px 0 rgba( 255, 255, 255, 0.1 );
 }
 
 .actions-container {
@@ -411,12 +474,52 @@ export default {
 }
 
 .action-card {
+  position: relative;
   margin-top: 10px;
-  background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%) !important;
+  background: transparent !important;
   border-radius: 15px !important;
 }
-.action-card:hover {
-  background: radial-gradient(circle at 50% 0%, #5865f2, transparent 150%) !important;
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 150%;
+  height: 100%;
+  background: radial-gradient(circle at -100% -300%,#5865f2,transparent 90%) !important;
+  z-index: -1;
+  transition: 0.2s ease-in-out;
+}
+.action-card:hover::before {
+  transform: translateX(30%);
+}
+
+.votes-containers {
+  height: 390px;
+  overflow-y: scroll;
+  border-radius: 0 0 10px 10px;
+}
+
+.votes-card {
+  position: relative;
+  margin-top: 10px;
+  background: transparent !important;
+  border-radius: 15px !important;
+}
+
+.votes-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 150%;
+  height: 100%;
+  background: radial-gradient(circle at -100% -300%,#5865f2,transparent 90%) !important;
+  z-index: -1;
+  transition: 0.2s ease-in-out;
+}
+.votes-card:hover::before {
+  transform: translateX(30%);
 }
 
 
