@@ -1,8 +1,8 @@
 <template>
   <div class="login">
     <div>
-      <h1 style="font-size: 3em"><span style="color: #5865F2">Flopo</span>Site</h1>
-      <p>Connectes-toi via <span style="color: #5865F2">Discord</span> 👇</p>
+      <h1 style="font-size: 3em"><span style="color: #5865f2">Flopo</span>Site</h1>
+      <p>Connectes-toi via <span style="color: #5865f2">Discord</span> 👇</p>
       <a :href="discordAuthUrl">
         <button class="btn-login">
           <span>Connexion</span>
@@ -17,49 +17,40 @@
   </div>
 
   <div class="flopo-img-sm">
-    <v-img class="flopobot" src="flopobot.webp"></v-img>
+    <v-img src="flopobot.webp" width="200px"></v-img>
   </div>
 
-
+  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 </template>
 
 <script>
+import Toast from '@/components/Toast.vue'
+import { useToastStore } from '@/stores/toastStore.js'
+
 export default {
+  components: { Toast },
+
+  setup() {
+    const toastStore = useToastStore()
+
+    return {
+      toastStore: toastStore.$state,
+    }
+  },
+
   computed: {
     discordAuthUrl() {
       const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID
       const redirectUri = encodeURIComponent(import.meta.env.VITE_REDIRECT_URI)
       return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify`
-    }
+    },
   },
-
-  mounted() {
-    let card = document.querySelector('.flopo-img')
-    window.addEventListener('mousemove', (e) => {
-      let rect = card.getBoundingClientRect()
-      let x = e.clientX - rect.left - rect.width / 2
-      let y = e.clientY - rect.top - rect.height / 2
-
-      let rotateX = (x / rect.height) * -20
-      let rotateY = (y / rect.width) * -20
-
-      card.style.transform = `perspective(1000px) rotateX(${rotateY}deg) rotateY(${-rotateX}deg)`
-
-      let bgX = (x / rect.width) * 50 + 50
-      card.style.backgroundPositionX = `${bgX}%`
-    })
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`
-      card.style.backgroundPositionX = ``
-    })
-  }
 }
 </script>
 
 <style>
 .discord-login {
-  background: #5865F2;
+  background: #5865f2;
   color: white;
   padding: 12px 24px;
   border-radius: 10px;
@@ -84,7 +75,7 @@ export default {
   overflow: hidden !important;
   z-index: 1;
   pointer-events: all;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 
 .btn-login::before {
@@ -94,7 +85,7 @@ export default {
   background: linear-gradient(45deg, #5865f2, #7984f5);
   border-radius: 14px;
   z-index: -1;
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 
 .btn-login::after {
@@ -115,7 +106,7 @@ export default {
 }
 
 .btn-login:active {
-  transform: scale(.95);
+  transform: scale(0.95);
 }
 
 .shine {
@@ -127,7 +118,7 @@ export default {
   height: 200%;
   background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transform: translateX(-100%);
-  transition: transform .5s ease;
+  transition: transform 0.5s ease;
   z-index: 0;
 }
 
@@ -145,7 +136,7 @@ export default {
 .flopo-img {
   position: fixed;
   top: -50vh;
-  right: -50vw;
+  right: -25vw;
   width: 150vw;
   height: 200vh;
   background: linear-gradient(-90deg, #5865f255, transparent);
@@ -159,23 +150,24 @@ export default {
 .flopobot {
   position: absolute;
   top: 50%;
-  left: 50%;
+  left: 65%;
   width: 300px;
   transform: translate(-50%, -50%) translateZ(175px);
 }
 
 .flopo-img-sm {
   position: absolute;
-  bottom: 0;
-  right: -25px;
+  bottom: 50px;
+  right: 10px;
   display: none;
 }
 
 @media (max-width: 850px) {
-  html {
+  /*html {
     height: 100vh !important;
+    width: 100vw !important;
     overflow: hidden !important;
-  }
+  }*/
   .flopo-img {
     display: none;
     position: absolute;
@@ -193,6 +185,9 @@ export default {
   .flopo-img-sm {
     display: flex;
   }
-}
 
+  .login {
+    margin-top: 10rem;
+  }
+}
 </style>
