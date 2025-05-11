@@ -8,9 +8,14 @@
       <p>{{ user?.warns }} warns <span style="color: rgba( 255, 255, 255, 0.3 )">({{ user?.allTimeWarns }} all time)</span></p>
     </div>
 
-    <div v-if="discordId === devId" class="mt-5 d-flex align-center" style="gap: 1rem">
-      <v-text-field v-model="message" variant="outlined" placeholder="Envoyer un message" density="compact" rounded="lg" hide-details></v-text-field>
-      <v-btn text="10 coins" append-icon="mdi mdi-play" class="text-capitalize" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10 || !message" @click="sendMessage"></v-btn>
+    <div v-if="discordId === devId">
+      <div class="mt-5 d-flex align-center" style="gap: 1rem">
+        <v-text-field v-model="message" variant="outlined" placeholder="Envoyer un message" density="compact" rounded="lg" hide-details></v-text-field>
+        <v-btn text="10 coins" append-icon="mdi mdi-play" class="text-capitalize" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10 || !message" @click="sendMessage"></v-btn>
+      </div>
+      <div class="mt-5 d-flex align-center" style="gap: 1rem">
+        <v-btn text="+100" append-icon="mdi mdi-play" class="text-capitalize" color="primary" variant="flat" rounded="lg" @click="addCoins"></v-btn>
+      </div>
     </div>
 
     <v-tabs
@@ -36,43 +41,39 @@
           <v-card class="action-card" variant="tonal">
             <v-card-title>Modif Pseudo</v-card-title>
             <v-card-subtitle>
-              <p>Modifie le pseudo de quelqu'un pendant 1h</p>
+              <p>Modifie le pseudo de quelqu'un</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-              <p style="color: #ddd;" class="mr-5 mt-2">Bientôt disponible...</p>
-              <v-btn text="1K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 1000"/>
+              <v-btn text="1K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 1000" @click="nicknameModal = true"/>
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card" variant="tonal">
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>Spam Ping</v-card-title>
             <v-card-subtitle>
               <p>Spam quelqu'un pendant 1 minute (1 ping par seconde)</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-              <p style="color: #ddd;" class="mr-5 mt-2">Bientôt disponible...</p>
               <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000"/>
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card" variant="tonal">
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>Slow Mode</v-card-title>
             <v-card-subtitle>
               <p>Limite quelqu'un à un message par minute pendant 1 heure</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-              <p style="color: #ddd;" class="mr-5 mt-2">Bientôt disponible...</p>
               <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000"/>
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card" variant="tonal">
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>Time-Out</v-card-title>
             <v-card-subtitle>
               <p>Time-out quelqu'un pendant 6 heures</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-              <p style="color: #ddd;" class="mr-5 mt-2">Bientôt disponible...</p>
               <v-btn text="100K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 100000"/>
             </v-card-text>
           </v-card>
@@ -155,6 +156,34 @@
     </div>
   </div>
   <toast v-if="toastStore.show" :key="toastStore.toastKey" />
+
+  <v-dialog v-model="nicknameModal" class="modals" max-width="800">
+    <v-card class="modal-card" variant="tonal">
+      <v-card-title>Modif Pseudo</v-card-title>
+      <v-card-subtitle>
+        <p>Modifie le pseudo de quelqu'un</p>
+      </v-card-subtitle>
+      <v-card-text class="d-flex" style="gap: 1em">
+        <v-select v-model="nicknameForm.id" placeholder="Akhy" clearable :items="users" item-value="id" item-title="globalName" variant="outlined" class="text-white w-50" rounded="lg" density="comfortable">
+          <template #item="{ props, item }" style="background: transparent !important">
+            <v-list-item v-bind="props" rounded="lg" color="primary">
+              <template #title>
+                <div style="display: flex; place-items: center; place-content: start; gap: 1em">
+                  <v-img :src="avatars[item.raw.id]" color="transparent" style="border-radius: 50%; max-width: 40px; height: 40px"/>
+                  <p>{{item.raw.globalName}}</p>
+                </div>
+              </template>
+            </v-list-item>
+          </template>
+        </v-select>
+
+        <v-text-field v-model="nicknameForm.nickname" clearable placeholder="Nouveau nom" variant="outlined" rounded="lg" density="comfortable" class="text-white w-50" maxLength="20" :hint="!nicknameForm.nickname ? 'Nom par défaut' : ''" persistent-hint/>
+      </v-card-text>
+      <v-card-text class="d-flex justify-end">
+        <v-btn text="1K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="!nicknameForm.id" @click="changeNickname" @click.stop="nicknameModal = false" />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
@@ -162,6 +191,7 @@ import axios from 'axios'
 import { io } from 'socket.io-client';
 import Toast from '../components/Toast.vue'
 import { useToastStore } from '../stores/toastStore.js'
+import { computed } from 'vue'
 
 export default {
   components: {
@@ -183,6 +213,14 @@ export default {
       toastStore.showSentToast()
     }
 
+    const showCommandToast = (message) => {
+      toastStore.showCommandToast(message)
+    }
+
+    const showSuccessOrWarningToast = (message, warning) => {
+      toastStore.showSuccessOrWarningToast(message, warning)
+    }
+
     const showErrorToast = (message) => {
       toastStore.showErrorToast(message)
     }
@@ -192,6 +230,8 @@ export default {
       showLogoutToast,
       showSentToast,
       showSendingToast,
+      showCommandToast,
+      showSuccessOrWarningToast,
       showErrorToast,
     }
   },
@@ -223,6 +263,12 @@ export default {
       socket: null,
       user_inventory: null,
       active_polls: null,
+      nicknameModal: false,
+      avatars: {},
+      nicknameForm: {
+        id: null,
+        nickname: null,
+      }
     }
   },
 
@@ -233,7 +279,8 @@ export default {
     await this.getUsers()
     if (!this.users) this.$router.push('/');
 
-    await this.getAvatar()
+    this.avatar = await this.getAvatar(this.discordId)
+    this.fetchAvatars()
     await this.getInventory()
     await this.getActivePolls()
 
@@ -271,6 +318,12 @@ export default {
       });
     },
 
+    fetchAvatars() {
+      this.users.forEach(async (user) => {
+        this.avatars[user.id] = await this.getAvatar(user.id);
+      })
+    },
+
     logout() {
       localStorage.removeItem('discordId');
       this.showLogoutToast();
@@ -294,8 +347,8 @@ export default {
       }
     },
 
-    async getAvatar() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/avatar'
+    async getAvatar(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
       try {
         console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
@@ -305,7 +358,7 @@ export default {
           },
           withCredentials: false
         })
-        this.avatar = response.data.avatarUrl
+        return response.data.avatarUrl
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -362,8 +415,30 @@ export default {
 
     },
 
-    timeLeft(end) {
-      return  Math.max(0, (new Date(end).getTime() - Date.now())/1000).toFixed()
+    async changeNickname() {
+      this.showCommandToast('Changement du pseudo...')
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/change-nickname', {
+          userId: this.nicknameForm.id,
+          nickname: this.nicknameForm.nickname,
+          commandUserId: this.discordId,
+        });
+        console.log(response)
+        this.showSuccessOrWarningToast(response.data.message, false);
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+    },
+
+    async addCoins() {
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
+          commandUserId: this.discordId,
+        });
+        console.log(response)
+      } catch (e) {
+        console.log(e)
+      }
     }
   },
 
@@ -492,6 +567,41 @@ export default {
 }
 .action-card:hover::before {
   transform: translateX(30%);
+}
+
+.disabled-card::after {
+  content: 'Bientôt disponible';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 150% 50%,#0c1316cc,#0c131677 200%) !important;
+  display: flex;
+  place-content: center;
+  place-items: center;
+}
+
+.modals {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.modal-card {
+  position: relative;
+  margin-top: 10px;
+  background: transparent !important;
+  border-radius: 15px !important;
+}
+.modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 150%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%,#5865f2,#181818aa 100%) !important;
+  z-index: -1;
 }
 
 .votes-containers {

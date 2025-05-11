@@ -88,6 +88,13 @@ export const useToastStore = defineStore('toast', {
                 this.show = false
             }, 1500)
         },
+        showCommandToast(message) {
+            this.key = Date.now()
+            this.text = message
+            this.icon = 'mdi mdi-send-outline'
+            this.color = 'dark'
+            this.show = true
+        },
         showSuccessOrWarningToast(message, warning) {
             setTimeout(() => {
                 this.show = false
