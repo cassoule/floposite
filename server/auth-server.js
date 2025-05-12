@@ -17,6 +17,8 @@ app.use(cors({
   origin: 'http://localhost:5173', // Frontend origin
   credentials: false
 }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/auth', async (req, res) => {
   const code = req.query.code;
@@ -70,29 +72,22 @@ app.get('/test-env', (req, res) => {
   });
 });
 
-app.post('/create-checkout-session', async (req, res) => {
+app.post('/create-payment-intent', async (req, res) => {
+  console.log(req.body)
   try {
-    const session = await stripe.checkout.sessions.create({
+    const { amount } = req.body;
+
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'eur',
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            product_data: {
-              name: '100 000 coins',
-            },
-            unit_amount: 99,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${process.env.CLIENT_URI}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URI}/dashboard`,
+      capture_method: 'automatic',
     });
 
-    res.json({ id: session.id });
+    res.json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
+    console.log(err)
     res.status(500).json({ error: err.message });
   }
 })
