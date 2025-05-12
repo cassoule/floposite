@@ -23,6 +23,9 @@
         <v-btn text="+1000" append-icon="mdi mdi-play" class="text-capitalize" color="primary" variant="flat" rounded="lg" @click="addCoins"></v-btn>
       </div>
     </div>
+    <div class="mt-5 d-flex align-center" style="gap: 1rem">
+      <v-btn text="Ajouter des coins" append-icon="mdi mdi-play" class="text-none" color="primary" variant="flat" rounded="lg" @click="coinsModal = true"></v-btn>
+    </div>
 
     <v-tabs
       v-model="tab"
@@ -168,6 +171,30 @@
   </div>
   <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 
+  <v-dialog v-model="coinsModal" class="modals" max-width="800">
+    <v-card class="modal-card" variant="tonal">
+      <v-card-title>Ajouter des coins</v-card-title>
+      <v-card-subtitle>
+        <p>Recharge tes coins !</p>
+      </v-card-subtitle>
+      <v-card-text class="d-flex" style="gap: 1em; place-content: start; flex-wrap: wrap">
+        <v-btn class="text-none" color="primary" @click="initiateCheckout" :disabled="loading">
+          100K coins (0.99€)
+        </v-btn>
+        <v-btn class="text-none" color="primary" @click="" :disabled="loading">
+          1M coins (4.99€)
+        </v-btn>
+        <v-btn class="text-none" color="primary" @click="" :disabled="loading">
+          10M coins (24.99€)
+        </v-btn>
+        <v-btn class="text-none" color="primary" @click="" :disabled="loading">
+          100M coins (124.99€)
+        </v-btn>
+        <div v-if="error" class="error">{{ error }}</div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
   <v-dialog v-model="nicknameModal" class="modals" max-width="800">
     <v-card class="modal-card" variant="tonal">
       <v-card-title>Modif Pseudo</v-card-title>
@@ -255,6 +282,7 @@ import { io } from 'socket.io-client';
 import Toast from '../components/Toast.vue'
 import { useToastStore } from '../stores/toastStore.js'
 import { computed } from 'vue'
+import { loadStripe } from '@stripe/stripe-js';
 
 export default {
   components: {
@@ -335,6 +363,7 @@ export default {
       active_polls: null,
       active_slowmodes: null,
 
+      coinsModal: false,
       nicknameModal: false,
       spamPingModal: false,
       slowmodeModal: false,
@@ -349,7 +378,11 @@ export default {
       },
       slowmodeForm: {
         id: null,
-      }
+      },
+
+      loading: false,
+      error: null,
+      stripePromise: null,
     }
   },
 
@@ -359,6 +392,8 @@ export default {
 
     await this.getUsers()
     if (!this.users) this.$router.push('/');
+
+    this.stripePromise = loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLIC_KEY);
 
     this.avatar = await this.getAvatar(this.discordId)
     this.fetchAvatars()
@@ -371,6 +406,33 @@ export default {
   },
 
   methods: {
+    async initiateCheckout() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        // 1. Create Checkout Session
+        const response = await fetch(import.meta.env.VITE_CLIENT_URI + '/create-checkout-session', {
+          method: 'POST'
+        });
+
+        if (!response.ok) throw new Error('Failed to create session');
+
+        const { id: sessionId } = await response.json();
+
+        // 2. Redirect to Stripe Checkout
+        const stripe = await this.stripePromise;
+        const { error } = await stripe.redirectToCheckout({ sessionId });
+
+        if (error) throw error;
+
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     initSocket() {
       // Connect to your bot's Socket.IO server
       this.socket = io(import.meta.env.VITE_FLAPI_URL, {
@@ -628,6 +690,25 @@ export default {
 </script>
 
 <style>
+button {
+  padding: 12px 24px;
+  background: #6772e5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #ff3860;
+  margin-top: 12px;
+}
 .discord-logout {
   position: fixed;
   top: 2em;
