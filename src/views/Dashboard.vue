@@ -31,7 +31,7 @@
       <v-tab value="skins" icon><i class="mdi mdi-pistol"/></v-tab>
       <v-tab value="votes" icon>
         <i class="mdi mdi-timer-outline"/>
-        <v-badge v-if="active_polls && Object.keys(active_polls)?.length > 0" dot color="primary" />
+        <v-badge v-if="active_polls && unseenActivePoll" dot color="primary" />
       </v-tab>
     </v-tabs>
 
@@ -51,7 +51,7 @@
           <v-card class="action-card" variant="tonal">
             <v-card-title>Spam Ping</v-card-title>
             <v-card-subtitle>
-              <p>Spam quelqu'un pendant 30 secondes (~1 MP par seconde)</p>
+              <p>Spam quelqu'un pendant 30 secondes</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000" @click="spamPingModal = true"/>
@@ -106,7 +106,7 @@
 
       <v-tabs-window-item value="votes" >
         <div class="votes-containers" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
-          <v-card v-for="poll in active_polls" :key="poll.id" class="votes-card" variant="tonal">
+          <v-card v-for="[key, poll] in Object.entries(active_polls)" :key="key" class="votes-card" variant="tonal">
             <div v-if="poll.requiredMajority - poll.for > 0">
               <v-card-title><span style="font-weight: bold">{{ poll.username.username }}</span> propose de timeout <span style="font-weight: bold">{{ poll.toUsername.username }}</span></v-card-title>
               <v-card-subtitle>Pendant <span style="font-weight: bold">{{ poll.time_display.replaceAll('*', '') }}</span></v-card-subtitle>
@@ -114,8 +114,13 @@
               <v-card-text class="d-flex align-end">
                 {{((new Date(poll.endTime).getTime() - Date.now())/1000).toFixed()}}s restantes
                 <v-spacer/>
-                <v-btn text="Oui" color="primary" variant="flat" rounded="lg" class="mr-2" disabled/>
-                <v-btn text="Non" color="primary" variant="tonal" style="border: 1px solid #5865f2" rounded="lg" disabled/>
+                <div v-if="!poll.voters.includes(discordId) ">
+                  <v-btn text="Oui" color="primary" variant="flat" rounded="lg" class="mr-2" @click="timeoutVote(key, true)"/>
+                  <v-btn text="Non" color="primary" variant="tonal" style="border: 1px solid #5865f2" rounded="lg" @click="timeoutVote(key, false)"/>
+                </div>
+                <div v-else>
+                  Tu as voté !
+                </div>
               </v-card-text>
             </div>
             <div v-else>
@@ -189,7 +194,7 @@
     <v-card class="modal-card" variant="tonal">
       <v-card-title>Spam Ping</v-card-title>
       <v-card-subtitle>
-        <p>Spam quelqu'un pendant 30 secondes (~1 MP par seconde)</p>
+        <p>Spam un akhy pendant 30 secondes</p>
       </v-card-subtitle>
       <v-card-text class="d-flex" style="gap: 1em">
         <v-select v-model="spamPingForm.id" placeholder="Akhy" clearable :items="users" item-value="id" item-title="globalName" variant="outlined" class="text-white w-50" rounded="lg" density="comfortable">
@@ -277,6 +282,11 @@ export default {
     devId() {
       return import.meta.env.VITE_DEV_ID
     },
+    unseenActivePoll() {
+      return Object.values(this.active_polls)?.filter((p) => {
+        return !p.voters.includes(this.discordId)
+      })?.length > 0
+    }
   },
 
   data() {
@@ -476,6 +486,21 @@ export default {
       }
     },
 
+    async timeoutVote(voteKey, voteFor) {
+      this.showCommandToast('Envoi du vote...')
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout/vote', {
+          commandUserId: this.discordId,
+          voteKey: voteKey,
+          voteFor: voteFor,
+        });
+        console.log(response)
+        this.showSuccessOrWarningToast(response.data.message, false);
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+    },
+
     async addCoins() {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
@@ -579,8 +604,6 @@ export default {
   }
 }
 
-
-
 .tabs {
   background: rgba( 255, 255, 255, 0.2 );
   border-radius: 10px 10px 0 0;
@@ -645,7 +668,7 @@ export default {
   left: -50%;
   width: 150%;
   height: 100%;
-  background: radial-gradient(circle at 50% 50%,#5865f2,#181818aa 100%) !important;
+  background: radial-gradient(circle at -100% -200%,#5865f2,#181818 100%) !important;
   z-index: -1;
 }
 
@@ -685,6 +708,13 @@ export default {
 }
 
 @media (max-width: 850px) {
+  .modals {
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+  }
+  .modal-card::before {
+    background: radial-gradient(circle at -100% -200%,#5865f2,#181818aa 100%) !important;
+  }
   .leaderboard {
     width: 100%;
   }
