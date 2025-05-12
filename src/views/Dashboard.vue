@@ -2,10 +2,16 @@
   <div v-if="user" class="user-tab">
     <div style="margin-top: 1rem">
       <v-img :src="avatar" lazy-src="anon.png" width="70" color="transparent" style="border-radius: 50%; width: 70px; height: 70px" />
-      <h1 class="mb-3">Salut <span style="color: #5865F2">@{{ user?.globalName }}</span></h1>
-      <p>{{ user?.coins }} coins</p>
+      <h1>
+        Salut <span style="color: #5865F2">@{{ user?.globalName }}</span>
+      </h1>
+      <span v-if="active_slowmodes && Object.values(active_slowmodes).find(s => s.userId === discordId)" class="bubble-text" style="background: #FF8C0077;">slowmode</span>
+      <span v-if="user_isTimedOut" class="bubble-text" style="background: #aa3e3e77;">timed out</span>
+      <span class="bubble-text" style="opacity: 0;"/>
+      <p class="mt-2">{{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} coins</p>
       <p>{{ user_inventory?.length }} skins <span style="color: rgba( 255, 255, 255, 0.3 )">({{ inventoryValue }}€)</span></p>
       <p>{{ user?.warns }} warns <span style="color: rgba( 255, 255, 255, 0.3 )">({{ user?.allTimeWarns }} all time)</span></p>
+
     </div>
 
     <div v-if="discordId === devId">
@@ -26,18 +32,27 @@
       grow
       class="tabs mt-5"
     >
-      <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box"/></v-tab>
       <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline"/></v-tab>
+      <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box"/></v-tab>
       <v-tab value="skins" icon><i class="mdi mdi-pistol"/></v-tab>
       <v-tab value="votes" icon>
         <i class="mdi mdi-timer-outline"/>
-        <v-badge v-if="active_polls && Object.keys(active_polls)?.length > 0" dot color="primary" />
+        <v-badge v-if="active_polls && unseenActivePoll" dot color="primary" />
       </v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab">
+      <v-tabs-window-item value="predictions">
+        <div style="height: 390px;" :style="discordId === devId ? 'height: 333px;' : 'height: 429px;'">
+          <div class="pt-16 pl-5">
+            <p class="pt-16 w-100 text-center text-h4">Prédictions</p>
+            <p class="pt-8 w-100 text-center">Bientôt disponible</p>
+          </div>
+        </div>
+      </v-tabs-window-item>
+
       <v-tabs-window-item value="commandes">
-        <div class="actions-container" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
+        <div class="actions-container" :style="discordId === devId ? 'height: 333px;' : 'height: 429px;'">
           <v-card class="action-card" variant="tonal">
             <v-card-title>Modif Pseudo</v-card-title>
             <v-card-subtitle>
@@ -51,20 +66,20 @@
           <v-card class="action-card" variant="tonal">
             <v-card-title>Spam Ping</v-card-title>
             <v-card-subtitle>
-              <p>Spam quelqu'un pendant 30 secondes (~1 MP par seconde)</p>
+              <p>Spam quelqu'un pendant 30 secondes</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000" @click="spamPingModal = true"/>
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
+          <v-card class="action-card" variant="tonal">
             <v-card-title>Slow Mode</v-card-title>
             <v-card-subtitle>
-              <p>Limite quelqu'un à un message par minute pendant 1 heure</p>
+              <p>1 message par minute pendant 1 heure</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-              <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000"/>
+              <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="user?.coins < 10000" @click="slowmodeModal = true"/>
             </v-card-text>
           </v-card>
 
@@ -80,17 +95,8 @@
         </div>
       </v-tabs-window-item>
 
-      <v-tabs-window-item value="predictions">
-        <div style="height: 390px;" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
-          <div class="pt-16 pl-5">
-            <p class="pt-16 w-100 text-center text-h4">Prédictions</p>
-            <p class="pt-8 w-100 text-center">Bientôt disponible</p>
-          </div>
-        </div>
-      </v-tabs-window-item>
-
       <v-tabs-window-item value="skins">
-        <div class="inventory" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
+        <div class="inventory" :style="discordId === devId ? 'height: 333px;' : 'height: 429px;'">
           <div v-for="skin in user_inventory" :key="skin.id" class="inventory-item" :style="`border-radius: 10px;`">
             <div style="display: flex; place-content: space-between; min-width: 300px; width: 100%; padding: .5em 1em">
               <div style="display: flex; width: 70%; gap: 1em">
@@ -105,8 +111,8 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="votes" >
-        <div class="votes-containers" :style="discordId === devId ? 'height: 333px;' : 'height: 450px;'">
-          <v-card v-for="poll in active_polls" :key="poll.id" class="votes-card" variant="tonal">
+        <div class="votes-containers" :style="discordId === devId ? 'height: 333px;' : 'height: 429px;'">
+          <v-card v-for="[key, poll] in Object.entries(active_polls)" :key="key" class="votes-card" :variant="poll.voters.includes(discordId) ? 'plain' : 'tonal'">
             <div v-if="poll.requiredMajority - poll.for > 0">
               <v-card-title><span style="font-weight: bold">{{ poll.username.username }}</span> propose de timeout <span style="font-weight: bold">{{ poll.toUsername.username }}</span></v-card-title>
               <v-card-subtitle>Pendant <span style="font-weight: bold">{{ poll.time_display.replaceAll('*', '') }}</span></v-card-subtitle>
@@ -114,8 +120,13 @@
               <v-card-text class="d-flex align-end">
                 {{((new Date(poll.endTime).getTime() - Date.now())/1000).toFixed()}}s restantes
                 <v-spacer/>
-                <v-btn text="Oui" color="primary" variant="flat" rounded="lg" class="mr-2" disabled/>
-                <v-btn text="Non" color="primary" variant="tonal" style="border: 1px solid #5865f2" rounded="lg" disabled/>
+                <div v-if="!poll.voters.includes(discordId)">
+                  <v-btn text="Oui" color="primary" variant="flat" rounded="lg" class="mr-2" @click="timeoutVote(key, true)"/>
+                  <v-btn text="Non" color="primary" variant="tonal" style="border: 1px solid #5865f2" rounded="lg" @click="timeoutVote(key, false)"/>
+                </div>
+                <div v-else>
+                  Tu as voté !
+                </div>
               </v-card-text>
             </div>
             <div v-else>
@@ -132,7 +143,7 @@
       </v-tabs-window-item>
     </v-tabs-window>
     <p v-if="tab === 'skins'" class="mt-2">Valeur totale : {{ inventoryValue }}€</p>
-    <p v-else class="mt-2">{{ user?.coins }} coins</p>
+    <p v-else class="mt-2">{{ formatAmount(user?.coins) }} coins</p>
 
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
@@ -151,7 +162,7 @@
     <h2 style="display: flex; place-content: space-between">Classement</h2>
     <div class="leaderboard">
       <div v-for="akhy in users" :key="akhy.id" style="border-radius: 10px;" :style="akhy.id === discordId ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)' : ''">
-        <div style="display: flex; place-content: space-between; min-width: 300px; width: 100%; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ akhy.coins }}</div>
+        <div style="display: flex; place-content: space-between; min-width: 300px; width: 100%; padding: .5em 1em"><span style="color: #ddd">@{{ akhy?.globalName }}</span> {{ formatAmount(akhy.coins) }}</div>
       </div>
     </div>
   </div>
@@ -189,7 +200,7 @@
     <v-card class="modal-card" variant="tonal">
       <v-card-title>Spam Ping</v-card-title>
       <v-card-subtitle>
-        <p>Spam quelqu'un pendant 30 secondes (~1 MP par seconde)</p>
+        <p>Spam un akhy pendant 30 secondes</p>
       </v-card-subtitle>
       <v-card-text class="d-flex" style="gap: 1em">
         <v-select v-model="spamPingForm.id" placeholder="Akhy" clearable :items="users" item-value="id" item-title="globalName" variant="outlined" class="text-white w-50" rounded="lg" density="comfortable">
@@ -207,6 +218,32 @@
       </v-card-text>
       <v-card-text class="d-flex justify-end">
         <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="!spamPingForm.id" @click="spamPing" @click.stop="spamPingModal = false" />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="slowmodeModal" class="modals" max-width="800">
+    <v-card class="modal-card" variant="tonal">
+      <v-card-title>Slow Mode</v-card-title>
+      <v-card-subtitle>
+        <p>1 message par minute pendant 1 heure</p>
+      </v-card-subtitle>
+      <v-card-text class="d-flex" style="gap: 1em">
+        <v-select v-model="slowmodeForm.id" placeholder="Akhy" clearable :items="users" item-value="id" item-title="globalName" variant="outlined" class="text-white w-50" rounded="lg" density="comfortable" hint="Tu peux retirer ton slowmode en te mettant toi-même" persistent-hint>
+          <template #item="{ props, item }" style="background: transparent !important">
+            <v-list-item v-bind="props" rounded="lg" color="primary">
+              <template #title>
+                <div style="display: flex; place-items: center; place-content: start; gap: 1em">
+                  <v-img :src="avatars[item.raw.id]" color="transparent" style="border-radius: 50%; max-width: 40px; height: 40px"/>
+                  <p>{{item.raw.globalName}}</p>
+                </div>
+              </template>
+            </v-list-item>
+          </template>
+        </v-select>
+      </v-card-text>
+      <v-card-text class="d-flex justify-end">
+        <v-btn text="10K coins" class="text-none" append-icon="mdi-play" color="primary" variant="flat" rounded="lg" :disabled="!slowmodeForm.id" @click="slowmode" @click.stop="slowmodeModal = false" />
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -277,6 +314,11 @@ export default {
     devId() {
       return import.meta.env.VITE_DEV_ID
     },
+    unseenActivePoll() {
+      return Object.values(this.active_polls)?.filter((p) => {
+        return !p.voters.includes(this.discordId)
+      })?.length > 0
+    }
   },
 
   data() {
@@ -288,10 +330,14 @@ export default {
       avatar: null,
       socket: null,
       user_inventory: null,
+      user_isTimedOut: false,
+
       active_polls: null,
+      active_slowmodes: null,
 
       nicknameModal: false,
       spamPingModal: false,
+      slowmodeModal: false,
 
       avatars: {},
       nicknameForm: {
@@ -299,6 +345,9 @@ export default {
         nickname: null,
       },
       spamPingForm: {
+        id: null,
+      },
+      slowmodeForm: {
         id: null,
       }
     }
@@ -315,6 +364,8 @@ export default {
     this.fetchAvatars()
     await this.getInventory()
     await this.getActivePolls()
+    await this.getActiveSlowmodes()
+    await this.isTimedOut()
 
     this.initSocket();
   },
@@ -343,6 +394,11 @@ export default {
       this.socket.on('new-poll', (data) => {
         console.log('New Poll:', data.action);
         this.getActivePolls()
+      })
+
+      this.socket.on('new-slowmode', (data) => {
+        console.log('New Slowmode:', data.action);
+        this.getActiveSlowmodes()
       })
 
       this.socket.on('disconnect', () => {
@@ -430,6 +486,23 @@ export default {
       }
     },
 
+    async getActiveSlowmodes() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/slowmodes'
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json'
+          },
+          withCredentials: false
+        })
+        this.active_slowmodes = response.data.slowmodes
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
     async sendMessage() {
       let msg = this.message
       this.message = null
@@ -476,12 +549,69 @@ export default {
       }
     },
 
+    async timeoutVote(voteKey, voteFor) {
+      this.showCommandToast('Envoi du vote...')
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout/vote', {
+          commandUserId: this.discordId,
+          voteKey: voteKey,
+          voteFor: voteFor,
+        });
+        console.log(response)
+        this.showSuccessOrWarningToast(response.data.message, false);
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+    },
+
+    async slowmode() {
+      this.showCommandToast('Envoi de la commande...')
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/slowmode', {
+          userId: this.slowmodeForm.id,
+          commandUserId: this.discordId,
+        });
+        console.log(response)
+        this.showSuccessOrWarningToast(response.data.message, false);
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+    },
+
     async addCoins() {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
           commandUserId: this.discordId,
         });
         console.log(response)
+      } catch (e) {
+        console.log(e)
+      }
+    },
+
+    formatAmount(amount) {
+      if (amount >= 1000000000) {
+        amount /= 1000000000
+        return amount.toFixed(1).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'Md';
+      }
+      if (amount >= 1000000) {
+        amount /= 1000000
+        return amount.toFixed(1).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'M';
+      }
+      if (amount >= 10000) {
+        amount /= 1000
+        return amount.toFixed(1).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'K';
+      }
+      return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    },
+
+    async isTimedOut() {
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout', {
+          userId: this.discordId,
+        });
+        console.log(response)
+        this.user_isTimedOut = response.data.isTimedOut;
       } catch (e) {
         console.log(e)
       }
@@ -579,7 +709,14 @@ export default {
   }
 }
 
-
+.bubble-text {
+  position: relative;
+  font-size: .8em;
+  color: #eee;
+  padding: 3px 10px;
+  border-radius: 15px;
+  margin-right: 10px;
+}
 
 .tabs {
   background: rgba( 255, 255, 255, 0.2 );
@@ -645,7 +782,7 @@ export default {
   left: -50%;
   width: 150%;
   height: 100%;
-  background: radial-gradient(circle at 50% 50%,#5865f2,#181818aa 100%) !important;
+  background: radial-gradient(circle at -100% -200%,#5865f2,#181818 100%) !important;
   z-index: -1;
 }
 
@@ -685,6 +822,13 @@ export default {
 }
 
 @media (max-width: 850px) {
+  .modals {
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+  }
+  .modal-card::before {
+    background: radial-gradient(circle at -100% -200%,#5865f2,#181818aa 100%) !important;
+  }
   .leaderboard {
     width: 100%;
   }
