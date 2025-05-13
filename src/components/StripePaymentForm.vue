@@ -66,7 +66,7 @@ export default {
           'Content-Type': 'application/json'
         }
       })
-      const { clientSecret } = await response.data.clientSecret;
+      const clientSecret = await response.data.clientSecret;
 
       console.log(response)
       console.log('Client secret received:', clientSecret);
