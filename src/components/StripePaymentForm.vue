@@ -42,7 +42,7 @@ export default {
     // Create payment intent
     try {
       const DEV = import.meta.env.VITE_DEV_ENV ?? false
-      const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI : '/.netlify/functions/payment'
+      const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI : '/netlify/functions/payment'
 
       /*const response = await fetch(endpoint, {
         method: 'POST',
