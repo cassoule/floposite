@@ -58,23 +58,23 @@ export default {
       const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI + '/create-payment-intent' : '/.netlify/functions/payment'
 
       //DEV
-      const response = await fetch(endpoint, {
+      /*const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: this.amount })
       });
 
-      const { clientSecret } = await response.json();
+      const { clientSecret } = await response.json();*/
 
       //PROD
-      /*const amount = this.amount
+      const amount = this.amount
       const response = await axios.get(endpoint, {
         params: { amount },
         headers: {
           'Content-Type': 'application/json'
         }
       })
-      const clientSecret = await response.data.clientSecret;*/
+      const clientSecret = await response.data.clientSecret;
 
       // Initialize elements
       this.elements = this.stripe.elements({
