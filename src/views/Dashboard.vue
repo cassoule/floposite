@@ -352,31 +352,79 @@
   </div>
   <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 
-  <v-dialog v-model="coinsModal" class="modals" max-width="800">
-    <v-card class="modal-card overflow-scroll" variant="tonal">
-      <v-card-title>Ajouter des coins</v-card-title>
-      <v-card-subtitle>
+  <v-dialog v-model="coinsModal" class="modals" :max-width="coinsModalMaxWidth" scrollable>
+    <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
+      <v-card-title >
+        Achat de coins
+        <v-icon class="mdi mdi-close-circle-outline mt-1" style="float: right" @click="coinsModal = false"></v-icon>
+      </v-card-title>
+      <v-card-subtitle class="pb-1">
         <p>Recharge tes coins !</p>
       </v-card-subtitle>
-      <v-card-text class="d-flex" style="gap: 1em; place-content: start; flex-wrap: wrap">
-        <v-btn class="text-none" color="primary" @click="paymentModal = true" :disabled="loading">
-          100K coins (0.99€)
-        </v-btn>
-        <v-btn class="text-none" color="primary" @click="" :disabled="loading">
-          1M coins (4.99€)
-        </v-btn>
-        <v-btn class="text-none" color="primary" @click="" :disabled="loading">
-          10M coins (24.99€)
-        </v-btn>
-        <v-btn class="text-none" color="primary" @click="" :disabled="loading">
-          100M coins (124.99€)
-        </v-btn>
-        <div v-if="error" class="error">{{ error }}</div>
+      <v-card-text class="d-flex px-4 py-16" style="gap: 1em; place-content: start; flex-wrap: wrap; height: fit-content">
+        <v-card class="article-card" color="transparent" style="border-radius: 12px">
+          <v-card-item>
+            <v-img src="flopobot.webp" min-width="200" width="100%"></v-img>
+          </v-card-item>
+          <v-card-subtitle>
+            +100 000 coins
+          </v-card-subtitle>
+          <v-card-actions>
+            <v-btn class="text-none" color="primary" variant="flat" rounded="lg" block @click="buyCoinsForm = { price: 99, coins: 100000 }" @click.stop="paymentModal = true" :disabled="loading">
+              0.99€
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+        <v-card class="article-card" color="transparent" style="border-radius: 12px">
+          <v-card-item>
+            <v-img src="flopobot.webp" min-width="200" width="100%"></v-img>
+          </v-card-item>
+          <v-card-subtitle>
+            +1 000 000 coins
+          </v-card-subtitle>
+          <v-card-actions>
+            <v-btn class="text-none" color="primary" variant="flat" rounded="lg" block @click="buyCoinsForm = { price: 499, coins: 1000000 }" @click.stop="paymentModal = true" :disabled="loading">
+              4.99€
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+        <v-card class="article-card" color="transparent" style="border-radius: 12px">
+          <v-card-item>
+            <v-img src="flopobot.webp" min-width="200" width="100%"></v-img>
+          </v-card-item>
+          <v-card-subtitle>
+            +10 000 000 coins
+          </v-card-subtitle>
+          <v-card-actions>
+            <v-btn class="text-none" color="primary" variant="flat" rounded="lg" block @click="buyCoinsForm = { price: 2499, coins: 10000000 }" @click.stop="paymentModal = true" :disabled="loading">
+              24.99€
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+        <v-card class="article-card" color="transparent" style="border-radius: 12px">
+          <v-card-item>
+            <v-img src="flopobot.webp" min-width="200" width="100%"></v-img>
+          </v-card-item>
+          <v-card-subtitle>
+            +100 000 000 coins
+          </v-card-subtitle>
+          <v-card-actions>
+            <v-btn class="text-none" color="primary" variant="flat" rounded="lg" block @click="buyCoinsForm = { price: 12499, coins: 100000000 }" @click.stop="paymentModal = true" :disabled="loading">
+                124.99€
+            </v-btn>
+          </v-card-actions>
+        </v-card>
       </v-card-text>
-      <v-dialog v-model="paymentModal" class="mt-3" max-width="600" style="backdrop-filter: blur(30px)" scrollable>
-        <v-card variant="text" color="transparent" rounded="lg">
-          <v-card-item class="px-2 py-2">
-            <StripePaymentForm :amount="50" @payment-success="handleSuccess" />
+      <v-card-text class="pt-1 pb-4 px-5" style="color: #ddddddaa; text-align: right; overflow: hidden">
+        Non remboursable
+      </v-card-text>
+
+      <v-dialog v-model="paymentModal" max-width="600" style="backdrop-filter: blur(100px); background: radial-gradient(circle at -100% 50%, #5865f2, transparent 100%)" scrollable>
+        <v-card color="white" style="border-radius: 20px;">
+          <v-card-title class="pt-4">Achat de {{formatAmount(buyCoinsForm.coins)}} coins ({{buyCoinsForm.price/100}}€)</v-card-title>
+          <v-card-subtitle>Les coins seront crédités instantanément une fois le paiment effectué</v-card-subtitle>
+          <v-card-item class="px-4 pt-6 pb-4">
+            <StripePaymentForm :amount="buyCoinsForm.price" @payment-success="handleSuccess" />
           </v-card-item>
         </v-card>
 
@@ -630,10 +678,21 @@ export default {
         })?.length > 0
       )
     },
+    coinsModalMaxWidth() {
+      if (this.windowWidth < 850) {
+        return 450
+      } else if (this.windowWidth < 1200) {
+        return 550
+      } else {
+        return 1005
+      }
+    }
   },
 
   data() {
     return {
+      windowWidth: window.innerWidth,
+
       tab: null,
       message: null,
       discordId: null,
@@ -653,6 +712,10 @@ export default {
       slowmodeModal: false,
 
       avatars: {},
+      buyCoinsForm: {
+        price: null,
+        coins: null,
+      },
       nicknameForm: {
         id: null,
         nickname: null,
@@ -687,41 +750,18 @@ export default {
     await this.isTimedOut()
 
     this.initSocket()
+    window.addEventListener('resize', this.updateWindowWidth)
   },
 
   methods: {
-    async initiateCheckout() {
-      this.loading = true
-      this.error = null
-
-      try {
-        // 1. Create Checkout Session
-        const response = await fetch(import.meta.env.VITE_CLIENT_URI + '/create-checkout-session', {
-          method: 'POST',
-        })
-
-        if (!response.ok) throw new Error('Failed to create session')
-
-        const { id: sessionId } = await response.json()
-
-        // 2. Redirect to Stripe Checkout
-        const stripe = await this.stripePromise
-        const { error } = await stripe.redirectToCheckout({ sessionId })
-
-        if (error) throw error
-      } catch (err) {
-        this.error = err.message
-      } finally {
-        this.loading = false
-      }
+    updateWindowWidth() {
+      this.windowWidth = window.innerWidth
     },
-
     handleSuccess() {
-      // Handle successful payment
       this.paymentModal = false
       this.coinsModal = false
-      console.log('Payment succeeded!');
-      // Redirect or show success message
+      this.showSuccessOrWarningToast('Paiement effectué !', false)
+      this.buyCoins()
     },
 
     initSocket() {
@@ -934,6 +974,18 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
           commandUserId: this.discordId,
+        })
+        console.log(response)
+      } catch (e) {
+        console.log(e)
+      }
+    },
+
+    async buyCoins() {
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/buy-coins', {
+          commandUserId: this.discordId,
+          coins: this.buyCoinsForm.coins
         })
         console.log(response)
       } catch (e) {
@@ -1200,9 +1252,22 @@ button:disabled {
   transform: translateX(30%);
 }
 
+.coins-modal {
+  max-width: 1100px;
+}
+
+.article-card {
+  width: fit-content;
+  background: transparent !important;
+  box-shadow: 0 8px 32px 0 #5865f222 !important;
+}
+
 @media (max-width: 1200px) {
   .tabs {
     min-width: 450px;
+  }
+  .coins-modal {
+    max-width: 511px;
   }
 }
 
@@ -1231,6 +1296,12 @@ button:disabled {
   }
   .tabs {
     min-width: auto;
+  }
+  .coins-modal {
+    max-width: 400px;
+  }
+  .article-card {
+    width: 100%;
   }
 }
 </style>

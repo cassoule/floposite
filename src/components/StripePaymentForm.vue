@@ -2,9 +2,12 @@
   <div class="payment-form">
     <form @submit.prevent="handleSubmit">
       <div v-show="ready" id="payment-element" ref="paymentElement"></div>
-      <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
-      <button :disabled="loading">
-        {{ loading ? 'Processing...' : 'Pay Now' }}
+      <div v-show="!ready" class="py-16 my-16">
+        <v-progress-circular class="w-100" :size="50" width="10" color="primary" indeterminate />
+      </div>
+<!--      <div v-if="errorMessage" class="error">{{ errorMessage }}</div>-->
+      <button :disabled="loading || !ready">
+        {{ loading ? 'Traitement en cours...' : 'Payer' }}
       </button>
 
     </form>
