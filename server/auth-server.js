@@ -4,10 +4,12 @@ import axios from 'axios';
 import { URLSearchParams } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import Stripe from 'stripe';
 
 dotenv.config({ path: '.env' });
 
 const app = express();
+const stripe = new Stripe(process.env.VITE_STRIPE_SECRET_KEY)
 const port = 3001;
 
 // Enable CORS for all routes
@@ -15,6 +17,8 @@ app.use(cors({
   origin: 'http://localhost:5173', // Frontend origin
   credentials: false
 }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/auth', async (req, res) => {
   const code = req.query.code;
@@ -67,6 +71,26 @@ app.get('/test-env', (req, res) => {
     redirectUri: !!process.env.VITE_REDIRECT_URI
   });
 });
+
+app.post('/create-payment-intent', async (req, res) => {
+  console.log(req.body)
+  try {
+    const { amount } = req.body;
+
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'eur',
+      payment_method_types: ['card'],
+      capture_method: 'automatic',
+    });
+
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: err.message });
+  }
+})
 
 app.listen(port, () => {
   console.log(`Auth server running on http://localhost:${port}`);
