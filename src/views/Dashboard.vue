@@ -17,13 +17,14 @@
         "
         class="bubble-text"
         style="background: #ff8c0077"
-        >slowmode</span
-      >
-      <span v-if="user_isTimedOut" class="bubble-text" style="background: #aa3e3e77"
-        >timed out</span
-      >
+        >
+        slowmode
+      </span>
+      <span v-if="user_isTimedOut" class="bubble-text" style="background: #aa3e3e77">
+        timed out
+      </span>
       <span class="bubble-text" style="opacity: 0" />
-      <p class="mt-2">{{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} coins</p>
+      <p class="d-flex mt-2" style="place-items: baseline">{{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} <v-img src="star.svg" class="ml-2" max-width="12px" height="12px"/></p>
       <p>
         {{ user_inventory?.length }} skins
         <span style="color: rgba(255, 255, 255, 0.3)">({{ inventoryValue }}€)</span>
@@ -67,19 +68,23 @@
         ></v-btn>
       </div>
     </div>
-    <div class="mt-5 d-flex align-center" style="gap: 1rem">
+    <div class="mt-5 d-flex align-center">
       <v-btn
         text="Ajouter des coins"
-        append-icon="mdi mdi-play"
-        class="text-none"
+        append-icon=""
+        class="text-none buy-btn"
         color="primary"
         variant="flat"
         rounded="lg"
         @click="coinsModal = true"
-      ></v-btn>
+      >
+        <template #append>
+          <v-img src="star.svg" width="12px" height="12px"/>
+        </template>
+      </v-btn>
     </div>
 
-    <v-tabs v-model="tab" variant="tonal" color="white" align-tabs="center" grow class="tabs mt-5">
+    <v-tabs v-model="tab" variant="tonal" color="white" align-tabs="center" grow class="tabs w-100 mt-5">
       <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
       <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
       <v-tab value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
@@ -89,11 +94,11 @@
       </v-tab>
     </v-tabs>
 
-    <v-tabs-window v-model="tab">
+    <v-tabs-window v-model="tab" class="w-100">
       <v-tabs-window-item value="predictions">
         <div
           style="height: 390px"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 429px;'"
+          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
         >
           <div class="pt-16 pl-5">
             <p class="pt-16 w-100 text-center text-h4">Prédictions</p>
@@ -105,7 +110,7 @@
       <v-tabs-window-item value="commandes">
         <div
           class="actions-container"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 429px;'"
+          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
         >
           <v-card class="action-card" variant="tonal">
             <v-card-title>Modif Pseudo</v-card-title>
@@ -120,6 +125,7 @@
                 color="primary"
                 variant="flat"
                 rounded="lg"
+                style="border-radius: 10px !important;"
                 :disabled="user?.coins < 1000"
                 @click="nicknameModal = true"
               />
@@ -139,6 +145,7 @@
                 color="primary"
                 variant="flat"
                 rounded="lg"
+                style="border-radius: 10px !important;"
                 :disabled="user?.coins < 10000"
                 @click="spamPingModal = true"
               />
@@ -158,6 +165,7 @@
                 color="primary"
                 variant="flat"
                 rounded="lg"
+                style="border-radius: 10px !important;"
                 :disabled="user?.coins < 10000"
                 @click="slowmodeModal = true"
               />
@@ -177,6 +185,7 @@
                 color="primary"
                 variant="flat"
                 rounded="lg"
+                style="border-radius: 10px !important;"
                 :disabled="user?.coins < 100000"
               />
             </v-card-text>
@@ -185,7 +194,7 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="skins">
-        <div class="inventory" :style="discordId === devId ? 'height: 333px;' : 'height: 429px;'">
+        <div class="inventory" :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'">
           <div
             v-for="skin in user_inventory"
             :key="skin.id"
@@ -232,7 +241,7 @@
       <v-tabs-window-item value="votes">
         <div
           class="votes-containers"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 429px;'"
+          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
         >
           <v-card
             v-for="[key, poll] in Object.entries(active_polls)"
@@ -300,7 +309,7 @@
       </v-tabs-window-item>
     </v-tabs-window>
     <p v-if="tab === 'skins'" class="mt-2">Valeur totale : {{ inventoryValue }}€</p>
-    <p v-else class="mt-2">{{ formatAmount(user?.coins) }} coins</p>
+    <p v-else class="d-flex mt-2" style="place-items: center">{{ formatAmount(user?.coins) }} coins <v-img src="star.svg" class="ml-2" max-width="12px" height="12px"/></p>
 
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
@@ -354,17 +363,16 @@
 
   <v-dialog v-model="coinsModal" class="modals" :max-width="coinsModalMaxWidth" scrollable>
     <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
-      <v-card-title >
+      <v-card-title class="pt-4">
         Achat de coins
-        <v-icon class="mdi mdi-close-circle-outline mt-1" style="float: right" @click="coinsModal = false"></v-icon>
       </v-card-title>
       <v-card-subtitle class="pb-1">
         <p>Recharge tes coins !</p>
       </v-card-subtitle>
       <v-card-text class="d-flex px-4 py-16" style="gap: 1em; place-content: start; flex-wrap: wrap; height: fit-content">
-        <v-card class="article-card" color="transparent" style="border-radius: 12px">
+        <v-card class="article-card" color="transparent" style="border-radius: 12px" :disabled="paymentModal">
           <v-card-item>
-            <v-img src="flopobot.webp" min-width="200" width="100%"></v-img>
+            <v-img src="100Kbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
           </v-card-item>
           <v-card-subtitle>
             +100 000 coins
@@ -375,9 +383,9 @@
             </v-btn>
           </v-card-actions>
         </v-card>
-        <v-card class="article-card" color="transparent" style="border-radius: 12px">
+        <v-card class="article-card" color="transparent" style="border-radius: 12px" :disabled="paymentModal">
           <v-card-item>
-            <v-img src="flopobot.webp" min-width="200" width="100%"></v-img>
+            <v-img src="1Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
           </v-card-item>
           <v-card-subtitle>
             +1 000 000 coins
@@ -388,9 +396,9 @@
             </v-btn>
           </v-card-actions>
         </v-card>
-        <v-card class="article-card" color="transparent" style="border-radius: 12px">
+        <v-card class="article-card" color="transparent" style="border-radius: 12px" :disabled="paymentModal">
           <v-card-item>
-            <v-img src="flopobot.webp" min-width="200" width="100%"></v-img>
+            <v-img src="10Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
           </v-card-item>
           <v-card-subtitle>
             +10 000 000 coins
@@ -401,9 +409,9 @@
             </v-btn>
           </v-card-actions>
         </v-card>
-        <v-card class="article-card" color="transparent" style="border-radius: 12px">
+        <v-card class="article-card" color="transparent" style="border-radius: 12px" :disabled="paymentModal">
           <v-card-item>
-            <v-img src="flopobot.webp" min-width="200" width="100%"></v-img>
+            <v-img src="100Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
           </v-card-item>
           <v-card-subtitle>
             +100 000 000 coins
@@ -419,10 +427,11 @@
         Non remboursable
       </v-card-text>
 
+
       <v-dialog v-model="paymentModal" max-width="600" style="backdrop-filter: blur(100px); background: radial-gradient(circle at -100% 50%, #5865f2, transparent 100%)" scrollable>
         <v-card color="white" style="border-radius: 20px;">
           <v-card-title class="pt-4">Achat de {{formatAmount(buyCoinsForm.coins)}} coins ({{buyCoinsForm.price/100}}€)</v-card-title>
-          <v-card-subtitle>Les coins seront crédités instantanément une fois le paiment effectué</v-card-subtitle>
+          <v-card-subtitle>Les coins seront crédités instantanément une fois le paiement effectué</v-card-subtitle>
           <v-card-item class="px-4 pt-6 pb-4">
             <StripePaymentForm :amount="buyCoinsForm.price" @payment-success="handleSuccess" />
           </v-card-item>
@@ -679,10 +688,10 @@ export default {
       )
     },
     coinsModalMaxWidth() {
-      if (this.windowWidth < 850) {
-        return 450
-      } else if (this.windowWidth < 1200) {
-        return 550
+      if (this.windowWidth <= 850) {
+        return 350
+      } else if (this.windowWidth <= 1200) {
+        return 511
       } else {
         return 1005
       }
@@ -1069,7 +1078,7 @@ button:disabled {
 .discord-logout {
   position: fixed;
   top: 2em;
-  right: 2.15em;
+  right: 2em;
   background: #a12829;
   color: white;
   padding: 7px 17px;
@@ -1083,6 +1092,10 @@ button:disabled {
 .discord-logout:hover {
   background: #aa3e3e;
   box-shadow: 0 0 32px 0 #a1282955;
+}
+.buy-btn {
+  z-index: 1;
+  border-radius: 10px !important;
 }
 .user-tab {
   width: fit-content;
@@ -1135,7 +1148,7 @@ button:disabled {
   transform: translateX(30%);
 }
 
-@media (min-width: 550px) {
+@media (min-width: 1200px) {
   .inventory-item:hover {
     transition-delay: 0.3s;
     min-height: 100px;
@@ -1259,7 +1272,7 @@ button:disabled {
 .article-card {
   width: fit-content;
   background: transparent !important;
-  box-shadow: 0 8px 32px 0 #5865f222 !important;
+  box-shadow: 0 0 32px 0 #0c131677 !important;
 }
 
 @media (max-width: 1200px) {

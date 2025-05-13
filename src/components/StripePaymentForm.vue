@@ -2,11 +2,18 @@
   <div class="payment-form">
     <form @submit.prevent="handleSubmit">
       <div v-show="ready" id="payment-element" ref="paymentElement"></div>
-      <div v-show="!ready" class="py-16 my-16">
+      <div v-show="!ready && !failed" class="py-16 my-16">
         <v-progress-circular class="w-100" :size="50" width="10" color="primary" indeterminate />
       </div>
-<!--      <div v-if="errorMessage" class="error">{{ errorMessage }}</div>-->
-      <button :disabled="loading || !ready">
+      <div v-show="failed" class="">
+        <v-alert variant="tonal" color="error" rounded="lg">
+          <v-alert-title>Erreur</v-alert-title>
+          <p>
+            Impossible d'initialiser le formulaire de paiement
+          </p>
+        </v-alert>
+      </div>
+      <button v-if="!failed" :disabled="loading || !ready">
         {{ loading ? 'Traitement en cours...' : 'Payer' }}
       </button>
 
@@ -33,6 +40,7 @@ export default {
       elements: null,
       paymentElement: null,
       ready: false,
+      failed: false,
     };
   },
   async mounted() {
@@ -47,29 +55,26 @@ export default {
     // Create payment intent
     try {
       const DEV = import.meta.env.VITE_DEV_ENV ?? false
-      const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI : '/.netlify/functions/payment'
+      const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI + '/create-payment-intent' : '/.netlify/functions/payment'
 
       //DEV
-     /* const response = await fetch(endpoint, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: this.amount })
       });
 
-      const { clientSecret } = await response.json();*/
+      const { clientSecret } = await response.json();
 
       //PROD
-      const amount = this.amount
+      /*const amount = this.amount
       const response = await axios.get(endpoint, {
         params: { amount },
         headers: {
           'Content-Type': 'application/json'
         }
       })
-      const clientSecret = await response.data.clientSecret;
-
-      console.log(response)
-      console.log('Client secret received:', clientSecret);
+      const clientSecret = await response.data.clientSecret;*/
 
       // Initialize elements
       this.elements = this.stripe.elements({
@@ -89,8 +94,9 @@ export default {
       console.log('Payment Element is ready');
       this.ready = true
     } catch (error) {
-      console.error('Initialization error:', error);
       this.errorMessage = 'Failed to initialize payment form';
+      this.failed = true
+      console.error('Initialization error:', error);
     }
   },
   methods: {
