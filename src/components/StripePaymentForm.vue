@@ -16,6 +16,7 @@
 
 <script>
 import { loadStripe } from '@stripe/stripe-js';
+import axios from 'axios'
 
 export default {
   props: {
@@ -40,11 +41,21 @@ export default {
 
     // Create payment intent
     try {
-      const response = await fetch(import.meta.env.VITE_CLIENT_URI + '/create-payment-intent', {
+      const DEV = import.meta.env.VITE_DEV_ENV ?? false
+      const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI : '/.netlify/functions/payment'
+
+      /*const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: this.amount })
-      });
+      });*/
+      const amount = this.amount
+      const response = await axios.post(endpoint, {
+        params: { amount },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
 
       const { clientSecret } = await response.json();
 

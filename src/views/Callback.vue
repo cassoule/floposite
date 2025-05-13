@@ -22,7 +22,7 @@ onMounted(async () => {
   try {
     const code = route.query.code
     const DEV = import.meta.env.VITE_DEV_ENV ?? false
-    const endpoint = DEV ? 'http://localhost:3001/auth' : '/.netlify/functions/auth'
+    const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI : '/.netlify/functions/auth'
 
     const response = await axios.get(endpoint, {
       params: { code },
