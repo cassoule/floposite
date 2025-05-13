@@ -39,30 +39,36 @@ export default {
     // Initialize Stripe
     this.stripe = await loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLIC_KEY);
 
+    if (!this.stripe) {
+      console.error('Stripe failed to initialize');
+      return;
+    }
+
     // Create payment intent
     try {
       const DEV = import.meta.env.VITE_DEV_ENV ?? false
       const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI : '/.netlify/functions/payment'
 
+      //DEV
+     /* const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: this.amount })
+      });
 
-      let response
-      if (DEV) {
-        response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: this.amount })
-        });
-      } else {
-        const amount = this.amount
-        response = await axios.get(endpoint, {
-          params: { amount },
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-      }
+      const { clientSecret } = await response.json();*/
 
-      const { clientSecret } = await response.json();
+      //PROD
+      const amount = this.amount
+      const response = await axios.get(endpoint, {
+        params: { amount },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      const { clientSecret } = await response.data.clientSecret;
+
+      console.log('Client secret received:', clientSecret);
 
       // Initialize elements
       this.elements = this.stripe.elements({
@@ -79,8 +85,10 @@ export default {
       // Create and mount payment element
       this.paymentElement = this.elements.create('payment');
       this.paymentElement.mount('#payment-element');
+      console.log('Payment Element is ready');
       this.ready = true
     } catch (error) {
+      console.error('Initialization error:', error);
       this.errorMessage = 'Failed to initialize payment form';
     }
   },
