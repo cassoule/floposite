@@ -68,6 +68,7 @@ export default {
       })
       const { clientSecret } = await response.data.clientSecret;
 
+      console.log(response)
       console.log('Client secret received:', clientSecret);
 
       // Initialize elements
