@@ -42,20 +42,25 @@ export default {
     // Create payment intent
     try {
       const DEV = import.meta.env.VITE_DEV_ENV ?? false
-      const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI : '/netlify/functions/payment'
+      const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI : '/.netlify/functions/payment'
 
-      /*const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: this.amount })
-      });*/
-      const amount = this.amount
-      const response = await axios.post(endpoint, {
-        params: { amount },
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
+
+      let response
+      if (DEV) {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: this.amount })
+        });
+      } else {
+        const amount = this.amount
+        response = await axios.get(endpoint, {
+          params: { amount },
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      }
 
       const { clientSecret } = await response.json();
 
