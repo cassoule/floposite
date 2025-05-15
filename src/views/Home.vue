@@ -65,9 +65,8 @@ export default {
     initSocket() {
       // Connect to your bot's Socket.IO server
       this.socket = io(import.meta.env.VITE_FLAPI_URL, {
-        withCredentials: false,
         extraHeaders: {
-          'ngrok-skip-browser-warning': 'true'
+          'ngrok-skip-browser-warning': 'true',
         }
       });
 

@@ -16,15 +16,18 @@
           active_slowmodes && Object.values(active_slowmodes).find((s) => s.userId === discordId)
         "
         class="bubble-text"
-        style="background: #ff8c0077"
-        >
+        style="background: radial-gradient(circle at -100% 0%, #ff8c00, transparent 120%); border: 1px solid #ff8c00"
+      >
         slowmode
       </span>
-      <span v-if="user_isTimedOut" class="bubble-text" style="background: #aa3e3e77">
+      <span v-if="user_isTimedOut" class="bubble-text" style="background: radial-gradient(circle at -100% 0%, #aa3e3e, transparent 120%); border: 1px solid #aa3e3e">
         timed out
       </span>
       <span class="bubble-text" style="opacity: 0" />
-      <p class="d-flex mt-2" style="place-items: baseline">{{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} <v-img src="star.svg" class="ml-2" max-width="12px" height="12px"/></p>
+      <p class="d-flex mt-2" style="place-items: baseline">
+        {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
+        <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
+      </p>
       <p>
         {{ user_inventory?.length }} skins
         <span style="color: rgba(255, 255, 255, 0.3)">({{ inventoryValue }}€)</span>
@@ -46,7 +49,7 @@
           hide-details
         ></v-text-field>
         <v-btn
-          text="10 coins"
+          text="10 FlopoCoins"
           append-icon="mdi mdi-play"
           class="text-capitalize"
           color="primary"
@@ -70,7 +73,7 @@
     </div>
     <div class="mt-5 d-flex align-center">
       <v-btn
-        text="Ajouter des coins"
+        text="Ajouter des FlopoCoins"
         append-icon=""
         class="text-none buy-btn"
         color="primary"
@@ -79,12 +82,19 @@
         @click="coinsModal = true"
       >
         <template #append>
-          <v-img src="star.svg" width="12px" height="12px"/>
+          <v-img src="star.svg" width="12px" height="12px" />
         </template>
       </v-btn>
     </div>
 
-    <v-tabs v-model="tab" variant="tonal" color="white" align-tabs="center" grow class="tabs w-100 mt-5">
+    <v-tabs
+      v-model="tab"
+      variant="tonal"
+      color="white"
+      align-tabs="center"
+      grow
+      class="tabs w-100 mt-5"
+    >
       <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
       <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
       <v-tab value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
@@ -97,13 +107,92 @@
     <v-tabs-window v-model="tab" class="w-100">
       <v-tabs-window-item value="predictions">
         <div
-          style="height: 390px"
+          style="
+            position: absolute;
+            z-index: 2;
+            padding: 0.5em;
+            width: 100%;
+            display: flex;
+            place-content: space-between;
+            backdrop-filter: blur(5px);
+          "
+        >
+          <h2 class="text-white">Prédictions</h2>
+          <v-btn
+            class="text-none"
+            variant="flat"
+            color="primary"
+            text="Nouvelle Prédi"
+            style="border-radius: 10px"
+            @click="prediModal = true"
+          />
+        </div>
+        <div
+          v-if="active_predis"
+          class="predis-containers pt-12"
           :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
         >
-          <div class="pt-16 pl-5">
-            <p class="pt-16 w-100 text-center text-h4">Prédictions</p>
-            <p class="pt-8 w-100 text-center">Bientôt disponible</p>
+          <v-card
+            v-for="[key, predi] in Object.entries(active_predis)"
+            :key="key"
+            class="votes-card"
+            :variant="((predi.endTime - Date.now()) / 1000).toFixed() < 0 ? 'plain' : 'tonal'"
+          >
+            <div>
+              <v-card-title>
+                {{ predi.label }}
+              </v-card-title>
+              <v-card-subtitle
+                >{{
+                  predi.options[0].votes.length + predi.options[1].votes.length
+                }}
+                vote(s)</v-card-subtitle
+              >
+              <v-card-text class="d-flex align-end">
+                <p v-if="!predi.closed">
+                  {{
+                    ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
+                      ? ((predi.closingTime - Date.now()) / 1000).toFixed() +
+                        's restantes pour voter'
+                      : ((predi.endTime - Date.now()) / 1000).toFixed() > 0
+                        ? Math.max(((predi.endTime - Date.now()) / 1000).toFixed(), 0) +
+                          's avant les résultats'
+                        : 'Prédi terminée, en attente de validation'
+                  }}
+                </p>
+                <p v-else>Prédi terminée, les FlopoCoins ont été distribués</p>
+
+                <v-spacer />
+                <div v-if="!predi.options[0].votes.find((v) => v?.voter === discordId)">
+                  <v-btn
+                    text="Voter"
+                    color="primary"
+                    variant="flat"
+                    rounded="lg"
+                    class="mr-2"
+                    @click="setSelectedPredi(predi, key)"
+                    @click.stop="prediVoteModal = true"
+                  />
+                </div>
+                <div v-else>Tu as voté !</div>
+              </v-card-text>
+            </div>
+          </v-card>
+          <div v-if="Object.keys(active_predis)?.length === 0" class="pt-16 pl-5">
+            <p class="pt-16 w-100 text-center">Aucune prédi en cours</p>
           </div>
+        </div>
+        <div
+          v-else
+          style="width: 100%; display: flex; place-content: center; place-items: center"
+          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+        >
+          <v-progress-circular
+            :size="70"
+            :width="10"
+            color="primary"
+            indeterminate
+          ></v-progress-circular>
         </div>
       </v-tabs-window-item>
 
@@ -119,13 +208,13 @@
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
-                text="1K coins"
+                text="1K FlopoCoins"
                 class="text-none"
                 append-icon="mdi-play"
                 color="primary"
                 variant="flat"
                 rounded="lg"
-                style="border-radius: 10px !important;"
+                style="border-radius: 10px !important"
                 :disabled="user?.coins < 1000"
                 @click="nicknameModal = true"
               />
@@ -139,13 +228,13 @@
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
-                text="10K coins"
+                text="10K FlopoCoins"
                 class="text-none"
                 append-icon="mdi-play"
                 color="primary"
                 variant="flat"
                 rounded="lg"
-                style="border-radius: 10px !important;"
+                style="border-radius: 10px !important"
                 :disabled="user?.coins < 10000"
                 @click="spamPingModal = true"
               />
@@ -159,13 +248,13 @@
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
-                text="10K coins"
+                text="10K FlopoCoins"
                 class="text-none"
                 append-icon="mdi-play"
                 color="primary"
                 variant="flat"
                 rounded="lg"
-                style="border-radius: 10px !important;"
+                style="border-radius: 10px !important"
                 :disabled="user?.coins < 10000"
                 @click="slowmodeModal = true"
               />
@@ -179,13 +268,13 @@
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
-                text="100K coins"
+                text="100K FlopoCoins"
                 class="text-none"
                 append-icon="mdi-play"
                 color="primary"
                 variant="flat"
                 rounded="lg"
-                style="border-radius: 10px !important;"
+                style="border-radius: 10px !important"
                 :disabled="user?.coins < 100000"
               />
             </v-card-text>
@@ -309,7 +398,10 @@
       </v-tabs-window-item>
     </v-tabs-window>
     <p v-if="tab === 'skins'" class="mt-2">Valeur totale : {{ inventoryValue }}€</p>
-    <p v-else class="d-flex mt-2" style="place-items: center">{{ formatAmount(user?.coins) }} coins <v-img src="star.svg" class="ml-2" max-width="12px" height="12px"/></p>
+    <p v-else class="d-flex mt-2" style="place-items: center">
+      {{ formatAmount(user?.coins) }} FlopoCoins
+      <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
+    </p>
 
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
@@ -363,80 +455,145 @@
 
   <v-dialog v-model="coinsModal" class="modals" :max-width="coinsModalMaxWidth" scrollable>
     <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
-      <v-card-title class="pt-4">
-        Achat de coins
-      </v-card-title>
+      <v-card-title class="pt-4"> Achat de FlopoCoins </v-card-title>
       <v-card-subtitle class="pb-1">
-        <p>Recharge tes coins !</p>
+        <p>Recharge tes FlopoCoins !</p>
       </v-card-subtitle>
-      <v-card-text class="d-flex px-4 py-16" style="gap: 1em; place-content: start; flex-wrap: wrap; height: fit-content">
-        <v-card class="article-card" color="transparent" style="border-radius: 12px" :disabled="paymentModal">
+      <v-card-text
+        class="d-flex px-4 py-16"
+        style="gap: 1em; place-content: start; flex-wrap: wrap; height: fit-content"
+      >
+        <v-card
+          class="article-card"
+          color="transparent"
+          style="border-radius: 12px"
+          :disabled="paymentModal"
+        >
           <v-card-item>
             <v-img src="100Kbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
           </v-card-item>
-          <v-card-subtitle>
-            +100 000 coins
-          </v-card-subtitle>
+          <v-card-subtitle> +100 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
-            <v-btn class="text-none" color="primary" variant="flat" rounded="lg" block @click="buyCoinsForm = { price: 99, coins: 100000 }" @click.stop="paymentModal = true" :disabled="loading">
+            <v-btn
+              class="text-none"
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              block
+              @click="buyCoinsForm = { price: 99, coins: 100000 }"
+              @click.stop="paymentModal = true"
+              :disabled="loading"
+            >
               0.99€
             </v-btn>
           </v-card-actions>
         </v-card>
-        <v-card class="article-card" color="transparent" style="border-radius: 12px" :disabled="paymentModal">
+        <v-card
+          class="article-card"
+          color="transparent"
+          style="border-radius: 12px"
+          :disabled="paymentModal"
+        >
           <v-card-item>
             <v-img src="1Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
           </v-card-item>
-          <v-card-subtitle>
-            +1 000 000 coins
-          </v-card-subtitle>
+          <v-card-subtitle> +1 000 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
-            <v-btn class="text-none" color="primary" variant="flat" rounded="lg" block @click="buyCoinsForm = { price: 499, coins: 1000000 }" @click.stop="paymentModal = true" :disabled="loading">
+            <v-btn
+              class="text-none"
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              block
+              @click="buyCoinsForm = { price: 499, coins: 1000000 }"
+              @click.stop="paymentModal = true"
+              :disabled="loading"
+            >
               4.99€
             </v-btn>
           </v-card-actions>
         </v-card>
-        <v-card class="article-card" color="transparent" style="border-radius: 12px" :disabled="paymentModal">
+        <v-card
+          class="article-card"
+          color="transparent"
+          style="border-radius: 12px"
+          :disabled="paymentModal"
+        >
           <v-card-item>
             <v-img src="10Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
           </v-card-item>
-          <v-card-subtitle>
-            +10 000 000 coins
-          </v-card-subtitle>
+          <v-card-subtitle> +10 000 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
-            <v-btn class="text-none" color="primary" variant="flat" rounded="lg" block @click="buyCoinsForm = { price: 2499, coins: 10000000 }" @click.stop="paymentModal = true" :disabled="loading">
+            <v-btn
+              class="text-none"
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              block
+              @click="buyCoinsForm = { price: 2499, coins: 10000000 }"
+              @click.stop="paymentModal = true"
+              :disabled="loading"
+            >
               24.99€
             </v-btn>
           </v-card-actions>
         </v-card>
-        <v-card class="article-card" color="transparent" style="border-radius: 12px" :disabled="paymentModal">
+        <v-card
+          class="article-card"
+          color="transparent"
+          style="border-radius: 12px"
+          :disabled="paymentModal"
+        >
           <v-card-item>
             <v-img src="100Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
           </v-card-item>
-          <v-card-subtitle>
-            +100 000 000 coins
-          </v-card-subtitle>
+          <v-card-subtitle> +100 000 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
-            <v-btn class="text-none" color="primary" variant="flat" rounded="lg" block @click="buyCoinsForm = { price: 12499, coins: 100000000 }" @click.stop="paymentModal = true" :disabled="loading">
-                124.99€
+            <v-btn
+              class="text-none"
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              block
+              @click="buyCoinsForm = { price: 12499, coins: 100000000 }"
+              @click.stop="paymentModal = true"
+              :disabled="loading"
+            >
+              124.99€
             </v-btn>
           </v-card-actions>
         </v-card>
       </v-card-text>
-      <v-card-text class="pt-1 pb-4 px-5" style="color: #ddddddaa; text-align: right; overflow: hidden">
+      <v-card-text
+        class="pt-1 pb-4 px-5"
+        style="color: #ddddddaa; text-align: right; overflow: hidden"
+      >
         Non remboursable
       </v-card-text>
 
-
-      <v-dialog v-model="paymentModal" max-width="600" style="backdrop-filter: blur(100px); background: radial-gradient(circle at -100% 50%, #5865f2, transparent 100%)" scrollable>
-        <v-card color="white" style="border-radius: 20px;">
-          <v-card-title class="pt-4">Achat de {{formatAmount(buyCoinsForm.coins)}} coins ({{buyCoinsForm.price/100}}€)</v-card-title>
-          <v-card-subtitle>Les coins seront crédités instantanément une fois le paiement effectué</v-card-subtitle>
+      <v-dialog
+        v-model="paymentModal"
+        max-width="600"
+        style="
+          backdrop-filter: blur(100px);
+          background: radial-gradient(circle at -100% 50%, #5865f2, transparent 100%);
+        "
+        scrollable
+      >
+        <v-card color="white" style="border-radius: 20px">
+          <v-card-title class="pt-4"
+            >Achat de {{ formatAmount(buyCoinsForm.coins) }} FlopoCoins ({{
+              buyCoinsForm.price / 100
+            }}€)</v-card-title
+          >
+          <v-card-subtitle
+            >Les FlopoCoins seront crédités instantanément une fois le paiement
+            effectué</v-card-subtitle
+          >
           <v-card-item class="px-4 pt-6 pb-4">
             <StripePaymentForm :amount="buyCoinsForm.price" @payment-success="handleSuccess" />
           </v-card-item>
         </v-card>
-
       </v-dialog>
     </v-card>
   </v-dialog>
@@ -491,7 +648,7 @@
       </v-card-text>
       <v-card-text class="d-flex justify-end">
         <v-btn
-          text="1K coins"
+          text="1K FlopoCoins"
           class="text-none"
           append-icon="mdi-play"
           color="primary"
@@ -542,7 +699,7 @@
       </v-card-text>
       <v-card-text class="d-flex justify-end">
         <v-btn
-          text="10K coins"
+          text="10K FlopoCoins"
           class="text-none"
           append-icon="mdi-play"
           color="primary"
@@ -595,7 +752,7 @@
       </v-card-text>
       <v-card-text class="d-flex justify-end">
         <v-btn
-          text="10K coins"
+          text="10K FlopoCoins"
           class="text-none"
           append-icon="mdi-play"
           color="primary"
@@ -605,6 +762,193 @@
           @click="slowmode"
           @click.stop="slowmodeModal = false"
         />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="prediModal" class="modals" max-width="800">
+    <v-card class="modal-card" variant="tonal">
+      <v-card-title>Prédi</v-card-title>
+      <v-card-subtitle>
+        <p>Crées une nouvelle prédiction</p>
+      </v-card-subtitle>
+      <v-card-text class="d-flex pb-4" style="gap: 1em">
+        <v-select
+          v-model="prediForm.closingTime"
+          label="Fermeture des votes"
+          :items="[
+            { time: 300, label: '5 minutes' },
+            { time: 600, label: '10 minutes' },
+            { time: 1800, label: '30 minutes' },
+            { time: 3600, label: '1 heure' },
+            { time: 7200, label: '2 heures' },
+            { time: 43200, label: '12 heures' },
+            { time: 86400, label: '24 heures' },
+          ]"
+          item-value="time"
+          item-title="label"
+          variant="outlined"
+          class="text-white w-50"
+          rounded="lg"
+          density="comfortable"
+          hint="Temps pour voter"
+          persistent-hint
+        />
+        <v-select
+          v-model="prediForm.payoutTime"
+          label="Résultats"
+          :items="[
+            { time: 300, label: '5 minutes' },
+            { time: 600, label: '10 minutes' },
+            { time: 1800, label: '30 minutes' },
+            { time: 3600, label: '1 heure' },
+            { time: 7200, label: '2 heures' },
+            { time: 43200, label: '12 heures' },
+            { time: 86400, label: '24 heures' },
+          ]"
+          item-value="time"
+          item-title="label"
+          variant="outlined"
+          class="text-white w-50"
+          rounded="lg"
+          density="comfortable"
+          hint="Temps après fermeture des votes"
+          persistent-hint
+        />
+      </v-card-text>
+      <v-card-text class="d-flex pt-0 pb-4" style="gap: 1em">
+        <v-text-field
+          v-model="prediForm.label"
+          label="Titre de la prédi"
+          maxLength="64"
+          clearable
+          variant="outlined"
+          class="text-white w-50"
+          rounded="lg"
+          density="comfortable"
+          hide-details
+        />
+      </v-card-text>
+      <v-card-text class="d-flex pt-0" style="gap: 1em">
+        <v-text-field
+          v-model="prediForm.options[0]"
+          label="Option 1"
+          maxLength="32"
+          clearable
+          variant="outlined"
+          class="text-white w-50"
+          rounded="lg"
+          density="comfortable"
+        />
+        <v-text-field
+          v-model="prediForm.options[1]"
+          label="Option 2"
+          maxLength="32"
+          clearable
+          variant="outlined"
+          class="text-white w-50"
+          rounded="lg"
+          density="comfortable"
+        />
+      </v-card-text>
+      <v-card-text class="d-flex justify-end">
+        <v-btn
+          text="100 FlopoCoins"
+          class="text-none"
+          append-icon="mdi-play"
+          color="primary"
+          variant="flat"
+          rounded="lg"
+          :disabled="!prediForm.label || !prediForm.options[0] || !prediForm.options[1]"
+          @click="startPredi"
+          @click.stop="prediModalClose"
+        />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="prediVoteModal" class="modals" max-width="800">
+    <v-card v-if="selectedPredi" class="modal-card" variant="tonal" :key="Date.now()">
+      <v-card-title>{{ selectedPredi.label }}</v-card-title>
+      <v-card-subtitle>
+        <p>Choisis un montant à parier</p>
+      </v-card-subtitle>
+      <v-card-text v-if="!processingVote" class="d-flex pb-4 px-4" style="gap: 1em; place-content: center">
+        <v-card class="w-50 predi-option-card" variant="text" rounded="xl" :style="selectedOption === 0 ? 'box-shadow: 0 0 10px 0 #ddddddaa !important; border: 2px solid #5865f2 !important' : ''" @click="selectedOption = 0">
+          <v-card-title>{{ selectedPredi.options[0].label }}</v-card-title>
+          <v-card-subtitle>Option 1</v-card-subtitle>
+          <v-card-text class="d-flex justify-center">
+            <h1>{{formatAmount(selectedPredi.options[0].total)}}</h1>
+          </v-card-text>
+          <v-card-item class="pr-0">
+            <div
+              style="
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                place-items: end;
+              "
+            >
+              <p class="pr-4">{{ selectedPredi.options[0].percent.toFixed(1) }}%</p>
+              <div
+                class="animate__animated animate__fadeIn"
+                :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${100 - selectedPredi.options[0].percent}%); background: #5865f2; border-radius: 20px 0 0 20px; border: 2px solid #5865f2`"
+              ></div>
+            </div>
+          </v-card-item>
+          <v-card-text>
+            <p>{{ selectedPredi.options[0].votes.length }} votants</p>
+<!--            <p>{{selectedPredi.options[0] }} FlopoCoins</p>-->
+          </v-card-text>
+        </v-card>
+        <v-card class="w-50 predi-option-card" variant="text" rounded="xl" :style="selectedOption === 1 ? 'box-shadow: 0 0 10px 0 #ddddddaa !important; border: 2px solid #aa3e3e !important' : ''" @click="selectedOption = 1">
+          <v-card-title>{{ selectedPredi.options[0].label }}</v-card-title>
+          <v-card-subtitle>Option 2</v-card-subtitle>
+          <v-card-text class="d-flex justify-center">
+            <h1>{{formatAmount(selectedPredi.options[1].total)}}</h1>
+          </v-card-text>
+          <v-card-item class="pl-0">
+            <div
+              style="
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                place-items: start;
+              "
+            >
+              <p class="pl-4">{{ selectedPredi.options[1].percent.toFixed(1) }}%</p>
+              <div
+                class="animate__animated animate__fadeIn"
+                :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${selectedPredi.options[1].percent - 100}%); background: #aa3e3e; border-radius: 0 20px 20px 0; border: 2px solid #aa3e3e77`"
+              ></div>
+            </div>
+          </v-card-item>
+          <v-card-text>
+            <p>{{ selectedPredi.options[1].votes.length }} votants</p>
+<!--            <p>{{ selectedPredi.options[1], 'record') }} FlopoCoins</p>-->
+          </v-card-text>
+        </v-card>
+      </v-card-text>
+      <v-card-text v-if="!processingVote" v-show="((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0">
+        <v-number-input v-model="prediVoteForm.amount" variant="outlined" control-variant="hidden" density="compact" rounded="lg" label="Montant du paris" :hint="`${formatAmount(Math.min(user.coins, 250000))} FlopoCoins max (10 minimum)`" :max="Math.min(user.coins, 250000)">
+          <template #append>
+            <v-btn variant="flat"  text="Prédir" :color="selectedOption === 1 ? '#aa3e3e' : '#5865f2'" class="text-none" :disabled="selectedOption === null || !prediVoteForm.amount || prediVoteForm.amount < 10" @click="prediVote"></v-btn>
+          </template>
+        </v-number-input>
+      </v-card-text>
+      <v-card-text>
+        <p v-if="!selectedPredi.closed">
+          {{
+            ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0
+              ? ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() +
+              's restantes pour voter'
+              : ((selectedPredi.endTime - Date.now()) / 1000).toFixed() > 0
+                ? Math.max(((selectedPredi.endTime - Date.now()) / 1000).toFixed(), 0) +
+                's avant les résultats'
+                : 'Prédi terminée, en attente de validation'
+          }}
+        </p>
+        <p v-else>Prédi terminée, les FlopoCoins ont été distribués</p>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -618,6 +962,7 @@ import { useToastStore } from '../stores/toastStore.js'
 import { computed } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import StripePaymentForm from '../components/StripePaymentForm.vue'
+import 'animate.css'
 
 export default {
   components: {
@@ -695,7 +1040,21 @@ export default {
       } else {
         return 1005
       }
-    }
+    },
+    percentages() {
+      if (!this.selectedPredi) return
+      let res1 = 0
+      let res2 = 0
+      if (this.selectedPredi.options[0].votes.length === 0 && this.selectedPredi.options[1].votes.length === 0) return {
+        res1,
+        res2
+      }
+
+      res1 = this.selectedPredi.options[1].votes.length === 0 ? 100 : (this.prediOptionStats(this.selectedPredi.options[0].votes, 'amount') / this.prediOptionStats(this.selectedPredi.options[1].votes, 'amount')) * 100
+      res2 = 100 - res1
+
+      return { res1, res2 }
+    },
   },
 
   data() {
@@ -713,12 +1072,19 @@ export default {
 
       active_polls: null,
       active_slowmodes: null,
+      active_predis: null,
+      processingVote: false,
+      selectedPrediKey: null,
+      selectedPredi: null,
+      selectedOption: null,
 
       coinsModal: false,
       paymentModal: false,
       nicknameModal: false,
       spamPingModal: false,
       slowmodeModal: false,
+      prediModal: false,
+      prediVoteModal: false,
 
       avatars: {},
       buyCoinsForm: {
@@ -735,6 +1101,15 @@ export default {
       slowmodeForm: {
         id: null,
       },
+      prediForm: {
+        label: null,
+        options: [],
+        closingTime: 300,
+        payoutTime: 300,
+      },
+      prediVoteForm: {
+        amount: null,
+      },
 
       loading: false,
       error: null,
@@ -749,13 +1124,12 @@ export default {
     await this.getUsers()
     if (!this.users) this.$router.push('/')
 
-    //this.stripePromise = loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLIC_KEY)
-
     this.avatar = await this.getAvatar(this.discordId)
     this.fetchAvatars()
     await this.getInventory()
     await this.getActivePolls()
     await this.getActiveSlowmodes()
+    await this.getActivePredis()
     await this.isTimedOut()
 
     this.initSocket()
@@ -801,6 +1175,13 @@ export default {
       this.socket.on('new-slowmode', (data) => {
         console.log('New Slowmode:', data.action)
         this.getActiveSlowmodes()
+      })
+
+      this.socket.on('new-predi', async (data) => {
+        console.log('New predi:', data.action)
+        await this.getActivePredis()
+        this.selectedPredi = this.active_predis[this.selectedPrediKey]
+        this.processingVote = false
       })
 
       this.socket.on('disconnect', () => {
@@ -979,6 +1360,54 @@ export default {
       }
     },
 
+    async startPredi() {
+      this.showCommandToast('Création de la prédiction...')
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/start-predi', {
+          commandUserId: this.discordId,
+          label: this.prediForm.label,
+          options: this.prediForm.options,
+          closingTime: this.prediForm.closingTime,
+          payoutTime: this.prediForm.payoutTime,
+        })
+        console.log(response)
+        this.showSuccessOrWarningToast(response.data.message, false)
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+    },
+
+    async getActivePredis() {
+      try {
+        const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/predis', {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        this.active_predis = response.data.predis
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async prediVote() {
+      this.showCommandToast('Prise en compte du vote...')
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/vote-predi', {
+          commandUserId: this.discordId,
+          predi: this.selectedPrediKey,
+          amount: this.prediVoteForm.amount,
+          option: this.selectedOption
+        })
+        console.log(response)
+        this.showSuccessOrWarningToast(response.data.message, false)
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+    },
+
     async addCoins() {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
@@ -994,7 +1423,7 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/buy-coins', {
           commandUserId: this.discordId,
-          coins: this.buyCoinsForm.coins
+          coins: this.buyCoinsForm.coins,
         })
         console.log(response)
       } catch (e) {
@@ -1042,6 +1471,21 @@ export default {
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
         console.log(e)
+      }
+    },
+
+    setSelectedPredi(predi, key) {
+      this.selectedPredi = predi
+      this.selectedPrediKey = key
+    },
+
+    prediModalClose() {
+      this.prediModal = false
+      this.prediForm = {
+        label: null,
+        options: [],
+        closingTime: null,
+        payoutTime: null,
       }
     },
   },
@@ -1265,6 +1709,11 @@ button:disabled {
   transform: translateX(30%);
 }
 
+.predis-containers {
+  overflow-y: scroll;
+  border-radius: 0 0 10px 10px;
+}
+
 .coins-modal {
   max-width: 1100px;
 }
@@ -1274,6 +1723,17 @@ button:disabled {
   background: transparent !important;
   box-shadow: 0 0 32px 0 #0c131677 !important;
 }
+
+.predi-option-card {
+  border: 2px solid #dddddd22 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 0 10px 0 #dddddd22 !important;
+}
+
+/*.predi-option-card:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 10px 0 #dddddd55 !important;
+}*/
 
 @media (max-width: 1200px) {
   .tabs {
