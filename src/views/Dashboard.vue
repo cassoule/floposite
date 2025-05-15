@@ -16,11 +16,11 @@
           active_slowmodes && Object.values(active_slowmodes).find((s) => s.userId === discordId)
         "
         class="bubble-text"
-        style="background: #ff8c0077"
+        style="background: radial-gradient(circle at -100% 0%, #ff8c00, transparent 120%); border: 1px solid #ff8c00"
       >
         slowmode
       </span>
-      <span v-if="user_isTimedOut" class="bubble-text" style="background: #aa3e3e77">
+      <span v-if="user_isTimedOut" class="bubble-text" style="background: radial-gradient(circle at -100% 0%, #aa3e3e, transparent 120%); border: 1px solid #aa3e3e">
         timed out
       </span>
       <span class="bubble-text" style="opacity: 0" />
