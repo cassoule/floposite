@@ -189,7 +189,6 @@
                     color="primary"
                     variant="flat"
                     rounded="lg"
-                    class="mr-2"
                     @click="setSelectedPredi(predi, key)"
                     @click.stop="prediVoteModal = true"
                   />
@@ -968,6 +967,11 @@
         </p>
         <p v-else>Prédi terminée, les FlopoCoins ont été distribués</p>
       </v-card-text>
+      <v-card-item v-if="discordId === devId">
+        <v-btn color="primary" text="Valider option 1" rounded="lg" class="mr-3" :disabled="selectedPredi.closingTime > Date.now() || selectedPredi.closed" @click="endPredi(true, 0)" @click.stop="prediVoteModal = false"/>
+        <v-btn color="primary" text="Valider option 2" rounded="lg" class="mr-3" :disabled="selectedPredi.closingTime > Date.now() || selectedPredi.closed" @click="endPredi(true, 1)" @click.stop="prediVoteModal = false"/>
+        <v-btn color="primary" text="Annuler la prédi" rounded="lg" variant="outlined" :disabled="selectedPredi.closed" @click="endPredi(false, null)" @click.stop="prediVoteModal = false"/>
+      </v-card-item>
     </v-card>
   </v-dialog>
 </template>
@@ -1156,8 +1160,8 @@ export default {
 
   watch: {
     prediVoteModal(newValue) {
-      console.log('coucou');
       this.selectedOption = !newValue ? null : this.selectedOption;
+      this.getActivePredis()
     }
   },
 
@@ -1431,6 +1435,28 @@ export default {
       } catch (e) {
         this.showErrorToast(e.response.data.message)
       }
+    },
+
+    async endPredi(confirm, winningOption) {
+      this.showCommandToast('Fermeture de la prédiction...')
+      if (this.discordId !== this.devId) {
+        this.showErrorToast('Tu n\'as pas les permissions requises')
+        return
+      }
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/end-predi', {
+          commandUserId: this.discordId,
+          predi: this.selectedPrediKey,
+          confirm: confirm,
+          winningOption: winningOption,
+        })
+        console.log(response)
+        this.showSuccessOrWarningToast(response.data.message, false)
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+
+      await this.getActivePredis()
     },
 
     async addCoins() {
