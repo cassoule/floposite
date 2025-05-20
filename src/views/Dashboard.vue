@@ -1589,6 +1589,7 @@ button:disabled {
   text-decoration: none;
   display: inline-block;
   cursor: pointer;
+  z-index: 10;
   transition: 0.2s ease-in-out;
 }
 .discord-logout:hover {
