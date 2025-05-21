@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
 import Phaser from 'phaser';
-import { ref, toRaw } from 'vue';
-import type { MainMenu } from '../game/scenes/MainMenu';
+import { onMounted, ref, toRaw } from 'vue'
+import type { MainMenu } from '@/game/scenes/MainMenu';
 import PhaserGame from '../components/Game.vue';
+import { socket } from '../game/client';
 
 const canMoveSprite = ref();
+
+let lastPlayerID = 0;
 
 //  References to the PhaserGame component (game and scene are exposed)
 const phaserRef = ref();
@@ -76,6 +78,10 @@ const currentScene = (scene: MainMenu) => {
   canMoveSprite.value = (scene.scene.key !== "MainMenu");
 
 }
+
+onMounted(() => {
+  socket.emit('newplayer');
+})
 </script>
 
 <template>

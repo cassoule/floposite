@@ -20,6 +20,7 @@
     "express": "^5.1.0",
     "phaser": "^3.88.2",
     "pinia": "^3.0.1",
+    "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "stripe": "^18.1.0",
     "vite-plugin-vuetify": "^2.1.1",

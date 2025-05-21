@@ -5,12 +5,22 @@ import { URLSearchParams } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 dotenv.config({ path: '.env' });
 
 const app = express();
 const stripe = new Stripe(process.env.VITE_STRIPE_SECRET_KEY)
 const port = 3001;
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, { // Changed from app to httpServer
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST']
+  }
+});
 
 // Enable CORS for all routes
 app.use(cors({
@@ -92,6 +102,50 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 })
 
-app.listen(port, () => {
-  console.log(`Auth server running on http://localhost:${port}`);
+const players = {};
+const randomInt = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  socket.on('newplayer', () => {
+    players[socket.id] = {
+      x: randomInt(100, 400),
+      y: randomInt(100, 400)
+    };
+
+    // Send existing players to the new client
+    socket.emit('allplayers', Object.values(players));
+
+    // Broadcast new player to others
+    socket.broadcast.emit('newplayer', {
+      id: socket.id,
+      ...players[socket.id]
+    });
+  });
+
+  socket.on('playermove', (data) => {
+    if (players[socket.id]) {
+      // Update player position
+      players[socket.id].x = data.x;
+      players[socket.id].y = data.y;
+
+      // Broadcast to other players
+      socket.broadcast.emit('playermoved', {
+        id: socket.id,
+        x: data.x,
+        y: data.y
+      });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+    delete players[socket.id];
+    io.emit('removeplayer', socket.id);
+  });
+});
+
+httpServer.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });
