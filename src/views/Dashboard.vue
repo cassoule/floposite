@@ -508,6 +508,46 @@
             @{{ akhy?.globalName }}
           </span>
           {{ formatAmount(akhy.coins) }}
+          <v-menu
+            activator="parent"
+            location="end"
+            open-on-hover
+            transition="scale-transition"
+          >
+            <v-list
+              width="250"
+              class="mr-2 py-0"
+              elevation="20"
+              rounded="xl"
+              bg-color="#181818"
+              base-color="white"
+              variant="tonal"
+              style="
+                border: 2px solid #FFFFFF55;
+              "
+            >
+              <v-list-item class="px-2">
+                <v-list-item-title style="display: flex; place-content: start; place-items: center; gap: .7rem">
+                  <v-img
+                    :src="avatars[akhy.id]"
+                    color="transparent"
+                    max-width="30"
+                    style="border-radius: 50%; width: 20px; height: 30px"
+                  />
+                  {{ akhy?.globalName }}
+                </v-list-item-title>
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-subtitle>
+                  {{ users.find(u => u.id === akhy.id)?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} FlopoCoins
+                </v-list-item-subtitle>
+              </v-list-item>
+              <v-list-item v-if="discordId === devId" class="px-2">
+                <v-btn class="mr-2" color="white" text="+1000" rounded="xl" variant="tonal"></v-btn>
+                <v-btn color="white" text="-1000" rounded="xl" variant="tonal"></v-btn>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         </div>
       </div>
     </div>
@@ -1754,7 +1794,7 @@ button:disabled {
 
 .tabs {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px 20px 0 0;
+  border-radius: 5px 5px 0 0;
   min-width: 800px;
 }
 
