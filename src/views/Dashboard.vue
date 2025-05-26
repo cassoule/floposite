@@ -1,6 +1,13 @@
 <template>
   <div v-if="user" class="user-tab">
-    <div style="margin-top: 1rem">
+    <div style="position:relative;margin-top: 1rem">
+      <v-sparkline
+        smooth
+        color="primary"
+        line-width="0.5"
+        :model-value="[1, 2, 0, 4, 3, 2, 5, 6, 3, 2, 2, 3]"
+        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1"
+      />
       <v-img
         :src="avatar"
         lazy-src="anon.png"
@@ -536,6 +543,17 @@
                   />
                   {{ akhy?.globalName }}
                 </v-list-item-title>
+              </v-list-item>
+              <v-list-item>
+                <v-sparkline
+                  smooth
+                  class="pa-0 ma-0"
+                  color="primary"
+                  line-width="2"
+                  :model-value="null ?? [0, 0]"
+                  style="position: absolute; left: 0; top: 0"
+                  title="Evolution de FlopoCoins"
+                />
               </v-list-item>
               <v-list-item>
                 <v-list-item-subtitle>
