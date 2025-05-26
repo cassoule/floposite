@@ -1958,9 +1958,9 @@ button:disabled {
 }*/
 
 @media (max-width: 1200px) {
-  .tabs {
+  /*.tabs {
     min-width: auto;
-  }
+  }*/
   .coins-modal {
     max-width: 511px;
   }
