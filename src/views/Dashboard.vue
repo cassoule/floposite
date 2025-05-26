@@ -3,6 +3,7 @@
     <div style="position:relative;margin-top: 1rem">
       <v-sparkline
         smooth
+        auto-draw
         color="primary"
         line-width="0.5"
         :model-value="sparklines[discordId]?.length > 0 ? sparklines[discordId]?.map(entry => entry.user_new_amount) : [0]"
@@ -547,6 +548,7 @@
               <v-list-item>
                 <v-sparkline
                   smooth
+                  auto-draw
                   class="pa-0 ma-0"
                   color="primary"
                   line-width="2"
