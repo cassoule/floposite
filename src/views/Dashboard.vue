@@ -5,7 +5,7 @@
         smooth
         color="primary"
         line-width="0.5"
-        :model-value="[1, 2, 0, 4, 3, 2, 5, 6, 3, 2, 2, 3]"
+        :model-value="sparklines[discordId]?.length > 0 ? sparklines[discordId]?.map(entry => entry.user_new_amount) : [0]"
         style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1"
       />
       <v-img
@@ -550,7 +550,7 @@
                   class="pa-0 ma-0"
                   color="primary"
                   line-width="2"
-                  :model-value="null ?? [0, 0]"
+                  :model-value="sparklines[akhy.id]?.length > 1 ? sparklines[akhy.id]?.map(entry => entry.user_new_amount) : [0, 0]"
                   style="position: absolute; left: 0; top: 0"
                   title="Evolution de FlopoCoins"
                 />
@@ -1247,6 +1247,7 @@ export default {
       prediVoteModal: false,
 
       avatars: {},
+      sparklines: {},
       buyCoinsForm: {
         price: null,
         coins: null,
@@ -1286,6 +1287,7 @@ export default {
 
     this.avatar = await this.getAvatar(this.discordId)
     this.fetchAvatars()
+    this.fetchSparklines()
     await this.getInventory()
     await this.getActivePolls()
     await this.getActiveSlowmodes()
@@ -1334,6 +1336,7 @@ export default {
       this.socket.on('data-updated', (data) => {
         console.log('Database updated:', data)
         this.getUsers() // Refresh data when updates occur
+        this.fetchSparklines()
       })
 
       this.socket.on('new-poll', (data) => {
@@ -1361,6 +1364,12 @@ export default {
     fetchAvatars() {
       this.users.forEach(async (user) => {
         this.avatars[user.id] = await this.getAvatar(user.id)
+      })
+    },
+
+    fetchSparklines() {
+      this.users.forEach(async (user) => {
+        this.sparklines[user.id] = await this.getSparkline(user.id)
       })
     },
 
@@ -1399,6 +1408,16 @@ export default {
           withCredentials: false,
         })
         return response.data.avatarUrl
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async getSparkline(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/sparkline'
+      try {
+        const response = await axios.get(fetchUrl)
+        return response.data.sparkline
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -1716,7 +1735,7 @@ button:disabled {
   margin-top: 12px;
 }
 .discord-logout {
-  position: fixed;
+  position: absolute;
   top: 2em;
   right: 2em;
   background: #a12829;
