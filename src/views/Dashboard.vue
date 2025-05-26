@@ -1,6 +1,13 @@
 <template>
   <div v-if="user" class="user-tab">
-    <div style="margin-top: 1rem">
+    <div style="position:relative;margin-top: 1rem">
+      <v-sparkline
+        smooth
+        color="primary"
+        line-width="0.5"
+        :model-value="sparklines[discordId]?.length > 0 ? sparklines[discordId]?.map(entry => entry.user_new_amount) : [0]"
+        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1"
+      />
       <v-img
         :src="avatar"
         lazy-src="anon.png"
@@ -508,6 +515,57 @@
             @{{ akhy?.globalName }}
           </span>
           {{ formatAmount(akhy.coins) }}
+          <v-menu
+            activator="parent"
+            location="end"
+            open-on-hover
+            transition="scale-transition"
+          >
+            <v-list
+              width="250"
+              class="mr-2 py-0"
+              elevation="20"
+              rounded="xl"
+              bg-color="#181818"
+              base-color="white"
+              variant="tonal"
+              style="
+                border: 2px solid #FFFFFF55;
+              "
+            >
+              <v-list-item class="px-2">
+                <v-list-item-title style="display: flex; place-content: start; place-items: center; gap: .7rem">
+                  <v-img
+                    :src="avatars[akhy.id]"
+                    color="transparent"
+                    max-width="30"
+                    style="border-radius: 50%; width: 20px; height: 30px"
+                  />
+                  {{ akhy?.globalName }}
+                </v-list-item-title>
+              </v-list-item>
+              <v-list-item>
+                <v-sparkline
+                  smooth
+                  class="pa-0 ma-0"
+                  color="primary"
+                  line-width="2"
+                  :model-value="sparklines[akhy.id]?.length > 1 ? sparklines[akhy.id]?.map(entry => entry.user_new_amount) : [0, 0]"
+                  style="position: absolute; left: 0; top: 0"
+                  title="Evolution de FlopoCoins"
+                />
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-subtitle>
+                  {{ users.find(u => u.id === akhy.id)?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} FlopoCoins
+                </v-list-item-subtitle>
+              </v-list-item>
+              <v-list-item v-if="discordId === devId" class="px-2">
+                <v-btn class="mr-2" color="white" text="+1000" rounded="xl" variant="tonal"></v-btn>
+                <v-btn color="white" text="-1000" rounded="xl" variant="tonal"></v-btn>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         </div>
       </div>
     </div>
@@ -1189,6 +1247,7 @@ export default {
       prediVoteModal: false,
 
       avatars: {},
+      sparklines: {},
       buyCoinsForm: {
         price: null,
         coins: null,
@@ -1228,6 +1287,7 @@ export default {
 
     this.avatar = await this.getAvatar(this.discordId)
     this.fetchAvatars()
+    this.fetchSparklines()
     await this.getInventory()
     await this.getActivePolls()
     await this.getActiveSlowmodes()
@@ -1276,6 +1336,7 @@ export default {
       this.socket.on('data-updated', (data) => {
         console.log('Database updated:', data)
         this.getUsers() // Refresh data when updates occur
+        this.fetchSparklines()
       })
 
       this.socket.on('new-poll', (data) => {
@@ -1303,6 +1364,12 @@ export default {
     fetchAvatars() {
       this.users.forEach(async (user) => {
         this.avatars[user.id] = await this.getAvatar(user.id)
+      })
+    },
+
+    fetchSparklines() {
+      this.users.forEach(async (user) => {
+        this.sparklines[user.id] = await this.getSparkline(user.id)
       })
     },
 
@@ -1341,6 +1408,16 @@ export default {
           withCredentials: false,
         })
         return response.data.avatarUrl
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async getSparkline(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/sparkline'
+      try {
+        const response = await axios.get(fetchUrl)
+        return response.data.sparkline
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -1658,7 +1735,7 @@ button:disabled {
   margin-top: 12px;
 }
 .discord-logout {
-  position: fixed;
+  position: absolute;
   top: 2em;
   right: 2em;
   background: #a12829;
@@ -1754,7 +1831,7 @@ button:disabled {
 
 .tabs {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px 20px 0 0;
+  border-radius: 5px 5px 0 0;
   min-width: 800px;
 }
 
