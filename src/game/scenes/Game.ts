@@ -32,12 +32,16 @@ export class Game extends Scene
 
         EventBus.on('local-player-id', (id: string) => {
             this.localPlayerId = id;
+            // Make sure the player exists in the map
+            if (!this.playerMap[id]) {
+                this.addNewPlayer(id, 100, 100);
+            }
         });
-        EventBus.on('add-player', (id: number, x: number, y: number) => {
+        EventBus.on('add-player', (id: string, x: number, y: number) => {
             console.log('adding player', id);
             this.addNewPlayer(id, x, y);
         });
-        EventBus.on('remove-player', (id: number) => {
+        EventBus.on('remove-player', (id: string) => {
             console.log('remove player', id);
             this.removePlayer(id)
         })
@@ -91,13 +95,16 @@ export class Game extends Scene
         this.scene.start('GameOver');
     }
 
-    addNewPlayer(id: number, x: number, y: number): void {
+    addNewPlayer(id: string, x: number, y: number): void {
+        this.load.image('sprite', 'sprite/sprite.png')
         console.log('adding new player ', id);
         this.playerMap[id] = this.add.sprite(x, y, 'sprite');
     }
 
-    removePlayer(id: number): void {
-        this.playerMap[id].delete();
-        delete this.playerMap[id];
+    removePlayer(id: string): void {
+        if (this.playerMap[id]) {
+            this.playerMap[id].destroy();
+            delete this.playerMap[id];
+        }
     }
 }

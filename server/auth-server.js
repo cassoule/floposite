@@ -102,35 +102,41 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 })
 
+
 const players = {};
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min)) + min;
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  socket.on('newplayer', () => {
-    players[socket.id] = {
-      x: randomInt(100, 400),
-      y: randomInt(100, 400)
-    };
+  // Automatically create player on connection (don't wait for 'newplayer' event)
+  players[socket.id] = {
+    x: randomInt(100, 400),
+    y: randomInt(100, 400)
+  };
 
-    // Send existing players to the new client
-    socket.emit('allplayers', Object.values(players));
+  // 1. Send the new player their own info immediately
+  socket.emit('yourplayer', {
+    id: socket.id,
+    ...players[socket.id]
+  });
 
-    // Broadcast new player to others
-    socket.broadcast.emit('newplayer', {
-      id: socket.id,
-      ...players[socket.id]
-    });
+  // 2. Send all existing players (except self) to the new client
+  const otherPlayers = Object.keys(players)
+    .filter(id => id !== socket.id)
+    .map(id => ({ id, ...players[id] }));
+  socket.emit('allplayers', otherPlayers);
+
+  // 3. Tell everyone else about the new player
+  socket.broadcast.emit('newplayer', {
+    id: socket.id,
+    ...players[socket.id]
   });
 
   socket.on('playermove', (data) => {
     if (players[socket.id]) {
-      // Update player position
       players[socket.id].x = data.x;
       players[socket.id].y = data.y;
-
-      // Broadcast to other players
       socket.broadcast.emit('playermoved', {
         id: socket.id,
         x: data.x,

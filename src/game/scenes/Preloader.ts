@@ -9,6 +9,7 @@ export class Preloader extends Scene
 
     init ()
     {
+        this.preload()
         //  We loaded this image in our Boot Scene, so we can display it here
         this.add.image(512, 384, 'background');
 
@@ -38,6 +39,10 @@ export class Preloader extends Scene
         this.load.tilemapTiledJSON('map', 'map/example_map.json', null)
         this.load.spritesheet('tileset', 'map/tilesheet.png', { frameWidth: 32, frameHeight: 32 });
         this.load.image('sprite', 'sprite/sprite.png')
+
+        this.load.on('complete', () => {
+            console.log('Loaded assets:', this.textures.getTextureKeys());
+        });
     }
 
     create ()
