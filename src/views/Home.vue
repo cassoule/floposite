@@ -45,6 +45,7 @@ export default {
   data() {
     return {
       flapi_ready: false,
+      discordId: null,
     }
   },
 
@@ -102,6 +103,8 @@ export default {
         console.log('flAPI not ready');
         this.flapi_ready = false
       }
+      this.discordId = localStorage.getItem('discordId')
+      if (this.discordId && this.flapi_ready) this.$router.push('/dashboard')
     }
   }
 }
