@@ -79,13 +79,14 @@
         ></v-btn>
       </div>
     </div>
-    <div class="mt-5 d-flex align-center">
+    <div class="mt-5 d-flex align-center" style="gap: .5rem">
+      <v-btn text="Tic Tac Toe" class="text-none game-btn" color="primary" append-icon="mdi mdi-pound" @click="$router.push('/tic-tac-toe')"></v-btn>
       <v-btn
-        text="Ajouter des FlopoCoins"
+        text="FlopoCoins"
         append-icon=""
         class="text-none buy-btn"
-        color="primary"
-        variant="flat"
+        color="white"
+        variant='plain'
         rounded="lg"
         @click="coinsModal = true"
       >
@@ -1756,6 +1757,17 @@ button:disabled {
   box-shadow: 0 0 32px 0 #a1282955;
 }
 .buy-btn {
+  z-index: 1;
+  border-radius: 10px !important;
+  background: radial-gradient(ellipse farthest-corner at right bottom, #FEDB37 0%, #FDB931 8%, #9f7928 30%, #8A6E2F 40%, transparent 200%),
+  radial-gradient(ellipse farthest-corner at left top, #FFFFFF 0%, #FFFFAC 8%, #D1B464 25%, #5d4a1f 62.5%, #5d4a1f 100%);
+  transition: .3s ease-in-out, .6s ease-in-out box-shadow;
+  box-shadow: 0 0 0 0 transparent;
+}
+.buy-btn:hover {
+  box-shadow: 0 0 20px 0 #D1B46477;
+}
+.game-btn {
   z-index: 1;
   border-radius: 10px !important;
 }
