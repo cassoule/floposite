@@ -55,7 +55,7 @@
 
       <p class="mt-3">
         {{ elos[discordId] }} FlopoElo
-        <span style="color: rgba(255, 255, 255, 0.3)">({{Math.max(...elo_graphs[discordId])}} all time best)</span>
+        <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">({{Math.max(...elo_graphs[discordId], 0)}} all time best)</span>
       </p>
     </div>
 
