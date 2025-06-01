@@ -93,7 +93,7 @@
       </div>
     </div>
     <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
-      <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .5em">
+      <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em">
         <v-badge color="secondary">
           <template #badge>
             <p>β</p>
@@ -130,7 +130,7 @@
         color="white"
         variant='tonal'
         rounded="lg"
-        style="margin-top: .6em"
+        style="margin-top: .65em"
         @click="coinsModal = true"
       >
         <template #append>
