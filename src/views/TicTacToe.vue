@@ -45,12 +45,15 @@ export default {
     timeLeft() {
       let tl = Math.min(
         Math.floor((((this.now - (this.foundLobby?.lastmove || this.now)) / 1000) * 100) / 60),
-        101,
+        100,
       )
-      if (tl < 101 && tl > 99) {
-        this.title = 'Temps écoulé'
-        this.message = 'Personne ne gagne'
-        this.socket.emit('tictactoegameOver', { playerId: this.discordId })
+      if (tl === 100) {
+        let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1 : this.foundLobby.p2
+        let loser = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2.name : this.foundLobby.p1.name
+
+        this.title = winner.id === this.discordId ? 'Victoire' : 'Défaite'
+        this.message = `Temps écoulé pour ${loser}`
+        this.socket.emit('tictactoegameOver', { playerId: this.discordId, winner: winner.id })
         this.endGameDialog = true
       }
       return tl
@@ -77,15 +80,15 @@ export default {
         )
 
         this.oppName =
-          this.foundLobby.p1.id === this.discordId
-            ? this.foundLobby.p2.name
-            : this.foundLobby.p1.name
+          this.foundLobby?.p1.id === this.discordId
+            ? this.foundLobby?.p2.name
+            : this.foundLobby?.p1.name
         this.playerName =
-          this.foundLobby.p1.id === this.discordId
-            ? this.foundLobby.p1.name
-            : this.foundLobby.p2.name
+          this.foundLobby?.p1.id === this.discordId
+            ? this.foundLobby?.p1.name
+            : this.foundLobby?.p2.name
         this.value =
-          this.foundLobby.p1.id === this.discordId ? this.foundLobby.p1.val : this.foundLobby.p2.val
+          this.foundLobby?.p1.id === this.discordId ? this.foundLobby?.p1.val : this.foundLobby?.p2.val
 
         this.inQueue = this.oppName === null
 
@@ -203,12 +206,13 @@ export default {
           this.title = this.foundLobby?.p2.id === this.discordId ? 'Victoire' : 'Défaite'
           this.message = `Victoire de ${this.foundLobby?.p2.id === this.discordId ? this.playerName : this.oppName}`
         }
-        this.socket.emit('tictactoegameOver', { playerId: this.discordId })
+        let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby?.p1 : this.foundLobby?.p2
+        this.socket.emit('tictactoegameOver', { playerId: this.discordId, winner: winner.id })
         this.endGameDialog = true
       } else if (this.foundLobby?.sum === 10) {
         this.title = 'égalité'
         this.message = 'Personne ne gagne'
-        this.socket.emit('tictactoegameOver', { playerId: this.discordId })
+        this.socket.emit('tictactoegameOver', { playerId: this.discordId, winner: null })
         this.endGameDialog = true
       }
     },
@@ -224,7 +228,11 @@ export default {
   <v-layout>
     <v-main class="d-flex" style="place-items: center; place-content: center; gap: 2em; flex-wrap: wrap">
       <div class="mt-8">
-        <h1 class="text-white">Tic Tac Toe</h1>
+
+        <h1 class="text-white" style="position: relative;">
+          Tic Tac Toe
+          <v-badge content="β BETA" color="secondary" style="position: absolute; top: .8em; right: 3.7em"/>
+        </h1>
 
         <v-btn
           v-if="!oppName"
