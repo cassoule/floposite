@@ -9,6 +9,14 @@
         :model-value="sparklines[discordId]?.length > 0 ? sparklines[discordId]?.map(entry => entry.user_new_amount) : [0]"
         style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1"
       />
+      <v-sparkline
+        smooth
+        auto-draw
+        color="secondary"
+        line-width="0.5"
+        :model-value="elo_graphs[discordId]?.length > 0 ? elo_graphs[discordId] : [0]"
+        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1"
+      />
       <v-img
         :src="avatar"
         lazy-src="anon.png"
@@ -43,6 +51,11 @@
       <p>
         {{ user?.warns }} warns
         <span style="color: rgba(255, 255, 255, 0.3)">({{ user?.allTimeWarns }} all time)</span>
+      </p>
+
+      <p class="mt-3">
+        {{ elos[discordId] }} FlopoElo
+        <span style="color: rgba(255, 255, 255, 0.3)">({{Math.max(...elo_graphs[discordId])}} all time best)</span>
       </p>
     </div>
 
@@ -79,15 +92,45 @@
         ></v-btn>
       </div>
     </div>
-    <div class="mt-5 d-flex align-center" style="gap: .5rem">
-      <v-btn text="Tic Tac Toe" class="text-none game-btn" color="primary" append-icon="mdi mdi-pound" @click="$router.push('/tic-tac-toe')"></v-btn>
+    <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
+      <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .5em">
+        <v-badge color="secondary">
+          <template #badge>
+            <p>β</p>
+          </template>
+          <template #default>
+            <v-btn
+              text="Tic Tac Toe"
+              class="text-none game-btn"
+              color="primary"
+              append-icon="mdi mdi-pound"
+              style="z-index: 0"
+              @click="$router.push('/tic-tac-toe')"
+            />
+          </template>
+        </v-badge>
+        <v-btn
+          text="Restez branchés..."
+          class="text-none game-btn"
+          color="secondary"
+          variant="plain"
+          disabled
+          rounded="lg"
+        >
+          <template #append>
+            <v-img src="hinhinhin.png" alt="coucou" width="20px" height="20px"/>
+          </template>
+        </v-btn>
+      </div>
+
       <v-btn
         text="FlopoCoins"
         append-icon=""
         class="text-none buy-btn"
         color="white"
-        variant='plain'
+        variant='tonal'
         rounded="lg"
+        style="margin-top: .6em"
         @click="coinsModal = true"
       >
         <template #append>
@@ -563,6 +606,24 @@
                   {{ users.find(u => u.id === akhy.id)?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} FlopoCoins
                 </v-list-item-subtitle>
               </v-list-item>
+              <v-list-item>
+                <v-sparkline
+                  smooth
+                  auto-draw
+                  class="pa-0 ma-0"
+                  color="secondary"
+                  line-width="2"
+                  :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0]"
+                  style="position: absolute; left: 0; top: 0"
+                  title="Evolution de l'elo"
+                />
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-subtitle>
+                  {{ elos[akhy.id] ?? 0 }} FlopoElo
+                </v-list-item-subtitle>
+              </v-list-item>
+
               <v-list-item v-if="discordId === devId" class="px-2">
                 <v-btn class="mr-2" color="white" text="+1000" rounded="xl" variant="tonal"></v-btn>
                 <v-btn color="white" text="-1000" rounded="xl" variant="tonal"></v-btn>
@@ -1251,6 +1312,8 @@ export default {
 
       avatars: {},
       sparklines: {},
+      elo_graphs: {},
+      elos: {},
       buyCoinsForm: {
         price: null,
         coins: null,
@@ -1291,6 +1354,8 @@ export default {
     this.avatar = await this.getAvatar(this.discordId)
     this.fetchAvatars()
     this.fetchSparklines()
+    this.fetchElos()
+    this.fetchEloGraphs()
     await this.getInventory()
     await this.getActivePolls()
     await this.getActiveSlowmodes()
@@ -1376,6 +1441,18 @@ export default {
       })
     },
 
+    fetchElos() {
+      this.users.forEach(async (user) => {
+        this.elos[user.id] = await this.getElo(user.id)
+      })
+    },
+
+    fetchEloGraphs() {
+      this.users.forEach(async (user) => {
+        this.elo_graphs[user.id] = await this.getEloGraph(user.id)
+      })
+    },
+
     logout() {
       localStorage.removeItem('discordId')
       this.showLogoutToast()
@@ -1421,6 +1498,26 @@ export default {
       try {
         const response = await axios.get(fetchUrl)
         return response.data.sparkline
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async getElo(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo'
+      try {
+        const response = await axios.get(fetchUrl)
+        return response.data.elo
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async getEloGraph(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo-graph'
+      try {
+        const response = await axios.get(fetchUrl)
+        return response.data.elo_graph
       } catch (e) {
         console.error('flAPI error:', e)
       }
