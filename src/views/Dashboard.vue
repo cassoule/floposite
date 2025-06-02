@@ -46,16 +46,16 @@
       </p>
       <p>
         {{ user_inventory?.length }} skins
-        <span style="color: rgba(255, 255, 255, 0.3)">({{ inventoryValue }}€)</span>
+        <span style="color: rgba(255, 255, 255, 0.3)">{{ inventoryValue }}€</span>
       </p>
       <p>
         {{ user?.warns }} warns
-        <span style="color: rgba(255, 255, 255, 0.3)">({{ user?.allTimeWarns }} all time)</span>
+        <span style="color: rgba(255, 255, 255, 0.3)">{{ user?.allTimeWarns }} all time</span>
       </p>
 
       <p class="mt-3">
         {{ elos[discordId] }} FlopoElo
-        <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">({{Math.max(...elo_graphs[discordId], 0)}} all time best)</span>
+        <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{elos[discordId] < Math.max(...elo_graphs[discordId], 0) ? Math.max(...elo_graphs[discordId], 0) + ' PB' : 'PB'}}</span>
       </p>
     </div>
 
@@ -530,11 +530,12 @@
   </div>
 
   <div v-if="users" class="leaderboard-container pl-3">
-    <h2 style="display: flex; place-content: space-between">Classement</h2>
+    <h2 style="display: flex; place-content: space-between">Classement <span class="text-capitalize text-secondary cursor-pointer rounded-lg" @click="leaderboardSwitch">{{leaderboardType}}</span></h2>
     <div class="leaderboard">
       <div
-        v-for="akhy in users"
+        v-for="akhy in leaderboardUsers"
         :key="akhy.id"
+        class="animate__animated animate__fadeIn"
         style="border-radius: 10px"
         :style="
           akhy.id === discordId
@@ -559,7 +560,7 @@
             />
             @{{ akhy?.globalName }}
           </span>
-          {{ formatAmount(akhy.coins) }}
+          {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
           <v-menu
             activator="parent"
             location="end"
@@ -1289,10 +1290,14 @@ export default {
       message: null,
       discordId: null,
       users: null,
+      usersByElo: null,
       avatar: null,
       socket: null,
       user_inventory: null,
       user_isTimedOut: false,
+
+      leaderboardUsers: null,
+      leaderboardType: 'coins',
 
       active_polls: null,
       active_slowmodes: null,
@@ -1350,6 +1355,7 @@ export default {
 
     await this.getUsers()
     if (!this.users) this.$router.push('/')
+    this.leaderboardUsers = this.users
 
     this.avatar = await this.getAvatar(this.discordId)
     this.fetchAvatars()
@@ -1382,6 +1388,12 @@ export default {
       this.coinsModal = false
       this.showSuccessOrWarningToast('Paiement effectué !', false)
       this.buyCoins()
+    },
+    leaderboardSwitch() {
+      this.leaderboardType = this.leaderboardType === 'coins' ? 'elo' : 'coins'
+      this.leaderboardUsers = this.leaderboardType === 'coins'
+        ? this.users
+        : this.usersByElo
     },
 
     initSocket() {
@@ -1471,6 +1483,19 @@ export default {
           withCredentials: false,
         })
         this.users = response.data
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+
+      try {
+        const response = await axios.get(fetchUrl + '/by-elo', {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        this.usersByElo = response.data
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -1884,6 +1909,7 @@ button:disabled {
   padding: 6px 5px;
   height: 700px;
   overflow-y: scroll;
+  transition: 2s ease;
 }
 
 .inventory {
