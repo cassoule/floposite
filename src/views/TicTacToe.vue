@@ -1,12 +1,16 @@
 <script>
 import { io } from 'socket.io-client'
+import axios from 'axios'
 
 export default {
-  mounted() {
+  async mounted() {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
 
     this.initSocket()
+
+    this.elo = await this.getElo(this.discordId)
+    this.elo_graph = await this.getEloGraph(this.discordId)
   },
 
   created() {
@@ -38,6 +42,10 @@ export default {
       title: null,
       message: null,
       endGameDialog: false,
+
+      elo: null,
+      oppElo: null,
+      elo_graph: [],
     }
   },
 
@@ -71,7 +79,7 @@ export default {
 
       this.socket.emit('tictactoeconnection', { id: this.discordId })
 
-      this.socket.on('tictactoequeue', (e) => {
+      this.socket.on('tictactoequeue', async (e) => {
         this.allPlayersArray = e.allPlayers
         this.queue = e.queue
 
@@ -90,7 +98,9 @@ export default {
         this.value =
           this.foundLobby?.p1.id === this.discordId ? this.foundLobby?.p1.val : this.foundLobby?.p2.val
 
-        this.inQueue = this.oppName === null
+        this.inQueue = this.inQueue && (this.foundLobby === null || this.foundLobby === undefined)
+
+        this.oppElo = await this.getElo(this.foundLobby?.p1.id === this.discordId ? this.foundLobby?.p2.id : this.foundLobby?.p1.id)
 
         this.foundLobby?.xs.forEach((x) => {
           document.getElementById(`btn${x}`).innerText = 'X'
@@ -126,6 +136,26 @@ export default {
 
         this.check(this.discordId, this.foundLobby.sum)
       })
+    },
+
+    async getElo(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo'
+      try {
+        const response = await axios.get(fetchUrl)
+        return response.data.elo
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async getEloGraph(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo-graph'
+      try {
+        const response = await axios.get(fetchUrl)
+        return response.data.elo_graph
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
     },
 
     findPlayer() {
@@ -267,13 +297,15 @@ export default {
         </div>
       </div>
       <div class="mt-0" style="width: 300px">
+        <p class="mb-3">FlopoElo : {{ this.elo ?? 'Non Classé' }}</p>
         <div>
           <p v-if="oppName" id="oppNameCont">
             Tu joues contre <span id="oppName" class="text-primary">{{ oppName }}</span>
           </p>
+          <span v-if="oppName">{{ oppElo ? `${oppElo} FlopoElo` : 'non classé' }}</span>
         </div>
         <p v-if="oppName" id="valueCont">
-          Avec les <span id="value" class="text-primary">{{ value }}</span>
+          Tu joues les <span id="value" class="text-primary">{{ value }}</span>
         </p>
         <p v-if="oppName" id="whosTurn" class="pt-6">
           {{
