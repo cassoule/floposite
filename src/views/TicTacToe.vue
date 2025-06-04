@@ -333,7 +333,7 @@ export default {
       </v-card>
     </v-dialog>
 
-    <v-btn class="back-btn text-none" text="Retour" variant="tonal" color="#ddd" @click="$router.push('/')"></v-btn>
+    <v-btn class="back-btn text-none" text="Retour" variant="tonal" color="#ddd" @click="$router.push('/dashboard')"></v-btn>
   </v-layout>
 </template>
 
