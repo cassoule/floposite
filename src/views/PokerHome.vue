@@ -1,8 +1,50 @@
 <script>
 import { io } from 'socket.io-client'
 import axios from 'axios'
+import Toast from '@/components/Toast.vue'
+import { useToastStore } from '@/stores/toastStore.js'
 
 export default {
+  components: { Toast },
+
+  setup() {
+    const toastStore = useToastStore()
+
+    const showLogoutToast = () => {
+      toastStore.showLogoutToast()
+    }
+
+    const showSendingToast = () => {
+      toastStore.showSendingToast()
+    }
+
+    const showSentToast = () => {
+      toastStore.showSentToast()
+    }
+
+    const showCommandToast = (message) => {
+      toastStore.showCommandToast(message)
+    }
+
+    const showSuccessOrWarningToast = (message, warning) => {
+      toastStore.showSuccessOrWarningToast(message, warning)
+    }
+
+    const showErrorToast = (message) => {
+      toastStore.showErrorToast(message)
+    }
+
+    return {
+      toastStore: toastStore.$state,
+      showLogoutToast,
+      showSentToast,
+      showSendingToast,
+      showCommandToast,
+      showSuccessOrWarningToast,
+      showErrorToast,
+    }
+  },
+
   data() {
     return {
       socket: null,
@@ -29,8 +71,6 @@ export default {
         },
       })
 
-      this.socket.emit('tictactoeconnection', { id: this.discordId })
-
       this.socket.on('new-poker-room', async () => {
         await this.getRooms()
       })
@@ -40,8 +80,9 @@ export default {
       const url = import.meta.env.VITE_FLAPI_URL + '/create-poker-room'
       try {
         const response = await axios.post(url, { creatorId: this.discordId })
+        this.$router.push('/poker/' + response.data.roomId)
       } catch (e) {
-        console.log(e)
+        this.showErrorToast(e.response.data.message)
       }
     },
 
@@ -53,33 +94,64 @@ export default {
       } catch (e) {
         console.log(e)
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
 <template>
   <v-layout>
     <v-main>
-      <h1>Poker Home</h1>
-      <v-btn class="mt-4" text="Créer un lobby" variant="flat" color="primary" rounded="lg" @click="createRoom"></v-btn>
+      <h1 class="text-white">Flopoker</h1>
 
-      <div>
+      <h2 class="text-white d-flex justify-space-between align-center mt-12 mb-4">
+        Tables actives
         <v-btn
+          class="text-none"
+          text="Créer une table"
+          variant="flat"
+          color="primary"
+          rounded="lg"
+          @click="createRoom"
+        ></v-btn>
+      </h2>
+
+      <div class="rooms-cont">
+        <v-card
           v-for="room in rooms"
           :key="room.id"
-          :text="room.name"
-          class="my-2"
+          class="px-3 room"
           color="primary"
           variant="tonal"
+          rounded="xl"
           block
           @click="$router.push('/poker/' + room.id)"
-        />
+        >
+          <v-card-title class="text-white pb-0 pt-4">
+            {{ room.name }}
+            <p style="float: right">
+              {{ Object.keys(room.players)?.length }}<span class="text-primary">/8</span>
+            </p>
+          </v-card-title>
+          <v-card-subtitle class="pb-4 d-flex justify-space-between">
+            <div>Créé par {{ room.host_name }}</div>
+            <div>{{ new Date(room.created_at).toLocaleString() }}</div>
+          </v-card-subtitle>
+        </v-card>
       </div>
     </v-main>
 
-    <v-btn class="back-btn text-none" text="Retour" variant="tonal" color="#ddd" @click="$router.push('/dashboard')"></v-btn>
+    <v-btn
+      class="back-btn text-none"
+      text="Retour"
+      variant="tonal"
+      color="#ddd"
+      @click="$router.push('/dashboard')"
+    ></v-btn>
+
+
   </v-layout>
+  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 </template>
 
 <style scoped>
@@ -88,5 +160,21 @@ export default {
   top: 1rem;
   left: 1rem;
   border-radius: 12px;
+}
+.rooms-cont {
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  height: 400px;
+  gap: 1em;
+}
+.room {
+  border: 2px solid transparent;
+  transition: 0.1s ease-in-out;
+  flex-shrink: 0;
+}
+
+.room:hover {
+  border: 2px solid #5865f2;
 }
 </style>
