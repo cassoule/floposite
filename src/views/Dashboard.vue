@@ -46,7 +46,7 @@
       </p>
       <p>
         {{ user_inventory?.length }} skins
-        <span style="color: rgba(255, 255, 255, 0.3)">{{ inventoryValue }}€</span>
+        <span style="color: rgba(255, 255, 255, 0.3)">{{ inventoryValue?.toFixed(2) }}€</span>
       </p>
       <p>
         {{ user?.warns }} warns
@@ -93,34 +93,31 @@
       </div>
     </div>
     <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
-      <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em">
+      <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
+        <v-btn
+          text="Tic Tac Toe"
+          class="text-none game-btn"
+          color="primary"
+          append-icon="mdi mdi-pound"
+          style="z-index: 0"
+          @click="$router.push('/tic-tac-toe')"
+        />
         <v-badge color="secondary">
           <template #badge>
-            <p>β</p>
+            <p>α</p>
           </template>
           <template #default>
             <v-btn
-              text="Tic Tac Toe"
+              text="Flopoker"
               class="text-none game-btn"
               color="primary"
-              append-icon="mdi mdi-pound"
+              variant="tonal"
+              append-icon="mdi mdi-cards-playing-spade-multiple"
               style="z-index: 0"
-              @click="$router.push('/tic-tac-toe')"
+              @click="$router.push('/poker')"
             />
           </template>
         </v-badge>
-        <v-btn
-          text="Restez branchés..."
-          class="text-none game-btn"
-          color="secondary"
-          variant="plain"
-          disabled
-          rounded="lg"
-        >
-          <template #append>
-            <v-img src="hinhinhin.png" alt="coucou" width="20px" height="20px"/>
-          </template>
-        </v-btn>
       </div>
 
       <v-btn
@@ -502,7 +499,7 @@
       </v-tabs-window-item>
     </v-tabs-window>
 
-    <p v-if="tab === 'skins'" class="mt-2">Valeur totale : {{ inventoryValue }}€</p>
+    <p v-if="tab === 'skins'" class="mt-2">Valeur totale : {{ inventoryValue?.toFixed(2) }}€</p>
     <p v-else class="d-flex mt-2" style="place-items: center">
       {{ formatAmount(user?.coins) }} FlopoCoins
       <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
@@ -524,6 +521,35 @@
         Salut <span style="color: #5865f2">{{ discordId }}</span> (⊙_⊙)？
       </h1>
       <p>Je crois qu'on ne se connait pas...</p>
+      <p class="mt-3">Mais tu peux quand même jouer à certains jeux ! ^^</p>
+    </div>
+    <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
+      <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
+        <v-btn
+          text="Tic Tac Toe"
+          class="text-none game-btn"
+          color="primary"
+          append-icon="mdi mdi-pound"
+          style="z-index: 0"
+          @click="$router.push('/tic-tac-toe')"
+        />
+        <v-badge color="secondary">
+          <template #badge>
+            <p>α</p>
+          </template>
+          <template #default>
+            <v-btn
+              text="Flopoker"
+              class="text-none game-btn"
+              color="primary"
+              append-icon="mdi mdi-cards-playing-spade-multiple"
+              variant="tonal"
+              style="z-index: 0"
+              @click="$router.push('/poker')"
+            />
+          </template>
+        </v-badge>
+      </div>
     </div>
 
     <button class="discord-logout" @click="logout">Déconnexion</button>
@@ -2107,6 +2133,17 @@ button:disabled {
   .coins-modal {
     max-width: 511px;
   }
+  .leaderboard {
+    width: 100%;
+  }
+  .leaderboard-container {
+    width: 100%;
+    margin-top: 0;
+  }
+  .user-tab {
+    width: 100%;
+    margin-bottom: 3rem;
+  }
 }
 
 @media (max-width: 850px) {
@@ -2117,18 +2154,10 @@ button:disabled {
   .modal-card::before {
     background: radial-gradient(circle at -100% -200%, #5865f2, #181818aa 100%) !important;
   }
-  .leaderboard {
-    width: 100%;
-  }
-  .leaderboard-container {
-    width: 100%;
-    margin-top: 0;
-  }
   .user-tab {
-    width: 100%;
-    margin-top: 0;
-    margin-bottom: 3rem;
+    margin-top: 5rem;
   }
+
   .inventory {
     width: 100%;
   }
