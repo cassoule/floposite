@@ -82,9 +82,16 @@ export default {
   <v-layout>
     <v-main class="text-secondary">
       <div v-if="room">
-        <h1 class="text-white">Poker Room</h1>
-        <p>{{ room }}</p>
-        <p>joined ? {{hasJoinedRoom}}</p>
+        <h1 class="text-white">
+          Poker Room
+          <span class="text-primary" style="font-size: 1.2rem">{{room.name}}</span>
+        </h1>
+<!--        <p>{{ room }}</p>-->
+        <p class="mb-8">{{hasJoinedRoom ? 'Tu es assis à cette table' : ''}}</p>
+        <h3>Joueurs :</h3>
+        <p v-for="player in room.players" :key="player.id">
+          {{player.globalName}}
+        </p>
         <v-btn v-if="!hasJoinedRoom" text="S'asseoir" class="text-none" color="primary" rounded="lg" @click="joinRoom" />
       </div>
 

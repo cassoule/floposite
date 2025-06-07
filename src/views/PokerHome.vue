@@ -100,44 +100,57 @@ export default {
 </script>
 
 <template>
-  <v-layout>
-    <v-main>
-      <h1 class="text-white">Flopoker</h1>
+  <v-layout class="w-100">
+    <v-main class="d-flex w-100">
+      <div class="w-100 mt-16">
+        <h1 class="text-white" style="position: relative; width: fit-content">
+          Flopoker
+          <v-badge content="αlpha" color="secondary" style="position: absolute; top: .8em; right: -1em"/>
+        </h1>
 
-      <h2 class="text-white d-flex justify-space-between align-center mt-12 mb-4">
-        Tables actives
-        <v-btn
-          class="text-none"
-          text="Créer une table"
-          variant="flat"
-          color="primary"
-          rounded="lg"
-          @click="createRoom"
-        ></v-btn>
-      </h2>
+        <h2 class="text-white d-flex justify-space-between align-center mt-12 mb-4" style="border-radius: 15px; background: #dddddd22; padding: .3em .3em .3em .6em">
+          Tables
+          <v-btn
+            class="text-none"
+            text="Créer une table"
+            variant="flat"
+            color="primary"
+            rounded="lg"
+            @click="createRoom"
+          ></v-btn>
+        </h2>
 
-      <div class="rooms-cont">
-        <v-card
-          v-for="room in rooms"
-          :key="room.id"
-          class="px-3 room"
-          color="primary"
-          variant="tonal"
-          rounded="xl"
-          block
-          @click="$router.push('/poker/' + room.id)"
-        >
-          <v-card-title class="text-white pb-0 pt-4">
-            {{ room.name }}
-            <p style="float: right">
-              {{ Object.keys(room.players)?.length }}<span class="text-primary">/8</span>
-            </p>
-          </v-card-title>
-          <v-card-subtitle class="pb-4 d-flex justify-space-between">
-            <div>Créé par {{ room.host_name }}</div>
-            <div>{{ new Date(room.created_at).toLocaleString() }}</div>
-          </v-card-subtitle>
-        </v-card>
+        <div v-if="rooms ? Object.keys(rooms)?.length > 0 : false" class="rooms-cont">
+          <v-card
+            v-for="room in rooms"
+            :key="room.id"
+            class="px-3 room"
+            :color="Object.keys(room.players).includes(discordId) ? 'secondary' : 'primary'"
+            variant="tonal"
+            style="border-radius: 15px"
+            block
+            @click="$router.push('/poker/' + room.id)"
+          >
+            <v-card-title class="text-white pb-0 pt-4">
+              {{ room.name }}
+              <span class="text-secondary ml-4" style="font-size: .8rem">{{ Object.keys(room.players).includes(discordId) ? 'Tu joues à cette table' : ''}}</span>
+              <p style="float: right">
+                {{ Object.keys(room.players)?.length }}<span class="text-primary">/8</span>
+              </p>
+            </v-card-title>
+            <v-card-subtitle class="pb-4 d-flex justify-space-between">
+              <div>Créé par {{ room.host_name }}</div>
+              <div>{{ new Date(room.created_at).toLocaleString() }}</div>
+            </v-card-subtitle>
+          </v-card>
+        </div>
+        <div v-else class="rooms-cont">
+          <p class="ma-auto text-center">
+            Aucune table pour le moment
+            <br>
+            <span class="text-secondary font-weight-thin">Tu peux en créer une ^^</span>
+          </p>
+        </div>
       </div>
     </v-main>
 

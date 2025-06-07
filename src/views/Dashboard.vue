@@ -2125,6 +2125,17 @@ button:disabled {
   .coins-modal {
     max-width: 511px;
   }
+  .leaderboard {
+    width: 100%;
+  }
+  .leaderboard-container {
+    width: 100%;
+    margin-top: 0;
+  }
+  .user-tab {
+    width: 100%;
+    margin-bottom: 3rem;
+  }
 }
 
 @media (max-width: 850px) {
@@ -2135,18 +2146,10 @@ button:disabled {
   .modal-card::before {
     background: radial-gradient(circle at -100% -200%, #5865f2, #181818aa 100%) !important;
   }
-  .leaderboard {
-    width: 100%;
-  }
-  .leaderboard-container {
-    width: 100%;
-    margin-top: 0;
-  }
   .user-tab {
-    width: 100%;
-    margin-top: 0;
-    margin-bottom: 3rem;
+    margin-top: 5rem;
   }
+
   .inventory {
     width: 100%;
   }
