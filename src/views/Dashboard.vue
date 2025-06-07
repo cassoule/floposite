@@ -967,6 +967,10 @@
             { time: 1800, label: '30 minutes' },
             { time: 3600, label: '1 heure' },
             { time: 7200, label: '2 heures' },
+						{ time: 10800, label: '3 heures' },
+						{ time: 14400, label: '4 heures' },
+						{ time: 18000, label: '5 heures' },
+						{ time: 21600, label: '6 heures' },
             { time: 43200, label: '12 heures' },
             { time: 86400, label: '24 heures' },
           ]"
@@ -982,12 +986,16 @@
         <v-select
           v-model="prediForm.payoutTime"
           label="Résultats"
-          :items="[
+                    :items="[
             { time: 300, label: '5 minutes' },
             { time: 600, label: '10 minutes' },
             { time: 1800, label: '30 minutes' },
             { time: 3600, label: '1 heure' },
             { time: 7200, label: '2 heures' },
+						{ time: 10800, label: '3 heures' },
+						{ time: 14400, label: '4 heures' },
+						{ time: 18000, label: '5 heures' },
+						{ time: 21600, label: '6 heures' },
             { time: 43200, label: '12 heures' },
             { time: 86400, label: '24 heures' },
           ]"
@@ -997,7 +1005,7 @@
           class="text-white w-50"
           rounded="lg"
           density="comfortable"
-          hint="Temps après fermeture des votes"
+          hint="Fin de la prédi"
           persistent-hint
         />
       </v-card-text>
