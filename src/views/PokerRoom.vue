@@ -54,6 +54,10 @@ export default {
       this.socket.on('player-joined', async () => {
         await this.getRoom()
       })
+
+      this.socket.on('poker-room-started', async () => {
+        await this.getRoom()
+      })
     },
 
     async getRoom() {
@@ -73,29 +77,48 @@ export default {
       } catch (e) {
         console.log(e)
       }
+    },
+
+    async leaveRoom() {
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/leave'
+      try {
+        const response = await axios.post(url, { userId: this.discordId, roomId: this.room_id })
+      } catch (e) {
+        console.log(e)
+      }
+    },
+
+    async startGame() {
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/start'
+      try {
+        const response = await axios.post(url, { roomId: this.room_id })
+      } catch (e) {
+        console.log(e)
+      }
     }
   },
 }
 </script>
 
 <template>
-  <v-layout>
-    <v-main class="text-secondary">
-      <div v-if="room">
+  <v-layout class="w-100">
+    <v-main class="text-secondary w-100">
+      <div v-if="room" class="w-100 mt-16">
         <h1 class="text-white">
           Poker Room
           <span class="text-primary" style="font-size: 1.2rem">{{room.name}}</span>
         </h1>
-<!--        <p>{{ room }}</p>-->
         <p class="mb-8">{{hasJoinedRoom ? 'Tu es assis à cette table' : ''}}</p>
-        <h3>Joueurs :</h3>
-        <p v-for="player in room.players" :key="player.id">
-          {{player.globalName}}
-        </p>
         <v-btn v-if="!hasJoinedRoom" text="S'asseoir" class="text-none" color="primary" rounded="lg" @click="joinRoom" />
+        <v-btn v-else text="Quitter" class="text-none" color="error" rounded="lg" @click="leaveRoom" />
+        <p>{{room}}</p>
+        <p v-for="player in room.players" :key="player.id" class="mt-6">
+          {{player}}
+        </p>
+        <v-btn v-if="discordId === room.host_id" text="Commencer" class="text-none" color="secondary" variant="tonal" rounded="lg" @click="startGame" />
       </div>
 
-      <div v-else style="display: flex; flex-direction: column; place-items: center">
+      <div v-else class="w-100 mt-16" style="display: flex; flex-direction: column; place-items: center">
         <v-progress-circular class="mb-6" color="primary" indeterminate />
         <p class="text-secondary">
           {{ roomTimeout ? "Cette partie n'a pas l'air accessible" : "Connexion..." }}

@@ -51,6 +51,8 @@ export default {
       discordId: null,
 
       rooms: null,
+      avatars: {},
+      users: {},
     }
   },
 
@@ -60,6 +62,8 @@ export default {
 
     this.initSocket()
     await this.getRooms()
+    await this.getUsers()
+    this.fetchAvatars()
   },
 
   methods: {
@@ -95,6 +99,60 @@ export default {
         console.log(e)
       }
     },
+
+    async getUsers() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        this.users = response.data
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+
+      try {
+        const response = await axios.get(fetchUrl + '/by-elo', {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        this.usersByElo = response.data
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+
+    fetchAvatars() {
+      this.users.forEach(async (user) => {
+        this.avatars[user.id] = await this.getAvatar(user.id)
+      })
+    },
+
+    async getAvatar(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        return response.data.avatarUrl
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
   },
 }
 </script>
@@ -108,14 +166,15 @@ export default {
           <v-badge content="αlpha" color="secondary" style="position: absolute; top: .8em; right: -1em"/>
         </h1>
 
-        <h2 class="text-white d-flex justify-space-between align-center mt-12 mb-4" style="border-radius: 15px; background: #dddddd22; padding: .3em .3em .3em .6em">
+        <h2 class="text-white d-flex justify-space-between align-center mt-12 mb-4" style="border-radius: 15px; background: #dddddd22; padding: 5px 5px 5px .6em">
           Tables
           <v-btn
             class="text-none"
             text="Créer une table"
             variant="flat"
             color="primary"
-            rounded="lg"
+            append-icon="mdi-plus"
+            style="border-radius: 10px"
             @click="createRoom"
           ></v-btn>
         </h2>
@@ -124,21 +183,34 @@ export default {
           <v-card
             v-for="room in rooms"
             :key="room.id"
-            class="px-3 room"
+            class="px-0 room"
             :color="Object.keys(room.players).includes(discordId) ? 'secondary' : 'primary'"
             variant="tonal"
-            style="border-radius: 15px"
+            style="border-radius: 15px !important"
             block
             @click="$router.push('/poker/' + room.id)"
           >
-            <v-card-title class="text-white pb-0 pt-4">
+            <v-card-title class="text-white pb-0 pt-2">
               {{ room.name }}
-              <span class="text-secondary ml-4" style="font-size: .8rem">{{ Object.keys(room.players).includes(discordId) ? 'Tu joues à cette table' : ''}}</span>
               <p style="float: right">
                 {{ Object.keys(room.players)?.length }}<span class="text-primary">/8</span>
               </p>
             </v-card-title>
-            <v-card-subtitle class="pb-4 d-flex justify-space-between">
+            <v-card-text class="d-flex justify-space-between pt-1 pb-1">
+              <div style="display: flex; place-content: start; gap: 0; width: 100%; overflow: hidden; border-radius: 10px">
+                <div v-for="(player, index) in Object.values(room.players)"
+                     :key="player.id + Date.now()"
+                     :style="`transform: translateX(calc(-10px * ${index})); z-index: 1;`"
+                >
+                  <v-img
+                    :src="avatars[player.id]"
+                    color="transparent"
+                    style="border-radius: 50%; width: 20px; height: 20px"
+                  />
+                </div>
+              </div>
+            </v-card-text>
+            <v-card-subtitle class="pb-3 d-flex justify-space-between">
               <div>Créé par {{ room.host_name }}</div>
               <div>{{ new Date(room.created_at).toLocaleString() }}</div>
             </v-card-subtitle>

@@ -59,39 +59,6 @@
       </p>
     </div>
 
-    <div v-if="discordId === devId">
-      <div class="mt-5 d-flex align-center" style="gap: 1rem">
-        <v-text-field
-          v-model="message"
-          variant="outlined"
-          placeholder="Envoyer un message"
-          density="compact"
-          rounded="lg"
-          hide-details
-        ></v-text-field>
-        <v-btn
-          text="10 FlopoCoins"
-          append-icon="mdi mdi-play"
-          class="text-capitalize"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          :disabled="user?.coins < 10 || !message"
-          @click="sendMessage"
-        ></v-btn>
-      </div>
-      <div class="mt-5 d-flex align-center" style="gap: 1rem">
-        <v-btn
-          text="+1000"
-          append-icon="mdi mdi-play"
-          class="text-capitalize"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          @click="addCoins"
-        ></v-btn>
-      </div>
-    </div>
     <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
       <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
         <v-btn
@@ -649,11 +616,6 @@
                 <v-list-item-subtitle>
                   {{ elos[akhy.id] ?? 0 }} FlopoElo
                 </v-list-item-subtitle>
-              </v-list-item>
-
-              <v-list-item v-if="discordId === devId" class="px-2">
-                <v-btn class="mr-2" color="white" text="+1000" rounded="xl" variant="tonal"></v-btn>
-                <v-btn color="white" text="-1000" rounded="xl" variant="tonal"></v-btn>
               </v-list-item>
             </v-list>
           </v-menu>
