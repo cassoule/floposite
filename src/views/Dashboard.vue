@@ -1767,7 +1767,7 @@ export default {
         amount /= 1000000000
         return (
           amount
-            .toFixed(1)
+            .toFixed(2)
             .toString()
             .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'Md'
         )
@@ -1776,7 +1776,7 @@ export default {
         amount /= 1000000
         return (
           amount
-            .toFixed(1)
+            .toFixed(2)
             .toString()
             .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'M'
         )
@@ -1785,7 +1785,7 @@ export default {
         amount /= 1000
         return (
           amount
-            .toFixed(1)
+            .toFixed(2)
             .toString()
             .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'K'
         )

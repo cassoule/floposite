@@ -217,7 +217,7 @@ export default {
           </v-card>
         </div>
         <div v-else class="rooms-cont">
-          <p class="ma-auto text-center">
+          <p class="ma-auto text-center text-white">
             Aucune table pour le moment
             <br>
             <span class="text-secondary font-weight-thin">Tu peux en créer une ^^</span>
