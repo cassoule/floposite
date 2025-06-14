@@ -1,6 +1,7 @@
 <script>
 import { io } from 'socket.io-client'
 import axios from 'axios'
+import { time } from '@discordjs/formatters'
 
 export default {
   data() {
@@ -14,6 +15,8 @@ export default {
 
       raiseValue: 0,
       adjustInterval: null,
+
+      now: Date.now(),
     }
   },
 
@@ -23,17 +26,20 @@ export default {
 
     this.initSocket()
     await this.getRoom()
-
-    if (this.room.host_id === this.discordId)
-      setTimeout(async () => {
-        await this.joinRoom()
-      }, 250)
   },
 
   created() {
     setTimeout(() => {
       if (!this.room) this.roomTimeout = true
     }, 2000)
+
+    this.interval = setInterval(() => {
+      this.now = Date.now()
+    }, 1)
+  },
+
+  beforeDestroy() {
+    clearInterval(this.interval)
   },
 
   computed: {
@@ -42,9 +48,42 @@ export default {
         ? Object.values(this.room?.players).filter((p) => p.id === this.discordId).length > 0
         : false
     },
+
+    isInQueue() {
+      return this.room
+        ? Object.values(this.room?.queue).filter((p) => p.id === this.discordId).length > 0
+        : false
+    },
+
+    timeLeft() {
+      if (this.room?.playing && !this.room?.waiting_for_restart) {
+        let tl = Math.min(
+          Math.floor((((this.now - (this.room?.last_move_at || this.now)) / 1000) * 100) / 60),
+          100,
+        )
+        if (tl === 100) {
+          console.log('no time left')
+          if (this.discordId === this.room?.current_player) {
+            console.log('auto fold')
+            this.handleFold()
+          }
+        }
+        return tl
+      } else {
+        return 0
+      }
+    },
+
+    totalPot() {
+      if (!this.room?.players) return 0;
+      return Object.values(this.room.players).reduce((sum, player) => {
+        return sum + (player.bet || 0);
+      }, 0);
+    }
   },
 
   methods: {
+    time,
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL, {
         withCredentials: false,
@@ -58,8 +97,11 @@ export default {
       })
 
       this.socket.on('new-poker-room', async () => {
+        const initialRoom = this.room
         await this.getRoom()
-        this.raiseValue = ((this.room?.highest_bet ?? 0) - ((this.room?.players[this.discordId]?.bet ?? 0))) + 10
+        if (initialRoom === this.room) window.reload()
+        this.raiseValue =
+          (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
       })
 
       this.socket.on('player-joined', async () => {
@@ -68,7 +110,8 @@ export default {
 
       this.socket.on('poker-room-started', async () => {
         await this.getRoom()
-        this.raiseValue = ((this.room?.highest_bet ?? 0) - ((this.room?.players[this.discordId]?.bet ?? 0))) + 10
+        this.raiseValue =
+          (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
       })
     },
 
@@ -89,6 +132,17 @@ export default {
       } catch (e) {
         console.log(e)
       }
+      await this.getRoom()
+    },
+
+    async handleAccept(id) {
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/accept'
+      try {
+        const response = await axios.post(url, { userId: id, roomId: this.room_id })
+      } catch (e) {
+        console.log(e)
+      }
+      await this.getRoom()
     },
 
     async leaveRoom() {
@@ -99,15 +153,17 @@ export default {
       } catch (e) {
         console.log(e)
       }
+      await this.getRoom()
     },
 
     async startGame() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/start'
+      const url = import.meta.env.VITE_FLAPI_URL + (this.room?.waiting_for_restart || this.room?.current_turn === 4 ? '/poker-room/next-round' : '/poker-room/start')
       try {
         const response = await axios.post(url, { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
+      await this.getRoom()
     },
 
     async handleFold() {
@@ -117,6 +173,7 @@ export default {
       } catch (e) {
         console.log(e)
       }
+      await this.getRoom()
     },
 
     async handleCheck() {
@@ -126,6 +183,7 @@ export default {
       } catch (e) {
         console.log(e)
       }
+      await this.getRoom()
     },
 
     async handleCall() {
@@ -135,15 +193,21 @@ export default {
       } catch (e) {
         console.log(e)
       }
+      await this.getRoom()
     },
 
     async handleRaise() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/action/raise'
       try {
-        const response = await axios.post(url, { roomId: this.room_id, playerId: this.discordId, amount: this.raiseValue })
+        const response = await axios.post(url, {
+          roomId: this.room_id,
+          playerId: this.discordId,
+          amount: this.raiseValue,
+        })
       } catch (e) {
         console.log(e)
       }
+      await this.getRoom()
     },
 
     formatAmount(amount) {
@@ -178,30 +242,30 @@ export default {
     },
 
     startAdjust(amount) {
-      this.adjustValue(amount); // Apply once immediately
-      this.stopAdjust(); // Clear any existing interval
+      this.adjustValue(amount) // Apply once immediately
+      this.stopAdjust() // Clear any existing interval
 
       this.adjustInterval = setInterval(() => {
-        this.adjustValue(amount);
-      }, 150); // adjust the speed if needed
+        this.adjustValue(amount)
+      }, 150) // adjust the speed if needed
     },
 
     stopAdjust() {
       if (this.adjustInterval) {
-        clearInterval(this.adjustInterval);
-        this.adjustInterval = null;
+        clearInterval(this.adjustInterval)
+        this.adjustInterval = null
       }
     },
 
     adjustValue(amount) {
-      const minRaise = (this.room?.highest_bet - this.room?.players[this.discordId]?.bet) + 10;
-      const maxRaise = this.room?.players[this.discordId]?.bank;
+      const minRaise = this.room?.highest_bet - this.room?.players[this.discordId]?.bet + 10
+      const maxRaise = this.room?.players[this.discordId]?.bank
 
-      const newValue = this.raiseValue + amount;
+      const newValue = this.raiseValue + amount
       if (amount < 0 && newValue >= minRaise) {
-        this.raiseValue = newValue;
+        this.raiseValue = newValue
       } else if (amount > 0 && newValue <= maxRaise) {
-        this.raiseValue = newValue;
+        this.raiseValue = newValue
       }
     },
   },
@@ -217,8 +281,8 @@ export default {
           <span class="text-primary" style="font-size: 1.2rem">{{ room.name }}</span>
           <span class="ml-16" style="float: right">
             <v-btn
-              v-if="discordId === room.host_id && !room.playing"
-              text="Commencer"
+              v-if="discordId === room.host_id && (!room.playing || room.waiting_for_restart || room.current_turn === 4 || room.curent_turn === null)"
+              :text="room?.playing ? 'Manche suivante' : 'Commencer'"
               class="text-none mr-4"
               color="white"
               variant="tonal"
@@ -232,6 +296,7 @@ export default {
               class="text-none"
               color="primary"
               rounded="lg"
+              :loading="isInQueue"
               @click="joinRoom"
             />
             <v-btn
@@ -242,6 +307,15 @@ export default {
               rounded="lg"
               @click="leaveRoom"
             />
+            <div
+              v-if="Object.keys(room.players).length < 2 && discordId === room?.host_id"
+              class="d-flex flex-column mt-2 ml-1"
+              style="place-items: start; place-content: start"
+            >
+              <p class="text-center" style="font-size: 0.7rem; color: #ddd">
+                En attente d'un autre joueur...
+              </p>
+            </div>
           </span>
         </h1>
         <p class="mb-8 mt-10">
@@ -257,11 +331,11 @@ export default {
         <div style="position: relative">
           <v-card
             class="w-100 mt-16 py-16"
-            style="border-radius: 200px; background: #3f51b522; border: 8px solid #3f51b599"
+            style="position: relative; border-radius: 200px; background: #3f51b522; border: 8px solid #3f51b599"
           >
             <div class="d-flex py-16" style="place-content: center; flex-wrap: wrap">
               <div v-for="card in room.tapis" :key="card" class="mr-2 mb-2">
-                <v-img :src="'/cards/' + card + '.png'" :alt="card" width="80"></v-img>
+                <v-img :src="'/cards/' + card + '.png'" :alt="card" width="80"/>
               </div>
               <div v-for="card in [1, 2, 3, 4, 5]">
                 <v-img
@@ -269,8 +343,12 @@ export default {
                   :src="'/cards/card_back.png'"
                   width="80"
                   class="mr-2 mb-2"
-                ></v-img>
+                />
               </div>
+            </div>
+            <div v-if="room?.playing && room.current_turn !== null && room.current_turn !== 4" style="position: absolute; bottom: 2em; text-align: center; width: 100%; color: white">
+              <p><span style="color: #dddddddd">Current Bet</span> {{room?.highest_bet ?? 0}} <span class="ml-4" style="color: #dddddddd">Pot</span> {{totalPot}}</p>
+              <p v-if="room?.current_player"><span style="color: #dddddddd">Au tour de </span> {{room?.players[room?.current_player]?.globalName}}</p>
             </div>
           </v-card>
           <div class="d-flex mb-16 pb-16" style="gap: 1rem; flex-wrap: wrap">
@@ -280,28 +358,53 @@ export default {
               :variant="player.id === discordId ? 'tonal' : 'text'"
               class="mt-6"
               rounded="xl"
-              :style="`width: 200px; ${room.current_player === player.id ? 'border: 4px solid #5865f2' : 'border: 4px solid transparent'}`"
+              style="width: 200px; overflow: hidden"
             >
-              <v-card-title>
+              <div
+                v-if="player.id === room.current_player"
+                style="width: 200px; height: 100%; border: 15px solid transparent; position: absolute; z-index: -1; transition: .1s ease"
+                :style="`border-image: conic-gradient(from 0deg, #5865f2 ${100 - timeLeft}%, transparent 0) 1`"
+              >
+                <div style="width: calc(100% + 18px); height: calc(100% + 18px); top: -9px; left: -9px; background: #37384A; position: absolute; z-index: 0; border-radius: 18px">
+                </div>
+              </div>
+              <v-card-title style="display: flex; place-items: center; gap: .5rem;">
                 {{ player.globalName }}
                 <span
                   v-if="room.dealer === player.id"
-                  style="background: #ddd; color: black; border-radius: 50%; padding: 0 0.2em"
+                  style="background: #ddd; color: black; border-radius: 50%; padding: 0 .4em; font-size: .6em; font-weight: bold;"
                 >
                   D
                 </span>
               </v-card-title>
               <v-card-text class="text-white pb-0">
                 {{ formatAmount(player.bet ?? 0) }} FC
-                <span v-if="player.allin" class="bg-primary ml-2 px-2 rounded-lg font-weight-bold">ALL IN</span>
-                <span v-if="player.folded" class="bg-error ml-2 px-2 rounded-lg font-weight-bold">FOLDED</span>
+                <span v-if="player.allin" class="bg-primary ml-2 px-2 rounded-lg font-weight-bold">
+                  ALL IN
+                </span>
+                <span v-if="player.folded" class="bg-error ml-2 px-2 rounded-lg font-weight-bold">
+                  FOLDED
+                </span>
+                <span
+                  v-if="room.winners.includes(player.id)"
+                  class="ml-2 px-2"
+                  style="background: #5865f2; color: white; border-radius: 10px; padding: 0 .4em; font-size: 1em"
+                >
+                  {{ room.winners.length > 1 ? 'SHARE' : 'WIN' }}
+                </span>
               </v-card-text>
               <v-card-subtitle class="mb-3" :title="player.bank + ' FC'">
                 {{ formatAmount(player.bank) }} FC
               </v-card-subtitle>
               <div>
                 <v-card-text
-                  v-if="player.id === discordId || player.allin || player.folded || !room.playing"
+                  v-if="
+                    player.id === discordId ||
+                    player.allin ||
+                    player.folded ||
+                    !room.playing ||
+                    room.current_turn === 4
+                  "
                   class="d-flex"
                   style="place-content: center; gap: 1rem"
                 >
@@ -317,25 +420,31 @@ export default {
                     <v-img :src="'/cards/card_back.png'" alt="back_card" width="70"></v-img>
                   </div>
                 </v-card-text>
-                <v-card-text v-if="player.id === discordId || player.allin || player.folded || !room.playing" class="text-center font-weight-bold">
+                <v-card-text
+                  v-if="
+                    player.id === discordId ||
+                    player.allin ||
+                    player.folded ||
+                    !room.playing ||
+                    room.current_turn === 4
+                  "
+                  class="text-center font-weight-bold"
+                >
                   {{ player.solve }}
                 </v-card-text>
               </div>
             </v-card>
-            <div
-              v-if="Object.keys(room.players).length < 2"
-              class="mt-6 d-flex flex-column"
-              style="place-items: center; place-content: end; gap: 1em"
-            >
-              <v-progress-circular color="primary" indeterminate></v-progress-circular>
-              <p class="text-center" style="font-size: 0.8em; color: #ddd">
-                En attente d'un <br />
-                autre joueur...
+            <div v-if="Object.values(room?.queue).length > 0" class="mt-6 ml-6 d-flex flex-column">
+              <p class="mb-3">File d'attente</p>
+              <p v-for="player in room?.queue" class="mb-3">
+                {{player.globalName}}
+                <button v-if="discordId === room?.host_id" :disabled="room?.current_turn !== 4 && room?.current_turn !== null" style="font-size: .75em; padding: .3em .6em; margin-left: 1em" @click="handleAccept(player.id)">Accepter</button>
               </p>
             </div>
           </div>
         </div>
 
+        <!--COMMANDS-->
         <v-card
           v-if="Object.keys(room.players).includes(discordId)"
           :color="discordId !== room.current_player ? 'dark' : 'white'"
@@ -375,7 +484,9 @@ export default {
             </p>
           </v-card-text>
           <v-card-text class="d-flex pa-3 pb-1" style="gap: 0.5em">
-            <v-btn color="error" style="border-radius: 10px; flex-grow: 1" @click="handleFold">Fold</v-btn>
+            <v-btn color="error" style="border-radius: 10px; flex-grow: 1" @click="handleFold"
+              >Fold</v-btn
+            >
             <v-btn
               color="primary"
               :disabled="room.players[discordId].bet < room.highest_bet"
@@ -390,29 +501,53 @@ export default {
               style="border-radius: 10px; flex-grow: 1; width: 15%"
               @click="handleCall"
             >
-              {{ room.players[discordId].bank <= room.highest_bet ? 'All In' : 'Call' }}
+              {{
+                room.players[discordId].bank <= room.highest_bet - room.players[discordId].bet
+                  ? 'All In'
+                  : 'Call'
+              }}
             </v-btn>
           </v-card-text>
-          <v-card-text class="d-flex pa-3 pt-1" style="gap: .5em">
+          <v-card-text class="d-flex pa-3 pt-1" style="gap: 0.5em">
             <v-slider
               v-model="raiseValue"
               hide-details
               color="primary"
               step="10"
-              :min="(room.highest_bet - room.players[discordId]?.bet) + 10"
+              :min="room.highest_bet - room.players[discordId]?.bet + 10"
               :max="room.players[discordId]?.bank"
               :thumb-label="raiseValue"
               style="flex-grow: 6"
             >
               <template #prepend>
-                <button class="py-0 px-2 ma-0 mr-1" style="font-size: .9em" :disabled="raiseValue <= (room.highest_bet - room.players[discordId]?.bet) + 10" @mousedown="startAdjust(-10)" @mouseup="stopAdjust" @mouseleave="stopAdjust">-</button>
-                <button class="py-0 px-2 ma-0" style="font-size: .9em" :disabled="raiseValue >= room.players[discordId]?.bank" @mousedown="startAdjust(10)" @mouseup="stopAdjust" @mouseleave="stopAdjust">+</button>
-                <p class="text-right" style="min-width: 50px; font-size: .6em; padding: 0">{{ formatAmount(raiseValue) }}</p>
+                <button
+                  class="py-0 px-2 ma-0 mr-1"
+                  style="font-size: 0.9em"
+                  :disabled="raiseValue <= room.highest_bet - room.players[discordId]?.bet + 10"
+                  @mousedown="startAdjust(-10)"
+                  @mouseup="stopAdjust"
+                  @mouseleave="stopAdjust"
+                >
+                  -
+                </button>
+                <button
+                  class="py-0 px-2 ma-0"
+                  style="font-size: 0.9em"
+                  :disabled="raiseValue >= room.players[discordId]?.bank"
+                  @mousedown="startAdjust(10)"
+                  @mouseup="stopAdjust"
+                  @mouseleave="stopAdjust"
+                >
+                  +
+                </button>
+                <p class="text-right" style="min-width: 50px; font-size: 0.6em; padding: 0">
+                  {{ formatAmount(raiseValue) }}
+                </p>
               </template>
             </v-slider>
             <v-btn
               color="primary"
-              :disabled="raiseValue <= 0"
+              :disabled="raiseValue <= 0 || Object.values(room.players).find(p => p.allin)"
               style="border-radius: 10px; flex-grow: 2; width: 17%"
               :style="
                 raiseValue === room.players[discordId]?.bank ? 'border: 2px solid #dddddddd' : ''

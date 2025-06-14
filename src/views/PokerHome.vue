@@ -84,7 +84,7 @@ export default {
       const url = import.meta.env.VITE_FLAPI_URL + '/create-poker-room'
       try {
         const response = await axios.post(url, { creatorId: this.discordId })
-        this.$router.push('/poker/' + response.data.roomId)
+        this.$router.push(`/poker/${response.data.roomId}`)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
       }
