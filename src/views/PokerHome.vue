@@ -84,7 +84,7 @@ export default {
       const url = import.meta.env.VITE_FLAPI_URL + '/create-poker-room'
       try {
         const response = await axios.post(url, { creatorId: this.discordId })
-        this.$router.push('/poker/' + response.data.roomId)
+        this.$router.push(`/poker/${response.data.roomId}`)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
       }
@@ -217,7 +217,7 @@ export default {
           </v-card>
         </div>
         <div v-else class="rooms-cont">
-          <p class="ma-auto text-center">
+          <p class="ma-auto text-center text-white">
             Aucune table pour le moment
             <br>
             <span class="text-secondary font-weight-thin">Tu peux en créer une ^^</span>
