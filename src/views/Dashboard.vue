@@ -62,6 +62,15 @@
     <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
       <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
         <v-btn
+          v-if="!user.dailyQueried"
+          color="primary"
+          variant="text"
+          rounded
+          @click="handleDailyQuery"
+        >
+          <v-icon class="animate__animated animate__heartBeat animate__infinite animate__slow mdi mdi-gift" size="30"></v-icon>
+        </v-btn>
+        <v-btn
           text="Tic Tac Toe"
           class="text-none game-btn"
           color="primary"
@@ -1759,6 +1768,14 @@ export default {
           coins: this.buyCoinsForm.coins,
         })
         console.log(response)
+      } catch (e) {
+        console.log(e)
+      }
+    },
+
+    async handleDailyQuery() {
+      try {
+        const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily')
       } catch (e) {
         console.log(e)
       }
