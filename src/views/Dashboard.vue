@@ -62,6 +62,15 @@
     <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
       <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
         <v-btn
+          v-if="!user.dailyQueried"
+          color="primary"
+          variant="text"
+          rounded
+          @click="handleDailyQuery"
+        >
+          <v-icon class="animate__animated animate__heartBeat animate__infinite animate__slow mdi mdi-gift" size="30"></v-icon>
+        </v-btn>
+        <v-btn
           text="Tic Tac Toe"
           class="text-none game-btn"
           color="primary"
@@ -85,22 +94,23 @@
             />
           </template>
         </v-badge>
+        <v-spacer/>
+        <v-btn
+          text="FlopoCoins"
+          append-icon=""
+          class="text-none buy-btn"
+          color="white"
+          variant='tonal'
+          rounded="lg"
+          @click="coinsModal = true"
+        >
+          <template #append>
+            <v-img src="star.svg" width="12px" height="12px" />
+          </template>
+        </v-btn>
       </div>
 
-      <v-btn
-        text="FlopoCoins"
-        append-icon=""
-        class="text-none buy-btn"
-        color="white"
-        variant='tonal'
-        rounded="lg"
-        style="margin-top: .65em"
-        @click="coinsModal = true"
-      >
-        <template #append>
-          <v-img src="star.svg" width="12px" height="12px" />
-        </template>
-      </v-btn>
+
     </div>
 
     <v-tabs
@@ -112,8 +122,8 @@
       density="compact"
       class="tabs w-100 mt-5"
     >
-      <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
       <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
+      <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
       <v-tab value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
       <v-tab value="votes" icon>
         <i class="mdi mdi-timer-outline" />
@@ -122,6 +132,92 @@
     </v-tabs>
 
     <v-tabs-window v-model="tab" class="w-100">
+      <v-tabs-window-item value="commandes">
+        <div
+          class="actions-container"
+          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+        >
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Modif Pseudo</v-card-title>
+            <v-card-subtitle>
+              <p>Modifie le pseudo de quelqu'un</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="1K FlopoCoins"
+                class="text-none"
+                append-icon="mdi-play"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                :disabled="user?.coins < 1000"
+                @click="nicknameModal = true"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Spam Ping</v-card-title>
+            <v-card-subtitle>
+              <p>Spam quelqu'un pendant 30 secondes</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="10K FlopoCoins"
+                class="text-none"
+                append-icon="mdi-play"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                :disabled="user?.coins < 10000"
+                @click="spamPingModal = true"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Slow Mode</v-card-title>
+            <v-card-subtitle>
+              <p>1 message par minute pendant 1 heure</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="10K FlopoCoins"
+                class="text-none"
+                append-icon="mdi-play"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                :disabled="user?.coins < 10000"
+                @click="slowmodeModal = true"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>Time-Out</v-card-title>
+            <v-card-subtitle>
+              <p>Time-out quelqu'un pendant 6 heures</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="100K FlopoCoins"
+                class="text-none"
+                append-icon="mdi-play"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                :disabled="user?.coins < 100000"
+              />
+            </v-card-text>
+          </v-card>
+        </div>
+      </v-tabs-window-item>
+
       <v-tabs-window-item value="predictions">
         <div
           style="
@@ -261,92 +357,6 @@
             color="primary"
             indeterminate
           ></v-progress-circular>
-        </div>
-      </v-tabs-window-item>
-
-      <v-tabs-window-item value="commandes">
-        <div
-          class="actions-container"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
-        >
-          <v-card class="action-card" variant="tonal">
-            <v-card-title>Modif Pseudo</v-card-title>
-            <v-card-subtitle>
-              <p>Modifie le pseudo de quelqu'un</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="1K FlopoCoins"
-                class="text-none"
-                append-icon="mdi-play"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                :disabled="user?.coins < 1000"
-                @click="nicknameModal = true"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card" variant="tonal">
-            <v-card-title>Spam Ping</v-card-title>
-            <v-card-subtitle>
-              <p>Spam quelqu'un pendant 30 secondes</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="10K FlopoCoins"
-                class="text-none"
-                append-icon="mdi-play"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                :disabled="user?.coins < 10000"
-                @click="spamPingModal = true"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card" variant="tonal">
-            <v-card-title>Slow Mode</v-card-title>
-            <v-card-subtitle>
-              <p>1 message par minute pendant 1 heure</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="10K FlopoCoins"
-                class="text-none"
-                append-icon="mdi-play"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                :disabled="user?.coins < 10000"
-                @click="slowmodeModal = true"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>Time-Out</v-card-title>
-            <v-card-subtitle>
-              <p>Time-out quelqu'un pendant 6 heures</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="100K FlopoCoins"
-                class="text-none"
-                append-icon="mdi-play"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                :disabled="user?.coins < 100000"
-              />
-            </v-card-text>
-          </v-card>
         </div>
       </v-tabs-window-item>
 
@@ -1518,6 +1528,7 @@ export default {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/sparkline'
       try {
         const response = await axios.get(fetchUrl)
+        console.log(response.data.sparkline)
         return response.data.sparkline
       } catch (e) {
         console.error('flAPI error:', e)
@@ -1757,6 +1768,14 @@ export default {
           coins: this.buyCoinsForm.coins,
         })
         console.log(response)
+      } catch (e) {
+        console.log(e)
+      }
+    },
+
+    async handleDailyQuery() {
+      try {
+        const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily')
       } catch (e) {
         console.log(e)
       }
