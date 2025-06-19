@@ -275,7 +275,7 @@ export default {
           style="border-radius: 10px"
           @click="findPlayer"
         />
-        <p class="mb-3">
+        <p v-if="!oppName" class="mb-3">
           {{ !oppName && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
           <span v-for="(p, index) in queue" :key="p">
             {{index > 1 ? ',' : ''}}
