@@ -60,7 +60,7 @@
     </div>
 
     <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
-      <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
+      <div class="d-flex py-2" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
         <v-btn
           v-if="!user.dailyQueried"
           color="primary"
@@ -1902,7 +1902,7 @@ button:disabled {
   box-shadow: 0 0 0 0 transparent;
 }
 .buy-btn:hover {
-  box-shadow: 0 0 20px 0 #D1B46477;
+  box-shadow: 0 0 10px 0 #D1B46477;
 }
 .game-btn {
   z-index: 1;
