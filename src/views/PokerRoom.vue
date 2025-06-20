@@ -17,6 +17,8 @@ export default {
       adjustInterval: null,
 
       now: Date.now(),
+      users: {},
+      avatars: {},
     }
   },
 
@@ -24,7 +26,9 @@ export default {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
 
+    await this.getUsers()
     this.initSocket()
+    this.fetchAvatars()
     await this.getRoom()
   },
 
@@ -65,6 +69,12 @@ export default {
           console.log('no time left')
           if (this.discordId === this.room?.current_player) {
             console.log('auto fold')
+            this.handleFold()
+          }
+        }
+        if (Object.keys(this.room?.afk).includes(this.discordId)) {
+          if (this.discordId === this.room?.current_player) {
+            console.log('afk fold')
             this.handleFold()
           }
         }
@@ -268,6 +278,59 @@ export default {
         this.raiseValue = newValue
       }
     },
+
+    async getUsers() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        this.users = response.data
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+
+      try {
+        const response = await axios.get(fetchUrl + '/by-elo', {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        this.usersByElo = response.data
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    fetchAvatars() {
+      this.users.forEach(async (user) => {
+        this.avatars[user.id] = await this.getAvatar(user.id)
+      })
+    },
+
+    async getAvatar(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
+      try {
+        console.log(fetchUrl)
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        return response.data.avatarUrl
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
   },
 }
 </script>
@@ -287,7 +350,7 @@ export default {
               color="white"
               variant="tonal"
               rounded="lg"
-              :disabled="Object.keys(room.players).length < 2"
+              :disabled="Object.keys(room.players).length - Object.keys(room.afk).length < 2"
               @click="startGame"
             />
             <v-btn
@@ -300,15 +363,15 @@ export default {
               @click="joinRoom"
             />
             <v-btn
-              v-else
-              :text="Object.keys(room.players).length === 1 ? 'Supprimer la table' : 'Quitter'"
+              v-else-if="!Object.keys(room?.afk).includes(discordId)"
+              :text="Object.keys(room.players).length - Object.keys(room.afk).length <= 1 && discordId === room.host_id ? 'Supprimer la table' : 'Quitter'"
               class="text-none"
               color="error"
               rounded="lg"
               @click="leaveRoom"
             />
             <div
-              v-if="Object.keys(room.players).length < 2 && discordId === room?.host_id"
+              v-if="Object.keys(room.players).length - Object.keys(room.afk).length < 2 && discordId === room?.host_id"
               class="d-flex flex-column mt-2 ml-1"
               style="place-items: start; place-content: start"
             >
@@ -327,7 +390,6 @@ export default {
               : ''
           }}
         </p>
-        <!--        <p>{{room}}</p>-->
         <div style="position: relative">
           <v-card
             class="w-100 mt-16 py-16"
@@ -351,6 +413,7 @@ export default {
               <p v-if="room?.current_player"><span style="color: #dddddddd">Au tour de </span> {{room?.players[room?.current_player]?.globalName}}</p>
             </div>
           </v-card>
+          <v-divider class="mt-6"/>
           <div class="d-flex mb-16 pb-16" style="gap: 1rem; flex-wrap: wrap">
             <v-card
               v-for="(player, index) in Object.values(room.players)"
@@ -369,12 +432,19 @@ export default {
                 </div>
               </div>
               <v-card-title style="display: flex; place-items: center; gap: .5rem;">
+                <v-img :src="avatars[player.id]" class="bg-primary" width="20" max-width="20" height="20" rounded="xl"></v-img>
                 {{ player.globalName }}
                 <span
                   v-if="room.dealer === player.id"
                   style="background: #ddd; color: black; border-radius: 50%; padding: 0 .4em; font-size: .6em; font-weight: bold;"
                 >
                   D
+                </span>
+                <span
+                  v-if="Object.keys(room.afk).includes(player.id)"
+                  style="background: red; color: white; border-radius: 5px; padding: 0 .4em; font-size: .6em; font-weight: bold;"
+                >
+                  AFK
                 </span>
               </v-card-title>
               <v-card-text class="text-white pb-0">
@@ -400,8 +470,6 @@ export default {
                 <v-card-text
                   v-if="
                     player.id === discordId ||
-                    player.allin ||
-                    player.folded ||
                     !room.playing ||
                     room.current_turn === 4
                   "
@@ -423,8 +491,6 @@ export default {
                 <v-card-text
                   v-if="
                     player.id === discordId ||
-                    player.allin ||
-                    player.folded ||
                     !room.playing ||
                     room.current_turn === 4
                   "
