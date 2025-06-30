@@ -261,7 +261,6 @@ export default {
 
         <h1 class="text-white" style="position: relative;">
           Tic Tac Toe
-          <v-badge content="β BETA" color="secondary" style="position: absolute; top: .8em; right: 3.7em"/>
         </h1>
 
         <v-btn
