@@ -8,6 +8,9 @@ export const useToastStore = defineStore('toast', {
         timeout: 0,
         icon: null,
         color: null,
+        showTimeout: null,
+        initTimeout: null,
+        hideTimeout: null,
     }),
     actions: {
         closeToast() {
@@ -96,19 +99,21 @@ export const useToastStore = defineStore('toast', {
             this.show = true
         },
         showSuccessOrWarningToast(message, warning) {
-            setTimeout(() => {
-                this.show = false
-            }, 500)
+            clearTimeout(this.showTimeout);
+            clearTimeout(this.initTimeout);
+            clearTimeout(this.hideTimeout);
 
-            setTimeout(() => {
+            this.show = false
+
+            this.initTimeout = setTimeout(() => {
                 this.key = Date.now()
                 this.text = message
                 this.icon = warning ? 'mdi mdi-alert-circle-outline' : 'mdi mdi-check-bold'
                 this.color = warning ? 'warning' : 'primary'
                 this.show = true
-            }, 750)
+            }, 150)
 
-            setTimeout(() => {
+            this.hideTimeout = setTimeout(() => {
                 this.show = false
             }, 3000)
         },
