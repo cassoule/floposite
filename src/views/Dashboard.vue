@@ -1,12 +1,16 @@
 <template>
   <div v-if="user" class="user-tab">
-    <div style="position:relative;margin-top: 1rem">
+    <div style="position: relative; margin-top: 1rem">
       <v-sparkline
         smooth
         auto-draw
         color="primary"
         line-width="0.5"
-        :model-value="sparklines[discordId]?.length > 0 ? sparklines[discordId]?.map(entry => entry.user_new_amount) : [0]"
+        :model-value="
+          sparklines[discordId]?.length > 0
+            ? sparklines[discordId]?.map((entry) => entry.user_new_amount)
+            : [0]
+        "
         style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1"
       />
       <v-sparkline
@@ -32,11 +36,21 @@
           active_slowmodes && Object.values(active_slowmodes).find((s) => s.userId === discordId)
         "
         class="bubble-text"
-        style="background: radial-gradient(circle at -100% 0%, #ff8c00, transparent 120%); border: 1px solid #ff8c00"
+        style="
+          background: radial-gradient(circle at -100% 0%, #ff8c00, transparent 120%);
+          border: 1px solid #ff8c00;
+        "
       >
         slowmode
       </span>
-      <span v-if="user_isTimedOut" class="bubble-text" style="background: radial-gradient(circle at -100% 0%, #aa3e3e, transparent 120%); border: 1px solid #aa3e3e">
+      <span
+        v-if="user_isTimedOut"
+        class="bubble-text"
+        style="
+          background: radial-gradient(circle at -100% 0%, #aa3e3e, transparent 120%);
+          border: 1px solid #aa3e3e;
+        "
+      >
         timed out
       </span>
       <span class="bubble-text" style="opacity: 0" />
@@ -55,20 +69,41 @@
 
       <p class="mt-3">
         {{ elos[discordId] }} FlopoElo
-        <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{elos[discordId] < Math.max(...elo_graphs[discordId], 0) ? Math.max(...elo_graphs[discordId], 0) + ' PB' : 'PB'}}</span>
+        <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
+          elos[discordId] < Math.max(...elo_graphs[discordId], 0)
+            ? Math.max(...elo_graphs[discordId], 0) + ' PB'
+            : 'PB'
+        }}</span>
       </p>
     </div>
 
-    <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
-      <div class="d-flex py-2" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
+    <div
+      class="mt-5 d-flex align-center"
+      style="gap: 0.5rem; position: relative; place-content: space-between"
+    >
+      <div
+        class="d-flex py-2"
+        style="
+          gap: 1rem;
+          overflow-y: scroll;
+          overflow-x: visible;
+          padding-top: 0.6em;
+          padding-right: 1em;
+        "
+      >
         <v-btn
           v-if="!user.dailyQueried"
           color="primary"
-          variant="text"
-          rounded
+          variant="tonal"
+          rounded="lg"
+          style="border: 1px solid #5865f2"
           @click="handleDailyQuery"
         >
-          <v-icon class="animate__animated animate__heartBeat animate__infinite animate__slow mdi mdi-gift" size="30"></v-icon>
+          <v-icon
+            class="animate__animated animate__heartBeat animate__infinite animate__slow mdi mdi-gift"
+            size="20"
+            color="white"
+          ></v-icon>
         </v-btn>
         <v-btn
           text="Tic Tac Toe"
@@ -80,27 +115,26 @@
         />
         <v-badge color="secondary">
           <template #badge>
-            <p>α</p>
+            <p>β</p>
           </template>
           <template #default>
             <v-btn
               text="Flopoker"
               class="text-none game-btn"
               color="primary"
-              variant="tonal"
               append-icon="mdi mdi-cards-playing-spade-multiple"
               style="z-index: 0"
               @click="$router.push('/poker')"
             />
           </template>
         </v-badge>
-        <v-spacer/>
+        <v-spacer />
         <v-btn
           text="FlopoCoins"
           append-icon=""
           class="text-none buy-btn"
           color="white"
-          variant='tonal'
+          variant="tonal"
           rounded="lg"
           @click="coinsModal = true"
         >
@@ -109,8 +143,6 @@
           </template>
         </v-btn>
       </div>
-
-
     </div>
 
     <v-tabs
@@ -223,7 +255,7 @@
           style="
             position: absolute;
             z-index: 2;
-            padding: .7em .5em;
+            padding: 0.7em 0.5em;
             width: 100%;
             display: flex;
             place-content: space-between;
@@ -249,49 +281,66 @@
             v-for="[key, predi] in Object.entries(active_predis)"
             :key="key"
             class="votes-card"
-            :variant="((predi.endTime - Date.now()) / 1000).toFixed() < 0 || predi.closed ? 'plain' : 'tonal'"
+            :variant="
+              ((predi.endTime - Date.now()) / 1000).toFixed() < 0 || predi.closed
+                ? 'plain'
+                : 'tonal'
+            "
           >
             <div>
               <v-img
                 :src="avatars[predi.creatorId]"
                 color="transparent"
-                style="border-radius: 50%; width: 25px; height: 25px; position: absolute; right: 1em; top: 1em"
+                style="
+                  border-radius: 50%;
+                  width: 25px;
+                  height: 25px;
+                  position: absolute;
+                  right: 1em;
+                  top: 1em;
+                "
               />
               <v-card-text class="font-weight-bold pr-0 mr-12">
                 {{ predi.label }}
               </v-card-text>
               <v-card-subtitle class="pb-3">
-                {{
-                  predi.options[0].votes.length + predi.options[1].votes.length
-                }}
-                vote(s)
-                - Prédi de {{ users.find(u => u.id === predi.creatorId).globalName }}
+                {{ predi.options[0].votes.length + predi.options[1].votes.length }}
+                vote(s) - Prédi de {{ users.find((u) => u.id === predi.creatorId).globalName }}
               </v-card-subtitle>
               <v-card-subtitle class="d-flex pb-2" style="place-content: space-between">
-                <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">{{ predi.options[0].label }}</p>
-                <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">{{ predi.options[1].label }}</p>
+                <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
+                  {{ predi.options[0].label }}
+                </p>
+                <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
+                  {{ predi.options[1].label }}
+                </p>
               </v-card-subtitle>
               <v-card-text class="px-0">
                 <div
                   class="animate__animated animate__fadeIn"
-                  style="text-align: right; position: absolute;"
+                  style="text-align: right; position: absolute"
                   :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${predi.options[0].percent - 100}%); background: #5865f2; border: 2px solid #5865f277`"
                 >
-                  <p class="pr-4" style="transform: translateY(-25px)">{{ predi.options[0].percent.toFixed(1) }}%</p>
+                  <p class="pr-4" style="transform: translateY(-25px)">
+                    {{ predi.options[0].percent.toFixed(1) }}%
+                  </p>
                 </div>
                 <div
                   class="animate__animated animate__fadeIn"
-                  style="text-align: left; position: absolute;"
+                  style="text-align: left; position: absolute"
                   :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${100 - predi.options[1].percent}%); background: #aa3e3e; border: 2px solid #aa3e3e77`"
                 >
-                  <p class="pl-4" style="transform: translateY(-25px)">{{ predi.options[1].percent.toFixed(1) }}%</p>
+                  <p class="pl-4" style="transform: translateY(-25px)">
+                    {{ predi.options[1].percent.toFixed(1) }}%
+                  </p>
                 </div>
               </v-card-text>
               <v-card-subtitle class="d-flex justify-space-between pt-2">
                 <div style="display: flex; place-content: start; gap: 0">
-                  <div v-for="(vote, index) in predi.options[0].votes"
-                       :key="vote.id + Date.now()"
-                       :style="`transform: translateX(calc(-12px * ${index})); z-index: 1;`"
+                  <div
+                    v-for="(vote, index) in predi.options[0].votes"
+                    :key="vote.id + Date.now()"
+                    :style="`transform: translateX(calc(-12px * ${index})); z-index: 1;`"
                   >
                     <v-img
                       :src="avatars[vote.id]"
@@ -300,10 +349,13 @@
                     />
                   </div>
                 </div>
-                <div style="display: flex; flex-direction: row-reverse; place-content: start; gap: 0">
-                  <div v-for="(vote, index) in predi.options[1].votes"
-                       :key="vote.id + Date.now()"
-                       :style="`transform: translateX(calc(12px * ${index})); z-index: 1;`"
+                <div
+                  style="display: flex; flex-direction: row-reverse; place-content: start; gap: 0"
+                >
+                  <div
+                    v-for="(vote, index) in predi.options[1].votes"
+                    :key="vote.id + Date.now()"
+                    :style="`transform: translateX(calc(12px * ${index})); z-index: 1;`"
                   >
                     <v-img
                       :src="avatars[vote.id]"
@@ -330,7 +382,9 @@
                 <v-spacer />
                 <div v-if="!predi.options[0].votes.find((v) => v?.voter === discordId)">
                   <v-btn
-                    :text="((predi.closingTime - Date.now()) / 1000).toFixed() > 0 ? 'Voter' : 'Voir'"
+                    :text="
+                      ((predi.closingTime - Date.now()) / 1000).toFixed() > 0 ? 'Voter' : 'Voir'
+                    "
                     color="primary"
                     variant="flat"
                     rounded="lg"
@@ -500,8 +554,20 @@
       <p>Je crois qu'on ne se connait pas...</p>
       <p class="mt-3">Mais tu peux quand même jouer à certains jeux ! ^^</p>
     </div>
-    <div class="mt-5 d-flex align-center" style="gap: .5rem; position: relative; place-content: space-between">
-      <div class="d-flex" style="gap: 1rem; overflow-y: scroll; overflow-x: visible; padding-top: .6em; padding-right: 1em">
+    <div
+      class="mt-5 d-flex align-center"
+      style="gap: 0.5rem; position: relative; place-content: space-between"
+    >
+      <div
+        class="d-flex"
+        style="
+          gap: 1rem;
+          overflow-y: scroll;
+          overflow-x: visible;
+          padding-top: 0.6em;
+          padding-right: 1em;
+        "
+      >
         <v-btn
           text="Tic Tac Toe"
           class="text-none game-btn"
@@ -533,7 +599,14 @@
   </div>
 
   <div v-if="users" class="leaderboard-container pl-3">
-    <h2 style="display: flex; place-content: space-between">Classement <span class="text-capitalize text-secondary cursor-pointer rounded-lg" @click="leaderboardSwitch">{{leaderboardType}}</span></h2>
+    <h2 style="display: flex; place-content: space-between">
+      Classement
+      <span
+        class="text-capitalize text-secondary cursor-pointer rounded-lg"
+        @click="leaderboardSwitch"
+        >{{ leaderboardType }}</span
+      >
+    </h2>
     <div class="leaderboard">
       <div
         v-for="akhy in leaderboardUsers"
@@ -555,7 +628,7 @@
             padding: 0.5em 1em;
           "
         >
-          <span style="color: #ddd; display: flex; place-items: center; gap: .7rem">
+          <span style="color: #ddd; display: flex; place-items: center; gap: 0.7rem">
             <v-img
               :src="avatars[akhy.id]"
               color="transparent"
@@ -564,12 +637,7 @@
             @{{ akhy?.globalName }}
           </span>
           {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
-          <v-menu
-            activator="parent"
-            location="end"
-            open-on-hover
-            transition="scale-transition"
-          >
+          <v-menu activator="parent" location="end" open-on-hover transition="scale-transition">
             <v-list
               width="250"
               class="mr-2 py-0"
@@ -578,12 +646,12 @@
               bg-color="#181818"
               base-color="white"
               variant="tonal"
-              style="
-                border: 2px solid #FFFFFF55;
-              "
+              style="border: 2px solid #ffffff55"
             >
               <v-list-item class="px-2">
-                <v-list-item-title style="display: flex; place-content: start; place-items: center; gap: .7rem">
+                <v-list-item-title
+                  style="display: flex; place-content: start; place-items: center; gap: 0.7rem"
+                >
                   <v-img
                     :src="avatars[akhy.id]"
                     color="transparent"
@@ -600,14 +668,24 @@
                   class="pa-0 ma-0"
                   color="primary"
                   line-width="2"
-                  :model-value="sparklines[akhy.id]?.length > 1 ? sparklines[akhy.id]?.map(entry => entry.user_new_amount) : [0, 0]"
+                  :model-value="
+                    sparklines[akhy.id]?.length > 1
+                      ? sparklines[akhy.id]?.map((entry) => entry.user_new_amount)
+                      : [0, 0]
+                  "
                   style="position: absolute; left: 0; top: 0"
                   title="Evolution de FlopoCoins"
                 />
               </v-list-item>
               <v-list-item>
                 <v-list-item-subtitle>
-                  {{ users.find(u => u.id === akhy.id)?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} FlopoCoins
+                  {{
+                    users
+                      .find((u) => u.id === akhy.id)
+                      ?.coins.toString()
+                      .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+                  }}
+                  FlopoCoins
                 </v-list-item-subtitle>
               </v-list-item>
               <v-list-item>
@@ -623,9 +701,7 @@
                 />
               </v-list-item>
               <v-list-item>
-                <v-list-item-subtitle>
-                  {{ elos[akhy.id] ?? 0 }} FlopoElo
-                </v-list-item-subtitle>
+                <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoElo </v-list-item-subtitle>
               </v-list-item>
             </v-list>
           </v-menu>
@@ -636,7 +712,13 @@
 
   <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 
-  <v-dialog v-model="coinsModal" class="modals" :max-width="coinsModalMaxWidth" scroll-strategy="reposition" scrollable>
+  <v-dialog
+    v-model="coinsModal"
+    class="modals"
+    :max-width="coinsModalMaxWidth"
+    scroll-strategy="reposition"
+    scrollable
+  >
     <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
       <v-card-title class="pt-4"> Achat de FlopoCoins </v-card-title>
       <v-card-subtitle class="pb-1">
@@ -965,10 +1047,10 @@
             { time: 1800, label: '30 minutes' },
             { time: 3600, label: '1 heure' },
             { time: 7200, label: '2 heures' },
-						{ time: 10800, label: '3 heures' },
-						{ time: 14400, label: '4 heures' },
-						{ time: 18000, label: '5 heures' },
-						{ time: 21600, label: '6 heures' },
+            { time: 10800, label: '3 heures' },
+            { time: 14400, label: '4 heures' },
+            { time: 18000, label: '5 heures' },
+            { time: 21600, label: '6 heures' },
             { time: 43200, label: '12 heures' },
             { time: 86400, label: '24 heures' },
           ]"
@@ -984,16 +1066,16 @@
         <v-select
           v-model="prediForm.payoutTime"
           label="Résultats"
-                    :items="[
+          :items="[
             { time: 300, label: '5 minutes' },
             { time: 600, label: '10 minutes' },
             { time: 1800, label: '30 minutes' },
             { time: 3600, label: '1 heure' },
             { time: 7200, label: '2 heures' },
-						{ time: 10800, label: '3 heures' },
-						{ time: 14400, label: '4 heures' },
-						{ time: 18000, label: '5 heures' },
-						{ time: 21600, label: '6 heures' },
+            { time: 10800, label: '3 heures' },
+            { time: 14400, label: '4 heures' },
+            { time: 18000, label: '5 heures' },
+            { time: 21600, label: '6 heures' },
             { time: 43200, label: '12 heures' },
             { time: 86400, label: '24 heures' },
           ]"
@@ -1058,7 +1140,13 @@
     </v-card>
   </v-dialog>
 
-  <v-dialog v-model="prediVoteModal" class="modals" max-width="800" scroll-strategy="reposition" scrollable>
+  <v-dialog
+    v-model="prediVoteModal"
+    class="modals"
+    max-width="800"
+    scroll-strategy="reposition"
+    scrollable
+  >
     <v-card v-if="selectedPredi" class="modal-card" variant="tonal" :key="Date.now()">
       <v-card-title>{{ selectedPredi.label }}</v-card-title>
       <v-card-subtitle>
@@ -1066,21 +1154,32 @@
       </v-card-subtitle>
       <v-card-text class="pa-0">
         <v-card-text v-if="!processingVote" class="w-100 d-flex predi-vote-options pb-4 px-4">
-          <v-card class="predi-option-card" variant="text" rounded="xl" :style="(selectedPredi.options[0].votes.find(v => v.id === discordId)) || (selectedOption === 0 && !selectedPredi.options[1].votes.find(v => v.id === discordId)) ? 'box-shadow: 0 0 10px 0 #ddddddaa !important; border: 2px solid #5865f2 !important' : ''" @click="((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 && !selectedPredi.options[1].votes.find(v => v.id === discordId) && !selectedPredi.closed ? selectedOption = 0 : ''">
+          <v-card
+            class="predi-option-card"
+            variant="text"
+            rounded="xl"
+            :style="
+              selectedPredi.options[0].votes.find((v) => v.id === discordId) ||
+              (selectedOption === 0 &&
+                !selectedPredi.options[1].votes.find((v) => v.id === discordId))
+                ? 'box-shadow: 0 0 10px 0 #ddddddaa !important; border: 2px solid #5865f2 !important'
+                : ''
+            "
+            @click="
+              ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 &&
+              !selectedPredi.options[1].votes.find((v) => v.id === discordId) &&
+              !selectedPredi.closed
+                ? (selectedOption = 0)
+                : ''
+            "
+          >
             <v-card-text class="font-weight-bold">{{ selectedPredi.options[0].label }}</v-card-text>
             <v-card-subtitle>Option 1</v-card-subtitle>
             <v-card-text class="d-flex justify-center">
-              <h1>{{formatAmount(selectedPredi.options[0].total)}}</h1>
+              <h1>{{ formatAmount(selectedPredi.options[0].total) }}</h1>
             </v-card-text>
             <v-card-item class="pr-0">
-              <div
-                style="
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                place-items: end;
-              "
-              >
+              <div style="width: 100%; display: flex; flex-direction: column; place-items: end">
                 <p class="pr-4">{{ selectedPredi.options[0].percent.toFixed(1) }}%</p>
                 <div
                   class="animate__animated animate__fadeIn"
@@ -1089,13 +1188,31 @@
               </div>
             </v-card-item>
             <v-card-text class="pb-1">
-              <p>{{ selectedPredi.options[0].votes.length }} vote(s) - Côte {{ (selectedPredi.options[0].total > 0 ? 1+(selectedPredi.options[1].total / selectedPredi.options[0].total) : 1).toFixed(2) }}</p>
+              <p>
+                {{ selectedPredi.options[0].votes.length }} vote(s) - Côte
+                {{
+                  (selectedPredi.options[0].total > 0
+                    ? 1 + selectedPredi.options[1].total / selectedPredi.options[0].total
+                    : 1
+                  ).toFixed(2)
+                }}
+              </p>
             </v-card-text>
             <v-card-text class="d-flex justify-space-between pt-0 pb-3">
-              <div style="display: flex; place-content: start; gap: 0; width: 100%; overflow: hidden; border-radius: 10px">
-                <div v-for="(vote, index) in selectedPredi.options[0].votes"
-                     :key="vote.id + Date.now()"
-                     :style="`transform: translateX(calc(-10px * ${index})); z-index: 1;`"
+              <div
+                style="
+                  display: flex;
+                  place-content: start;
+                  gap: 0;
+                  width: 100%;
+                  overflow: hidden;
+                  border-radius: 10px;
+                "
+              >
+                <div
+                  v-for="(vote, index) in selectedPredi.options[0].votes"
+                  :key="vote.id + Date.now()"
+                  :style="`transform: translateX(calc(-10px * ${index})); z-index: 1;`"
                 >
                   <v-img
                     :src="avatars[vote.id]"
@@ -1106,21 +1223,32 @@
               </div>
             </v-card-text>
           </v-card>
-          <v-card class="predi-option-card" variant="text" rounded="xl" :style="selectedPredi.options[1].votes.find(v => v.id === discordId) || (selectedOption === 1 && !selectedPredi.options[0].votes.find(v => v.id === discordId)) ? 'box-shadow: 0 0 10px 0 #ddddddaa !important; border: 2px solid #aa3e3e !important' : ''" @click="((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 && !selectedPredi.options[0].votes.find(v => v.id === discordId) && !selectedPredi.closed ? selectedOption = 1 : ''">
+          <v-card
+            class="predi-option-card"
+            variant="text"
+            rounded="xl"
+            :style="
+              selectedPredi.options[1].votes.find((v) => v.id === discordId) ||
+              (selectedOption === 1 &&
+                !selectedPredi.options[0].votes.find((v) => v.id === discordId))
+                ? 'box-shadow: 0 0 10px 0 #ddddddaa !important; border: 2px solid #aa3e3e !important'
+                : ''
+            "
+            @click="
+              ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 &&
+              !selectedPredi.options[0].votes.find((v) => v.id === discordId) &&
+              !selectedPredi.closed
+                ? (selectedOption = 1)
+                : ''
+            "
+          >
             <v-card-text class="font-weight-bold">{{ selectedPredi.options[1].label }}</v-card-text>
             <v-card-subtitle>Option 2</v-card-subtitle>
             <v-card-text class="d-flex justify-center">
-              <h1>{{formatAmount(selectedPredi.options[1].total)}}</h1>
+              <h1>{{ formatAmount(selectedPredi.options[1].total) }}</h1>
             </v-card-text>
             <v-card-item class="pl-0">
-              <div
-                style="
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                place-items: start;
-              "
-              >
+              <div style="width: 100%; display: flex; flex-direction: column; place-items: start">
                 <p class="pl-4">{{ selectedPredi.options[1].percent.toFixed(1) }}%</p>
                 <div
                   class="animate__animated animate__fadeIn"
@@ -1129,13 +1257,31 @@
               </div>
             </v-card-item>
             <v-card-text class="pb-1">
-              <p>{{ selectedPredi.options[1].votes.length }} vote(s) - Côte {{ (selectedPredi.options[1].total > 0 ? 1+(selectedPredi.options[0].total / selectedPredi.options[1].total) : 1).toFixed(2) }}</p>
+              <p>
+                {{ selectedPredi.options[1].votes.length }} vote(s) - Côte
+                {{
+                  (selectedPredi.options[1].total > 0
+                    ? 1 + selectedPredi.options[0].total / selectedPredi.options[1].total
+                    : 1
+                  ).toFixed(2)
+                }}
+              </p>
             </v-card-text>
             <v-card-text class="d-flex justify-space-between pt-0 pb-3">
-              <div style="display: flex; place-content: start; gap: 0; width: 100%; overflow: hidden; border-radius: 10px">
-                <div v-for="(vote, index) in selectedPredi.options[1].votes"
-                     :key="vote.id + Date.now()"
-                     :style="`transform: translateX(calc(-10px * ${index})); z-index: 1;`"
+              <div
+                style="
+                  display: flex;
+                  place-content: start;
+                  gap: 0;
+                  width: 100%;
+                  overflow: hidden;
+                  border-radius: 10px;
+                "
+              >
+                <div
+                  v-for="(vote, index) in selectedPredi.options[1].votes"
+                  :key="vote.id + Date.now()"
+                  :style="`transform: translateX(calc(-10px * ${index})); z-index: 1;`"
                 >
                   <v-img
                     :src="avatars[vote.id]"
@@ -1147,40 +1293,114 @@
             </v-card-text>
           </v-card>
         </v-card-text>
-        <v-card-item v-if="!processingVote" v-show="((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 && !selectedPredi.closed">
-          <v-number-input v-model="prediVoteForm.amount" class="pt-1" clearable variant="outlined" control-variant="hidden" density="compact" rounded="lg" label="Montant du paris" :hint="`${formatAmount(Math.min(user.coins, 250000))} FlopoCoins max (10 minimum)`" :max="Math.min(user.coins, 250000)">
+        <v-card-item
+          v-if="!processingVote"
+          v-show="
+            ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 && !selectedPredi.closed
+          "
+        >
+          <v-number-input
+            v-model="prediVoteForm.amount"
+            class="pt-1"
+            clearable
+            variant="outlined"
+            control-variant="hidden"
+            density="compact"
+            rounded="lg"
+            label="Montant du paris"
+            :hint="`${formatAmount(Math.min(user.coins, 250000))} FlopoCoins max (10 minimum)`"
+            :max="Math.min(user.coins, 250000)"
+          >
             <template #append>
-              <v-btn variant="flat"  text="Prédir" :color="selectedOption === 1 ? '#aa3e3e' : '#5865f2'" class="text-none" :disabled="selectedOption === null || !prediVoteForm.amount || prediVoteForm.amount < 10 || prediVoteForm > 250000" @click="prediVote" @click.stop="prediVoteModal = false"></v-btn>
+              <v-btn
+                variant="flat"
+                text="Prédir"
+                :color="selectedOption === 1 ? '#aa3e3e' : '#5865f2'"
+                class="text-none"
+                :disabled="
+                  selectedOption === null ||
+                  !prediVoteForm.amount ||
+                  prediVoteForm.amount < 10 ||
+                  prediVoteForm > 250000
+                "
+                @click="prediVote"
+                @click.stop="prediVoteModal = false"
+              ></v-btn>
             </template>
           </v-number-input>
         </v-card-item>
-        <v-card-subtitle v-if="selectedPredi.options[0].votes.find(v => v.id === discordId) || selectedPredi.options[1].votes.find(v => v.id === discordId)?.amount">
-          Tu as misé {{ formatAmount(selectedPredi.options[0].votes.find(v => v.id === discordId)?.amount ?? selectedPredi.options[1].votes.find(v => v.id === discordId)?.amount) }}
+        <v-card-subtitle
+          v-if="
+            selectedPredi.options[0].votes.find((v) => v.id === discordId) ||
+            selectedPredi.options[1].votes.find((v) => v.id === discordId)?.amount
+          "
+        >
+          Tu as misé
+          {{
+            formatAmount(
+              selectedPredi.options[0].votes.find((v) => v.id === discordId)?.amount ??
+                selectedPredi.options[1].votes.find((v) => v.id === discordId)?.amount,
+            )
+          }}
           FlopoCoins sur
-          <span class="font-weight-bold font-italic">'{{ selectedPredi.options[0].votes.find(v => v.id === discordId) ? selectedPredi.options[0].label : selectedPredi.options[1].label }}'</span>
+          <span class="font-weight-bold font-italic"
+            >'{{
+              selectedPredi.options[0].votes.find((v) => v.id === discordId)
+                ? selectedPredi.options[0].label
+                : selectedPredi.options[1].label
+            }}'</span
+          >
         </v-card-subtitle>
         <v-card-text class="px-4">
           <p v-if="!selectedPredi.closed">
             {{
               ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0
                 ? ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() +
-                's restantes pour voter'
+                  's restantes pour voter'
                 : ((selectedPredi.endTime - Date.now()) / 1000).toFixed() > 0
                   ? Math.max(((selectedPredi.endTime - Date.now()) / 1000).toFixed(), 0) +
-                  's avant les résultats'
+                    's avant les résultats'
                   : 'Prédi terminée, en attente de validation'
             }}
           </p>
-          <p v-else-if="selectedPredi.cancelledTime === null">Prédi terminée, les FlopoCoins ont été distribués - Résultat : <span class="font-weight-bold font-italic">'{{selectedPredi.options[selectedPredi.winning].label}}'</span></p>
+          <p v-else-if="selectedPredi.cancelledTime === null">
+            Prédi terminée, les FlopoCoins ont été distribués - Résultat :
+            <span class="font-weight-bold font-italic"
+              >'{{ selectedPredi.options[selectedPredi.winning].label }}'</span
+            >
+          </p>
           <p v-else>Prédi annulée, les FlopoCoins ont été remboursés</p>
         </v-card-text>
         <v-card-item v-if="discordId === devId" class="px-4">
-          <v-btn color="primary" text="Valider option 1" rounded="lg" class="mr-3" :disabled="selectedPredi.closingTime > Date.now() || selectedPredi.closed" @click="endPredi(true, 0)" @click.stop="prediVoteModal = false"/>
-          <v-btn color="primary" text="Valider option 2" rounded="lg" class="mr-3" :disabled="selectedPredi.closingTime > Date.now() || selectedPredi.closed" @click="endPredi(true, 1)" @click.stop="prediVoteModal = false"/>
-          <v-btn color="primary" text="Annuler la prédi" rounded="lg" variant="outlined" :disabled="selectedPredi.closed" @click="endPredi(false, null)" @click.stop="prediVoteModal = false"/>
+          <v-btn
+            color="primary"
+            text="Valider option 1"
+            rounded="lg"
+            class="mr-3"
+            :disabled="selectedPredi.closingTime > Date.now() || selectedPredi.closed"
+            @click="endPredi(true, 0)"
+            @click.stop="prediVoteModal = false"
+          />
+          <v-btn
+            color="primary"
+            text="Valider option 2"
+            rounded="lg"
+            class="mr-3"
+            :disabled="selectedPredi.closingTime > Date.now() || selectedPredi.closed"
+            @click="endPredi(true, 1)"
+            @click.stop="prediVoteModal = false"
+          />
+          <v-btn
+            color="primary"
+            text="Annuler la prédi"
+            rounded="lg"
+            variant="outlined"
+            :disabled="selectedPredi.closed"
+            @click="endPredi(false, null)"
+            @click.stop="prediVoteModal = false"
+          />
         </v-card-item>
       </v-card-text>
-
     </v-card>
   </v-dialog>
 </template>
@@ -1276,12 +1496,21 @@ export default {
       if (!this.selectedPredi) return
       let res1 = 0
       let res2 = 0
-      if (this.selectedPredi.options[0].votes.length === 0 && this.selectedPredi.options[1].votes.length === 0) return {
-        res1,
-        res2
-      }
+      if (
+        this.selectedPredi.options[0].votes.length === 0 &&
+        this.selectedPredi.options[1].votes.length === 0
+      )
+        return {
+          res1,
+          res2,
+        }
 
-      res1 = this.selectedPredi.options[1].votes.length === 0 ? 100 : (this.prediOptionStats(this.selectedPredi.options[0].votes, 'amount') / this.prediOptionStats(this.selectedPredi.options[1].votes, 'amount')) * 100
+      res1 =
+        this.selectedPredi.options[1].votes.length === 0
+          ? 100
+          : (this.prediOptionStats(this.selectedPredi.options[0].votes, 'amount') /
+              this.prediOptionStats(this.selectedPredi.options[1].votes, 'amount')) *
+            100
       res2 = 100 - res1
 
       return { res1, res2 }
@@ -1380,9 +1609,9 @@ export default {
 
   watch: {
     prediVoteModal(newValue) {
-      this.selectedOption = !newValue ? null : this.selectedOption;
+      this.selectedOption = !newValue ? null : this.selectedOption
       this.getActivePredis()
-    }
+    },
   },
 
   methods: {
@@ -1397,9 +1626,7 @@ export default {
     },
     leaderboardSwitch() {
       this.leaderboardType = this.leaderboardType === 'coins' ? 'elo' : 'coins'
-      this.leaderboardUsers = this.leaderboardType === 'coins'
-        ? this.users
-        : this.usersByElo
+      this.leaderboardUsers = this.leaderboardType === 'coins' ? this.users : this.usersByElo
     },
 
     initSocket() {
@@ -1408,7 +1635,7 @@ export default {
         withCredentials: false,
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
-        }
+        },
       })
 
       this.socket.emit('user-connected', this.discordId)
@@ -1719,7 +1946,7 @@ export default {
           commandUserId: this.discordId,
           predi: this.selectedPrediKey,
           amount: this.prediVoteForm.amount,
-          option: this.selectedOption
+          option: this.selectedOption,
         })
         console.log(response)
         this.showSuccessOrWarningToast(response.data.message, false)
@@ -1731,7 +1958,7 @@ export default {
     async endPredi(confirm, winningOption) {
       this.showCommandToast('Fermeture de la prédiction...')
       if (this.discordId !== this.devId) {
-        this.showErrorToast('Tu n\'as pas les permissions requises')
+        this.showErrorToast("Tu n'as pas les permissions requises")
         return
       }
       try {
@@ -1775,7 +2002,9 @@ export default {
 
     async handleDailyQuery() {
       try {
-        const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily')
+        const response = await axios.get(
+          import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily',
+        )
       } catch (e) {
         console.log(e)
       }
@@ -1896,13 +2125,30 @@ button:disabled {
 .buy-btn {
   z-index: 1;
   border-radius: 10px !important;
-  background: radial-gradient(ellipse farthest-corner at right bottom, #FEDB37 0%, #FDB931 8%, #9f7928 30%, #8A6E2F 40%, transparent 200%),
-  radial-gradient(ellipse farthest-corner at left top, #FFFFFF 0%, #FFFFAC 8%, #D1B464 25%, #5d4a1f 62.5%, #5d4a1f 100%);
-  transition: .3s ease-in-out, .6s ease-in-out box-shadow;
+  background:
+    radial-gradient(
+      ellipse farthest-corner at right bottom,
+      #fedb37 0%,
+      #fdb931 8%,
+      #9f7928 30%,
+      #8a6e2f 40%,
+      transparent 200%
+    ),
+    radial-gradient(
+      ellipse farthest-corner at left top,
+      #ffffff 0%,
+      #ffffac 8%,
+      #d1b464 25%,
+      #5d4a1f 62.5%,
+      #5d4a1f 100%
+    );
+  transition:
+    0.3s ease-in-out,
+    0.6s ease-in-out box-shadow;
   box-shadow: 0 0 0 0 transparent;
 }
 .buy-btn:hover {
-  box-shadow: 0 0 10px 0 #D1B46477;
+  box-shadow: 0 0 10px 0 #d1b46477;
 }
 .game-btn {
   z-index: 1;
