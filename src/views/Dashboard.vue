@@ -1915,12 +1915,15 @@ export default {
       })
     },
 
-    async fetchUsername() {
+    async fetchUsername(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/username'
       try {
-        const response = await axios.get(`https://discord.com/api/v10/users/${this.discordId}`, {
+        const response = await axios.get(fetchUrl, {
           headers: {
-            Authorization: `Bot ${import.meta.env.VITE_BOT_TOKEN}`,
-          }
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
         })
         this.anonUsername = response.data.username
       } catch (e) {
