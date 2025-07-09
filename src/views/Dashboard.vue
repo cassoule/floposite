@@ -1925,8 +1925,7 @@ export default {
           },
           withCredentials: false,
         })
-        console.log(response.data)
-        return response.data.username
+        return response.data?.user?.globalName
       } catch (e) {
         console.log(e)
       }
