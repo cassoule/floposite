@@ -1833,7 +1833,7 @@ export default {
     this.leaderboardUsers = this.users
 
     this.avatar = await this.getAvatar(this.discordId)
-    await this.fetchUsername()
+    this anonUsername = await this.fetchUsername(this.discordId)
     this.fetchAvatars()
     this.fetchSparklines()
     this.fetchElos()
@@ -1925,7 +1925,8 @@ export default {
           },
           withCredentials: false,
         })
-        this.anonUsername = response.data.username
+        console.log(response.data)
+        return response.data.username
       } catch (e) {
         console.log(e)
       }
