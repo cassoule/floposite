@@ -1833,7 +1833,7 @@ export default {
     this.leaderboardUsers = this.users
 
     this.avatar = await this.getAvatar(this.discordId)
-    this anonUsername = await this.fetchUsername(this.discordId)
+    this.anonUsername = await this.fetchUsername(this.discordId)
     this.fetchAvatars()
     this.fetchSparklines()
     this.fetchElos()
