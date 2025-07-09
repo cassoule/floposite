@@ -166,23 +166,6 @@ export default {
           <v-badge content="β BETA" color="secondary" style="position: absolute; top: .8em; right: -1em"/>
         </h1>
 
-        <v-alert color="#dddddd22" variant="flat" rounded="xl" closable>
-          <v-alert-title class="text-white">
-            Bêta, mais...
-          </v-alert-title>
-          <br>
-          <p class="text-white">Le Flopoker est en bêta, cependant il influe maintenant réellement sur les coins et l'elo de chaque joueurs présent au <i>classement</i>.</p>
-          <p class="text-white font-weight-bold">Je ne peux pas assurer que les coins (ou l'elo) perdus à l'occasion de potentiels bugs puissent être récupérés.</p>
-          <br>
-          <p class="text-white">Si un joueur non présent au <i>classement</i> ou avec moins de 100 FlopoCoins rejoint une table alors celle-ci n'influera que sur l'elo des joueurs présent au <i>classement</i> et pas sur leurs FlopoCoins.</p>
-          <template #close="{ props }">
-            <v-icon v-bind="props" icon="mdi mdi-close" color="white"></v-icon>
-          </template>
-          <template #prepend>
-            <v-icon icon="mdi mdi-beta" color="white"></v-icon>
-          </template>
-        </v-alert>
-
         <h2 class="text-white d-flex justify-space-between align-center mt-8 mb-4" style="border-radius: 15px; background: #dddddd22; padding: 5px 5px 5px .6em">
           Tables
           <v-btn

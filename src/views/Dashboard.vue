@@ -2,6 +2,7 @@
   <div v-if="user" class="user-tab">
     <div style="position: relative; margin-top: 1rem">
       <v-sparkline
+        v-if="sparklines[discordId]?.length > 0"
         smooth
         auto-draw
         color="primary"
@@ -11,15 +12,16 @@
             ? sparklines[discordId]?.map((entry) => entry.user_new_amount)
             : [0]
         "
-        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1"
+        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1; height: 100%; width: 100%"
       />
       <v-sparkline
+        v-if="elo_graphs[discordId]?.length > 0"
         smooth
         auto-draw
         color="secondary"
         line-width="0.5"
         :model-value="elo_graphs[discordId]?.length > 0 ? elo_graphs[discordId] : [0]"
-        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1"
+        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1; height: 100%; width: 100%"
       />
       <v-img
         :src="avatar"
@@ -92,6 +94,28 @@
         "
       >
         <v-btn
+          class="text-capitalize"
+          text="échanger"
+          append-icon="mdi-swap-horizontal"
+          color="dark"
+          variant="flat"
+          rounded="lg"
+          disabled
+        />
+        <v-btn
+          text="Acheter"
+          append-icon=""
+          class="text-none buy-btn"
+          color="white"
+          variant="tonal"
+          rounded="lg"
+          @click="coinsModal = true"
+        >
+          <template #append>
+            <v-img src="star.svg" width="12px" height="12px" />
+          </template>
+        </v-btn>
+        <v-btn
           v-if="!user.dailyQueried"
           color="primary"
           variant="tonal"
@@ -105,43 +129,6 @@
             color="white"
           ></v-icon>
         </v-btn>
-        <v-btn
-          text="Tic Tac Toe"
-          class="text-none game-btn"
-          color="primary"
-          append-icon="mdi mdi-pound"
-          style="z-index: 0"
-          @click="$router.push('/tic-tac-toe')"
-        />
-        <v-badge color="secondary">
-          <template #badge>
-            <p>β</p>
-          </template>
-          <template #default>
-            <v-btn
-              text="Flopoker"
-              class="text-none game-btn"
-              color="primary"
-              append-icon="mdi mdi-cards-playing-spade-multiple"
-              style="z-index: 0"
-              @click="$router.push('/poker')"
-            />
-          </template>
-        </v-badge>
-        <v-spacer />
-        <v-btn
-          text="FlopoCoins"
-          append-icon=""
-          class="text-none buy-btn"
-          color="white"
-          variant="tonal"
-          rounded="lg"
-          @click="coinsModal = true"
-        >
-          <template #append>
-            <v-img src="star.svg" width="12px" height="12px" />
-          </template>
-        </v-btn>
       </div>
     </div>
 
@@ -154,6 +141,7 @@
       density="compact"
       class="tabs w-100 mt-5"
     >
+      <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
       <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
       <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
       <v-tab value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
@@ -164,6 +152,144 @@
     </v-tabs>
 
     <v-tabs-window v-model="tab" class="w-100">
+      <v-tabs-window-item value="games">
+        <div
+          class="actions-container"
+          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+        >
+          <v-card class="action-card bg-black" variant="tonal">
+            <v-card-title>Tic Tac Toe</v-card-title>
+            <v-card-subtitle>
+              <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoElo.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none game-btn"
+                color="primary"
+                append-icon="mdi mdi-pound"
+                style="z-index: 0"
+                @click="$router.push('/tic-tac-toe')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card bg-black" variant="tonal">
+            <v-card-title>Flopoker</v-card-title>
+            <v-card-subtitle>
+              <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-badge color="secondary">
+                <template #badge>
+                  <p>β</p>
+                </template>
+                <template #default>
+                  <v-btn
+                    text="Jouer"
+                    class="text-none game-btn"
+                    color="primary"
+                    append-icon="mdi mdi-cards-playing-spade-multiple"
+                    style="z-index: 0"
+                    @click="$router.push('/poker')"
+                  />
+                </template>
+              </v-badge>
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title> <!--Blackjack-->
+            <v-card-subtitle>
+<!--              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-cards"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title><!--Puissance 4-->
+            <v-card-subtitle>
+<!--              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-numeric-4-circle"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title><!--Chess-->
+            <v-card-subtitle>
+<!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoElo.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-chess-king"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title><!--Loup-Garou-->
+            <v-card-subtitle>
+<!--              <p>Joue une partie de ce loup-garou un peu particulier, de 4 à 8 joueurs.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-fire-circle"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title><!--Solitaire-->
+            <v-card-subtitle>
+<!--              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-cards-spade"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+        </div>
+      </v-tabs-window-item>
+
       <v-tabs-window-item value="commandes">
         <div
           class="actions-container"
@@ -549,51 +675,163 @@
         style="border-radius: 50%"
       />
       <h1 class="mb-3">
-        Salut <span style="color: #5865f2">{{ discordId }}</span> (⊙_⊙)？
+        Salut <span style="color: #5865f2">{{ anonUsername ?? discordId }}</span> (⊙_⊙)？
       </h1>
       <p>Je crois qu'on ne se connait pas...</p>
       <p class="mt-3">Mais tu peux quand même jouer à certains jeux ! ^^</p>
     </div>
-    <div
-      class="mt-5 d-flex align-center"
-      style="gap: 0.5rem; position: relative; place-content: space-between"
+
+    <v-tabs
+      v-model="tab"
+      variant="tonal"
+      color="white"
+      align-tabs="center"
+      grow
+      density="compact"
+      class="tabs w-100 mt-16"
     >
-      <div
-        class="d-flex"
-        style="
-          gap: 1rem;
-          overflow-y: scroll;
-          overflow-x: visible;
-          padding-top: 0.6em;
-          padding-right: 1em;
-        "
-      >
-        <v-btn
-          text="Tic Tac Toe"
-          class="text-none game-btn"
-          color="primary"
-          append-icon="mdi mdi-pound"
-          style="z-index: 0"
-          @click="$router.push('/tic-tac-toe')"
-        />
-        <v-badge color="secondary">
-          <template #badge>
-            <p>α</p>
-          </template>
-          <template #default>
-            <v-btn
-              text="Flopoker"
-              class="text-none game-btn"
-              color="primary"
-              append-icon="mdi mdi-cards-playing-spade-multiple"
-              variant="tonal"
-              style="z-index: 0"
-              @click="$router.push('/poker')"
-            />
-          </template>
-        </v-badge>
-      </div>
-    </div>
+      <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
+    </v-tabs>
+
+    <v-tabs-window v-model="tab" class="w-100">
+      <v-tabs-window-item value="games">
+        <div
+          class="actions-container"
+          :style="discordId === devId ? 'height: 333px;' : 'height: 444px;'"
+        >
+          <v-card class="action-card bg-black" variant="tonal">
+            <v-card-title>Tic Tac Toe</v-card-title>
+            <v-card-subtitle>
+              <p>Joue au morpion contre un autre joueur.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none game-btn"
+                color="primary"
+                append-icon="mdi mdi-pound"
+                style="z-index: 0"
+                @click="$router.push('/tic-tac-toe')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card bg-black" variant="tonal">
+            <v-card-title>Flopoker</v-card-title>
+            <v-card-subtitle>
+              <p>Joue au poker avec de 2 à 8 joueurs par table.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-badge color="secondary">
+                <template #badge>
+                  <p>β</p>
+                </template>
+                <template #default>
+                  <v-btn
+                    text="Jouer"
+                    class="text-none game-btn"
+                    color="primary"
+                    append-icon="mdi mdi-cards-playing-spade-multiple"
+                    style="z-index: 0"
+                    @click="$router.push('/poker')"
+                  />
+                </template>
+              </v-badge>
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title> <!--Blackjack-->
+            <v-card-subtitle>
+              <!--              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-cards"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title><!--Puissance 4-->
+            <v-card-subtitle>
+              <!--              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-numeric-4-circle"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title><!--Chess-->
+            <v-card-subtitle>
+              <!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoElo.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-chess-king"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title><!--Loup-Garou-->
+            <v-card-subtitle>
+              <!--              <p>Joue une partie de ce loup-garou un peu particulier, de 4 à 8 joueurs.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-fire-circle"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title><!--Solitaire-->
+            <v-card-subtitle>
+              <!--              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>-->
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-cards-spade"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+        </div>
+      </v-tabs-window-item>
+    </v-tabs-window>
 
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
@@ -1521,6 +1759,8 @@ export default {
     return {
       windowWidth: window.innerWidth,
 
+      anonUsername: null,
+
       tab: null,
       message: null,
       discordId: null,
@@ -1593,6 +1833,7 @@ export default {
     this.leaderboardUsers = this.users
 
     this.avatar = await this.getAvatar(this.discordId)
+    await this.fetchUsername()
     this.fetchAvatars()
     this.fetchSparklines()
     this.fetchElos()
@@ -1674,6 +1915,19 @@ export default {
       })
     },
 
+    async fetchUsername() {
+      try {
+        const response = await axios.get(`https://discord.com/api/v10/users/${this.discordId}`, {
+          headers: {
+            Authorization: `Bot ${import.meta.env.VITE_BOT_TOKEN}`,
+          }
+        })
+        this.anonUsername = response.data.username
+      } catch (e) {
+        console.log(e)
+      }
+    },
+
     fetchAvatars() {
       this.users.forEach(async (user) => {
         this.avatars[user.id] = await this.getAvatar(user.id)
@@ -1707,7 +1961,6 @@ export default {
     async getUsers() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
-        console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',
@@ -1737,7 +1990,6 @@ export default {
     async getAvatar(id) {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
       try {
-        console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',
@@ -1755,7 +2007,6 @@ export default {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/sparkline'
       try {
         const response = await axios.get(fetchUrl)
-        console.log(response.data.sparkline)
         return response.data.sparkline
       } catch (e) {
         console.error('flAPI error:', e)
@@ -1785,7 +2036,6 @@ export default {
     async getInventory() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/inventory'
       try {
-        console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',
@@ -1802,7 +2052,6 @@ export default {
     async getActivePolls() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/polls'
       try {
-        console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',
@@ -1819,7 +2068,6 @@ export default {
     async getActiveSlowmodes() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/slowmodes'
       try {
-        console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',
@@ -1857,7 +2105,6 @@ export default {
           nickname: this.nicknameForm.nickname,
           commandUserId: this.discordId,
         })
-        console.log(response)
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
@@ -1871,7 +2118,6 @@ export default {
           userId: this.spamPingForm.id,
           commandUserId: this.discordId,
         })
-        console.log(response)
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
@@ -1886,7 +2132,6 @@ export default {
           voteKey: voteKey,
           voteFor: voteFor,
         })
-        console.log(response)
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
@@ -1900,7 +2145,6 @@ export default {
           userId: this.slowmodeForm.id,
           commandUserId: this.discordId,
         })
-        console.log(response)
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
@@ -1917,7 +2161,6 @@ export default {
           closingTime: this.prediForm.closingTime,
           payoutTime: this.prediForm.payoutTime,
         })
-        console.log(response)
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
@@ -1948,7 +2191,6 @@ export default {
           amount: this.prediVoteForm.amount,
           option: this.selectedOption,
         })
-        console.log(response)
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
@@ -1968,7 +2210,6 @@ export default {
           confirm: confirm,
           winningOption: winningOption,
         })
-        console.log(response)
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
@@ -1982,7 +2223,6 @@ export default {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
           commandUserId: this.discordId,
         })
-        console.log(response)
       } catch (e) {
         console.log(e)
       }
@@ -1994,7 +2234,6 @@ export default {
           commandUserId: this.discordId,
           coins: this.buyCoinsForm.coins,
         })
-        console.log(response)
       } catch (e) {
         console.log(e)
       }
@@ -2046,7 +2285,6 @@ export default {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout', {
           userId: this.discordId,
         })
-        console.log(response)
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
         console.log(e)
@@ -2261,7 +2499,7 @@ button:disabled {
 }
 
 .disabled-card::after {
-  content: 'Bientôt disponible';
+  content: 'Prochainement';
   position: absolute;
   top: 0;
   left: 0;
