@@ -198,6 +198,25 @@
             </v-card-text>
           </v-card>
 
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Puissance 4</v-card-title>
+            <v-card-subtitle>
+              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-numeric-4-circle"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/connect-4')"
+              />
+            </v-card-text>
+          </v-card>
+
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title> <!--Blackjack-->
             <v-card-subtitle>
@@ -208,24 +227,6 @@
                 text="Jouer"
                 class="text-none"
                 append-icon="mdi-cards"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Puissance 4-->
-            <v-card-subtitle>
-<!--              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>-->
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-numeric-4-circle"
                 color="primary"
                 variant="flat"
                 rounded="lg"
