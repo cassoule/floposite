@@ -180,11 +180,6 @@
               <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-              <v-badge color="secondary">
-                <template #badge>
-                  <p>β</p>
-                </template>
-                <template #default>
                   <v-btn
                     text="Jouer"
                     class="text-none game-btn"
@@ -193,8 +188,7 @@
                     style="z-index: 0"
                     @click="$router.push('/poker')"
                   />
-                </template>
-              </v-badge>
+
             </v-card-text>
           </v-card>
 
