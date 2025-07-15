@@ -163,7 +163,6 @@ export default {
       <div class="w-100 mt-16">
         <h1 class="text-white mb-4" style="position: relative; width: fit-content">
           Flopoker
-          <v-badge content="β BETA" color="secondary" style="position: absolute; top: .8em; right: -1em"/>
         </h1>
 
         <h2 class="text-white d-flex justify-space-between align-center mt-8 mb-4" style="border-radius: 15px; background: #dddddd22; padding: 5px 5px 5px .6em">

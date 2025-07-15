@@ -15,7 +15,7 @@
             style="border-radius: 10px"
             @click="joinQueue"
           />
-          <p v-if="queue.length > 0" class="mb-3">
+          <p v-if="!foundLobby && queue.length > 0" class="mb-3">
             {{ !foundLobby && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
             <span v-for="(p, index) in queue" :key="p">
               {{index > 1 ? ',' : ''}}
@@ -126,6 +126,8 @@ export default {
         this.message = `Temps écoulé pour ${loser}`
         this.socket.emit('connect4NoTime', { playerId: this.discordId, winner: winner.id })
         this.endGameDialog = true
+        clearInterval(this.interval)
+        tl = 0
       }
       return tl
     },
@@ -167,6 +169,9 @@ export default {
     this.interval = setInterval(() => {
       this.now = Date.now()
     }, 1000)
+  },
+  beforeDestroy() {
+    clearInterval(this.interval)
   },
   mounted() {
     this.discordId = localStorage.getItem('discordId')
@@ -217,6 +222,8 @@ export default {
         }, 250)
       }
     });
+
+    this.socket.emit('connect4connection', { id: this.discordId })
   },
   beforeUnmount() {
     if (this.socket) {
