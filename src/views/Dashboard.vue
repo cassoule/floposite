@@ -159,7 +159,7 @@
         >
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Tic Tac Toe</v-card-title>
-            <v-card-subtitle>
+            <v-card-subtitle style="text-wrap: wrap">
               <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoElo.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
@@ -176,7 +176,7 @@
 
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Flopoker</v-card-title>
-            <v-card-subtitle>
+            <v-card-subtitle style="text-wrap: wrap">
               <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
@@ -198,9 +198,46 @@
             </v-card-text>
           </v-card>
 
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Puissance 4</v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-numeric-4-circle"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/connect-4')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>Loup-Garou</v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Joue une partie de ce loup-garou un peu particulier, de 4 à 8 joueurs.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-fire-circle"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+              />
+            </v-card-text>
+          </v-card>
+
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title> <!--Blackjack-->
-            <v-card-subtitle>
+            <v-card-subtitle style="text-wrap: wrap">
 <!--              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>-->
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
@@ -217,26 +254,8 @@
           </v-card>
 
           <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Puissance 4-->
-            <v-card-subtitle>
-<!--              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>-->
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-numeric-4-circle"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title><!--Chess-->
-            <v-card-subtitle>
+            <v-card-subtitle style="text-wrap: wrap">
 <!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoElo.</p>-->
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
@@ -253,26 +272,8 @@
           </v-card>
 
           <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Loup-Garou-->
-            <v-card-subtitle>
-<!--              <p>Joue une partie de ce loup-garou un peu particulier, de 4 à 8 joueurs.</p>-->
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-fire-circle"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title><!--Solitaire-->
-            <v-card-subtitle>
+            <v-card-subtitle style="text-wrap: wrap">
 <!--              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>-->
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
