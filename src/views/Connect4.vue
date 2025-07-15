@@ -1,55 +1,76 @@
 <template>
-  <div class="connect4-container">
-    <h1 class="title">Connect 4</h1>
+  <v-layout>
+    <v-main class="d-flex" style="place-items: start; place-content: start; gap: 2em; flex-wrap: wrap">
+      <div class="mt-8">
+        <h1 class="text-white" style="position: relative;">Puissance 4</h1>
 
-    <!-- Queue Section -->
-    <div v-if="!foundLobby" class="queue-section">
-      <button @click="joinQueue" class="join-button" :disabled="inQueue">
-        {{ inQueue ? 'En attente d\'un adversaire...' : 'Jouer' }}
-      </button>
-      <div v-if="inQueue && queue.length > 0" class="queue-list">
-        Dans la file d'attente :
-        <span v-for="(p, index) in queue" :key="p">
-          {{ index > 0 ? ', ' : '' }}{{ p }}
-        </span>
-      </div>
-    </div>
+          <v-btn
+            v-if="!foundLobby"
+            id="find"
+            class="my-2 "
+            color="primary"
+            text="Chercher un joueur"
+            :loading="inQueue"
+            :disabled="foundLobby !== null && foundLobby !== undefined"
+            style="border-radius: 10px"
+            @click="joinQueue"
+          />
+          <p v-if="queue.length > 0" class="mb-3">
+            {{ !foundLobby && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
+            <span v-for="(p, index) in queue" :key="p">
+              {{index > 1 ? ',' : ''}}
+              {{ p }}
+            </span>
+          </p>
 
-    <!-- Game Section -->
-    <div v-else class="game-section">
-      <div class="game-info">
-        <p>
-          <span :class="['player-indicator', playerValue === 'R' ? 'red' : 'yellow']"></span>
-          Tu joues contre <strong>{{ oppName }}</strong>
-        </p>
-        <p class="turn-indicator" :class="{ 'my-turn': isMyTurn }">
-          {{ gameOver ? 'Partie terminée' : (isMyTurn ? "C'est ton tour" : `C'est au tour de ${oppName}`) }}
-        </p>
-      </div>
+        <div v-if="foundLobby" class="game-section">
+          <div class="game-info">
+            <p>
+              <span :class="['player-indicator', playerValue === 'R' ? 'red' : 'yellow']"></span>
+              Tu joues contre <strong>{{ oppName }}</strong>
+            </p>
+            <p class="turn-indicator" :class="{ 'my-turn': isMyTurn }">
+              {{ gameOver ? 'Partie terminée' : (isMyTurn ? "C'est ton tour" : `C'est au tour de ${oppName}`) }}
+            </p>
+          </div>
 
-      <!-- Game Board -->
-      <div class="board">
-        <div v-for="(col, colIndex) in board[0]" :key="colIndex" class="column" @click="dropPiece(colIndex)">
-          <div v-for="(cell, rowIndex) in board" :key="rowIndex" class="cell">
-            <div
-              :class="[
-                'piece',
-                board[rowIndex][colIndex] === 'R' ? 'red' : '',
-                board[rowIndex][colIndex] === 'Y' ? 'yellow' : '',
-                isWinningPiece(rowIndex, colIndex) ? 'win' : ''
-              ]"
-            ></div>
+          <!-- Game Board -->
+          <div class="board">
+            <div v-for="(col, colIndex) in board[0]" :key="colIndex" class="column" @click="dropPiece(colIndex)">
+              <div v-for="(cell, rowIndex) in board" :key="rowIndex" class="cell">
+                <div
+                  :class="[
+              'piece',
+              board[rowIndex][colIndex] === 'R' ? 'red' : '',
+              board[rowIndex][colIndex] === 'Y' ? 'yellow' : '',
+              isWinningPiece(rowIndex, colIndex) ? 'win' : ''
+            ]"
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+    </v-main>
 
-      <!-- Game Over Message -->
-      <div v-if="gameOver" class="game-over-message">
-        <h2>{{ gameOverMessage }}</h2>
-        <button @click="resetGame" class="join-button">Rejouer</button>
-      </div>
-    </div>
-  </div>
+    <v-progress-linear v-if="foundLobby" v-model="timeLeft" style="position: fixed; left: 0"/>
+
+    <v-dialog v-model="endGameDialog" persistent max-width="250">
+      <v-card color="primary" style="border-radius: 15px">
+        <v-card-title class="text-uppercase pt-4 pb-0">
+          {{ title }}
+        </v-card-title>
+        <v-card-text class="px-4 py-0 font-weight-light">
+          {{ message }}
+        </v-card-text>
+        <v-card-actions>
+          <v-btn class="rounded-lg" text="Ok" variant="tonal" @click="reload"></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-btn class="back-btn text-none" text="Retour" variant="tonal" color="#ddd" @click="$router.push('/dashboard')"></v-btn>
+  </v-layout>
 </template>
 
 <script>
@@ -67,6 +88,10 @@ export default {
       board: [],
       gameOver: false,
       winner: null,
+      endGameDialog: false,
+      title: null,
+      message: null,
+      now: Date.now(),
     };
   },
   computed: {
@@ -87,9 +112,28 @@ export default {
       if (this.winner === 'draw') return "Match nul !";
       if (this.winner === this.discordId) return "Victoire !";
       return "Défaite...";
-    }
+    },
+    timeLeft() {
+      let tl = Math.min(
+        Math.floor((((this.now - (this.foundLobby?.lastmove || this.now)) / 1000) * 100) / 60),
+        100,
+      )
+      if (tl === 100) {
+        let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1 : this.foundLobby.p2
+        let loser = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2.name : this.foundLobby.p1.name
+
+        this.title = winner.id === this.discordId ? 'Victoire' : 'Défaite'
+        this.message = `Temps écoulé pour ${loser}`
+        this.socket.emit('connect4NoTime', { playerId: this.discordId, winner: winner.id })
+        this.endGameDialog = true
+      }
+      return tl
+    },
   },
   methods: {
+    reload() {
+      location.reload()
+    },
     joinQueue() {
       this.inQueue = true;
       this.socket.emit('connect4queue', { playerId: this.discordId });
@@ -99,7 +143,6 @@ export default {
 
       // Check if column is full
       if (this.board[0][colIndex]) {
-        console.log("This column is full.");
         return;
       }
 
@@ -119,6 +162,11 @@ export default {
       this.gameOver = false;
       this.winner = null;
     }
+  },
+  created() {
+    this.interval = setInterval(() => {
+      this.now = Date.now()
+    }, 1000)
   },
   mounted() {
     this.discordId = localStorage.getItem('discordId')
@@ -157,11 +205,16 @@ export default {
       }
     });
 
-    this.socket.on('connect4gameOver', (data) => {
+    this.socket.on('connect4gameOver', async (data) => {
       if (this.foundLobby && this.foundLobby.msgId === data.game.msgId) {
         this.gameOver = true;
         this.winner = data.winner;
         this.foundLobby.winningPieces = data.game.winningPieces; // Get winning pieces
+        this.title = this.winner === 'draw' ? 'Égalité' : (this.winner === this.discordId ? 'Victoire' : 'Défaite')
+        this.message = this.winner === 'draw' ? 'Personne ne gagne' : (this.foundLobby.p1.id === this.winner ? `Victoire de ${this.foundLobby.p1.name}` : `Victoire de ${this.foundLobby.p2.name}`)
+        setTimeout(() => {
+          this.endGameDialog = true
+        }, 250)
       }
     });
   },
@@ -174,39 +227,11 @@ export default {
 </script>
 
 <style scoped>
-.connect4-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: sans-serif;
-  padding: 20px;
-  background-color: #2c3e50;
-  color: white;
-  min-height: 100vh;
-}
-
-.title {
-  margin-bottom: 2rem;
-}
-
-.join-button {
-  padding: 10px 20px;
-  font-size: 1.2rem;
-  cursor: pointer;
-  border: none;
-  border-radius: 5px;
-  background-color: #5865f2;
-  color: white;
-  transition: background-color 0.3s;
-}
-
-.join-button:disabled {
-  background-color: #4a54c4;
-  cursor: not-allowed;
-}
-
-.join-button:hover:not(:disabled) {
-  background-color: #4a54c4;
+.back-btn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  border-radius: 12px;
 }
 
 .queue-section, .game-section {
@@ -262,8 +287,8 @@ export default {
 }
 
 .piece.win {
-  box-shadow: 0 0 20px 5px #fff;
-  transform: scale(1.1);
+  border: 2px solid white;
+  transform: scale(1.2);
 }
 
 .game-info {
