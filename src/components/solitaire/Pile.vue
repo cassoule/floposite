@@ -1,105 +1,94 @@
+<!-- Pile.vue -->
 <template>
-  <div class="pile">
-    <draggable
-      v-model="internalCards"
-      group="cards"
-      item-key="image"
-      @start="dragStart"
-      @end="dragEnd"
-    >
-      <template #item="{ element, index }">
-        <Card
-          :key="element.image"
-          :card="element"
-          :pileType="pileType"
-          :pileIndex="pileIndex"
-          :cardIndex="index"
-        />
-      </template>
-    </draggable>
-    <div v-if="!internalCards.length" class="empty-pile" @click="handleEmptyPileClick"></div>
+  <div
+    :class="['pile', type]"
+    @click="onPileClick"
+    @dragover.prevent
+    @drop.prevent="onDrop"
+  >
+    <!-- Placeholder for empty tableau/foundation piles -->
+    <div v-if="pile.length === 0" class="empty-pile-placeholder"></div>
+
+    <Card
+      v-for="(card, index) in pile"
+      :key="card.suit + card.rank"
+      :card="card"
+      :card-index="index"
+      :style="{ top: type === 'tableauPiles' ? `${index * 25}px` : '0' }"
+      class="card-in-pile"
+      @card-drag-started="handleCardDrag"
+    />
   </div>
 </template>
 
 <script>
 import Card from './Card.vue';
-import draggable from 'vuedraggable';
 
 export default {
+  name: 'Pile',
   components: {
     Card,
-    draggable,
   },
   props: {
-    cards: {
+    pile: {
       type: Array,
       required: true,
     },
-    pileType: {
-      type: String,
+    type: {
+      type: String, // e.g., 'tableauPiles', 'foundationPiles', 'stock', 'wastePile'
       required: true,
     },
     pileIndex: {
-      type: Number,
-      required: true,
+      type: Number, // Index for tableau and foundation piles
+      default: null,
     },
   },
-  emits: ['card-moved', 'empty-pile-clicked'], // Emit when card is moved
-
-  data() {
-    return {
-      draggedCard: null,
-      internalCards: [...this.cards],
-    }
-  },
-
-  watch: {
-    cards: {
-      handler(newCards) {
-        this.internalCards = [...newCards];
-      },
-      deep: true,
-    },
-  },
-
   methods: {
-    dragStart(evt) {
-      this.$emit('drag-start', {
-        card: this.cards[evt.itemIndex],
-        pileType: this.pileType,
-        pileIndex: this.pileIndex,
-        cardIndex: evt.itemIndex
-      })
+    handleCardDrag(cardIndex) {
+      // Create the complete "source" object.
+      const sourceInfo = {
+        sourcePileType: this.type,
+        sourcePileIndex: this.pileIndex, // This will be the index (0-6) for tableau, or null for waste
+        sourceCardIndex: cardIndex,   // This is the index of the specific card that was dragged
+      };
+      // Emit this detailed object up to the parent (Solitaire.vue).
+      this.$emit('drag-start-from-pile', sourceInfo);
+    },
+    // Emits the drop info up to the parent
+    onDrop() {
+      // Create the complete "destination" object.
+      const destinationInfo = {
+        destPileType: this.type,
+        destPileIndex: this.pileIndex,
+      };
+      // Emit this detailed object up to the parent.
+      this.$emit('drop-on-pile', destinationInfo);
     },
 
-    dragEnd(evt) {
-      this.$emit('drag-end', {
-        card: this.cards[evt.newIndex],
-        pileType: this.pileType,
-        pileIndex: this.pileIndex,
-        cardIndex: evt.newIndex,
-      });
+    // Handles clicks, specifically for the stock pile.
+    onPileClick() {
+      if (this.type === 'stock') {
+        this.$emit('stock-pile-clicked');
+      }
     },
-    handleCardSelected(cardInfo) {
-      this.$emit('card-selected', cardInfo);
-    },
-
-    handleEmptyPileClick() {
-      this.$emit('empty-pile-clicked', this.pileType, this.pileIndex); // Emit click on empty pile
-    },
-  }
+  },
 };
 </script>
 
 <style scoped>
 .pile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1px dashed #999;
-  padding: 5px;
-  margin: 5px;
-  min-height: 100px;
-  width: 80px;
+  position: relative;
+  width: 100px; /* Adjust card width */
+  height: 140px; /* Adjust card height */
+  border: 2px solid #555;
+  border-radius: 5px;
+}
+.empty-pile-placeholder {
+  width: 100%;
+  height: 100%;
+}
+.card-in-pile {
+  position: absolute;
+  left: 0;
 }
 </style>
