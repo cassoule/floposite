@@ -192,7 +192,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card" variant="tonal">
+          <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Puissance 4</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>
@@ -211,7 +211,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card" variant="tonal">
+          <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Solitaire</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Tente de gagner quelques FlopoCoins au solitaire.</p>
@@ -718,21 +718,52 @@
               <p>Joue au poker avec de 2 à 8 joueurs par table.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-              <v-badge color="secondary">
-                <template #badge>
-                  <p>β</p>
-                </template>
-                <template #default>
-                  <v-btn
-                    text="Jouer"
-                    class="text-none game-btn"
-                    color="primary"
-                    append-icon="mdi mdi-cards-playing-spade-multiple"
-                    style="z-index: 0"
-                    @click="$router.push('/poker')"
-                  />
-                </template>
-              </v-badge>
+              <v-btn
+                text="Jouer"
+                class="text-none game-btn"
+                color="primary"
+                append-icon="mdi mdi-cards-playing-spade-multiple"
+                style="z-index: 0"
+                @click="$router.push('/poker')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card bg-black" variant="tonal">
+            <v-card-title>Puissance 4</v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-numeric-4-circle"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/connect-4')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="action-card bg-black" variant="tonal">
+            <v-card-title>Solitaire</v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-cards-spade"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/solitaire')"
+              />
             </v-card-text>
           </v-card>
 
@@ -746,24 +777,6 @@
                 text="Jouer"
                 class="text-none"
                 append-icon="mdi-cards"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Puissance 4-->
-            <v-card-subtitle>
-              <!--              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>-->
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-numeric-4-circle"
                 color="primary"
                 variant="flat"
                 rounded="lg"
@@ -800,24 +813,6 @@
                 text="Jouer"
                 class="text-none"
                 append-icon="mdi-fire-circle"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Solitaire-->
-            <v-card-subtitle>
-              <!--              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>-->
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-cards-spade"
                 color="primary"
                 variant="flat"
                 rounded="lg"

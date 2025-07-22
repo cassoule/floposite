@@ -1,9 +1,10 @@
 <!-- Card.vue -->
 <template>
   <div
-    class="card-container"
+    :class="['card-container', { 'is-hidden': isHidden }]"
     :draggable="card.faceUp"
     @dragstart.stop="onDragStart"
+    @dragend.stop="onDragEnd"
   >
     <img
       v-if="card.faceUp"
@@ -15,7 +16,7 @@
       v-else
       src="/cards/card_back.png"
       alt="card back"
-      class="card-image"
+      class="card-back"
     />
   </div>
 </template>
@@ -32,6 +33,10 @@ export default {
       type: Number,
       required: true,
     },
+    isHidden: {
+      type: Boolean,
+      default: false
+    },
   },
   methods: {
     // When a drag starts, emit the card and its index up to the pile
@@ -41,7 +46,11 @@ export default {
       event.dataTransfer.effectAllowed = 'move';
 
       // Emit the index of THIS card up to the parent Pile.
-      this.$emit('card-drag-started', this.cardIndex);
+      this.$emit('card-drag-started', event, this.cardIndex);
+    },
+
+    onDragEnd() {
+      this.$emit('card-drag-ended');
     },
   },
 };
@@ -52,17 +61,31 @@ export default {
   width: 100px;
   height: 140px;
   cursor: grab;
+  /* Use 'visibility' instead of 'opacity' to ensure the layout space is preserved */
+  opacity: 1;
+  transition: opacity 0s; /* No transition needed */
+}
+.card-container.is-hidden {
+  opacity: 0;
 }
 .card-image {
   width: 100%;
   height: 100%;
-  border-radius: 5px;
 }
 .card-back {
   width: 100%;
   height: 100%;
-  background-color: blue; /* Or use an image */
-  border: 1px solid #ccc;
-  border-radius: 5px;
+}
+@media(max-width: 850px) {
+  .card-container {
+    width: 50px;
+    height: 70px;
+  }
+}
+@media(max-width: 550px) {
+  .card-container {
+    width: 33px;
+    height: 47px;
+  }
 }
 </style>

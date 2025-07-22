@@ -1,10 +1,12 @@
 <!-- Solitaire.vue -->
 <template>
   <v-layout class="w-100">
-    <v-main class="d-flex w-100">
-      <div class="w-100 mt-16">
-        <h1 class="text-white mb-4" style="position: relative; width: fit-content">
-          Flopoker
+    <v-main class="d-flex w-100 mb-16 pb-16 mt-16">
+      <div class="w-100">
+        <h1 class="text-white mb-4 d-flex w-100" style="position: relative; width: fit-content; place-items: center">
+          Solitaire
+          <v-spacer></v-spacer>
+          <v-btn variant="flat" color="primary" rounded="lg" @click="handleRestart">Rejouer</v-btn>
         </h1>
         <div v-if="gameState" class="solitaire-board pb-16 mb-16">
           <div class="top-section">
@@ -87,6 +89,15 @@ export default {
     }
   },
   methods: {
+    async handleRestart() {
+      try {
+        const response = await api.startNewGame(this.userId);
+        this.gameState = response.data.gameState;
+      } catch (error) {
+        console.error('Failed to start new game:', error);
+      }
+    },
+
     async fetchGameState() {
       try {
         const response = await api.getGameState(this.userId);
@@ -117,7 +128,7 @@ export default {
         const response = await api.moveCard(movePayload);
         this.gameState = response.data.gameState; // Update the view with the new state
         if (response.data.win) {
-          alert('Congratulations, you won!');
+          alert('C\'est gagné');
         }
       } catch (error) {
         // The backend correctly identifies invalid moves now.
@@ -151,6 +162,10 @@ export default {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
+}
+.top-section {
+  flex-wrap: wrap;
+  gap: 1em;
 }
 .stock-and-waste,
 .foundations,

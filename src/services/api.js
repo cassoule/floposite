@@ -5,6 +5,9 @@ import axios from 'axios';
 const API_URL = import.meta.env.VUE_APP_API_URL || 'http://localhost:3000';
 
 export default {
+  startNewGame(userId) {
+    return axios.post(`${API_URL}/solitaire/start`, { userId });
+  },
   /**
    * Gets the current game state for a user.
    * Creates a new game if one doesn't exist.
