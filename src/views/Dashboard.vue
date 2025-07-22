@@ -211,6 +211,25 @@
             </v-card-text>
           </v-card>
 
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Solitaire</v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-cards-spade"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/solitaire')"
+              />
+            </v-card-text>
+          </v-card>
+
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>Loup-Garou</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
@@ -257,24 +276,6 @@
                 text="Jouer"
                 class="text-none"
                 append-icon="mdi-chess-king"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Solitaire-->
-            <v-card-subtitle style="text-wrap: wrap">
-<!--              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>-->
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-cards-spade"
                 color="primary"
                 variant="flat"
                 rounded="lg"

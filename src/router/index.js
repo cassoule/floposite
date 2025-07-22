@@ -6,6 +6,7 @@ import TicTacToe from '../views/TicTacToe.vue'
 import Connect4 from '../views/Connect4.vue'
 import PokerHome from '../views/PokerHome.vue'
 import PokerRoom from '../views/PokerRoom.vue'
+import Solitaire from '../views/Solitaire.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -15,6 +16,7 @@ const routes = [
   { path: '/connect-4', component: Connect4 },
   { path: '/poker', component: PokerHome },
   { path: '/poker/:id', component: PokerRoom },
+  { path: '/solitaire', component: Solitaire },
 ]
 
 const router = createRouter({
