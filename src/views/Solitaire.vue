@@ -11,7 +11,8 @@
         <div v-if="isLoading" class="loading-overlay">
           <div class="spinner">Chargement...</div>
         </div>
-        <div v-if="gameState" class="solitaire-board pb-16 mb-16" :key="Date.now()">
+
+        <div v-if="gameState" class="solitaire-board pb-16 mb-16" :key="Date.now()" :disabled="gameState.isDone">
           <div class="top-section">
             <div class="stock-and-waste">
               <Pile
@@ -23,6 +24,7 @@
                 type="wastePile"
                 :pile="gameState.wastePile"
                 @drag-start-from-pile="handleDragStart"
+                @auto-move-triggered="handleAutoMove"
               />
             </div>
             <div class="foundations">
@@ -46,6 +48,7 @@
               :pile="pile"
               @drag-start-from-pile="handleDragStart"
               @drop-on-pile="handleDrop"
+              @auto-move-triggered="handleAutoMove"
             />
           </div>
         </div>
@@ -66,6 +69,15 @@
 <script>
 import Pile from '../components/solitaire/Pile.vue';
 import api from '../services/api'; // Adjust path if needed
+
+function getRankValue(rank) {
+  if (rank === 'A') return 1;
+  if (rank === 'T') return 10;
+  if (rank === 'J') return 11;
+  if (rank === 'Q') return 12;
+  if (rank === 'K') return 13;
+  return parseInt(rank, 10);
+}
 
 export default {
   name: 'Solitaire',
@@ -153,16 +165,56 @@ export default {
       }
     },
 
+    async handleAutoMove(sourceInfo) {
+      if (this.isLoading) return;
+
+      // Find a valid foundation pile destination for the clicked card
+      const destinationInfo = this.findValidFoundationMove(sourceInfo);
+
+      // If a valid destination was found
+      if (destinationInfo) {
+        const movePayload = { ...sourceInfo, ...destinationInfo };
+        await this.processMove(movePayload);
+      }
+    },
+
+    async processMove(movePayload) {
+      this.isLoading = true;
+      const oldState = JSON.parse(JSON.stringify(this.gameState));
+
+      this.performLocalMove(movePayload);
+
+      try {
+        const response = await api.moveCard({ userId: this.userId, ...movePayload });
+        // On success, our optimistic state is correct. We do nothing.
+        if (response.data.win) {
+          alert('Bien joué !');
+        }
+      } catch (error) {
+        console.warn('Invalid move detected by server. Reverting UI.');
+        this.gameState = oldState; // Roll back on error
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     performLocalMove(moveData) {
       const { sourcePileType, sourcePileIndex, sourceCardIndex, destPileType, destPileIndex } = moveData;
 
-      const sourcePile = sourcePileType === 'tableauPiles'
-        ? this.gameState.tableauPiles[sourcePileIndex]
-        : this.gameState.wastePile;
+      let sourcePile;
+      if (sourcePileType === 'tableauPiles') {
+        sourcePile = this.gameState.tableauPiles[sourcePileIndex];
+      } else if (sourcePileType === 'wastePile') {
+        sourcePile = this.gameState.wastePile;
+      } else if (sourcePileType === 'foundationPiles') {
+        sourcePile = this.gameState.foundationPiles[sourcePileIndex];
+      }
 
       const destPile = destPileType === 'tableauPiles'
         ? this.gameState.tableauPiles[destPileIndex]
         : this.gameState.foundationPiles[destPileIndex];
+
+      if (!sourcePile || !destPile) return;
 
       const cardsToMove = sourcePile.splice(sourceCardIndex);
       destPile.push(...cardsToMove);
@@ -188,7 +240,6 @@ export default {
       try {
         this.isLoading = true
         const response = await api.drawCard(this.userId);
-        console.log(response.data.gameState)
         this.gameState = {...response.data.gameState}
         this.isLoading = false
         await this.fetchGameState()
@@ -196,6 +247,42 @@ export default {
         console.error('Failed to draw card:', error);
         this.gameState = oldState;
       }
+    },
+
+    findValidFoundationMove(sourceInfo) {
+      const { sourcePileType, sourcePileIndex, sourceCardIndex } = sourceInfo;
+
+      let sourcePile = sourcePileType === 'tableauPiles'
+        ? this.gameState.tableauPiles[sourcePileIndex]
+        : this.gameState.wastePile;
+
+      // Can only auto-move the top card of a stack
+      if (sourceCardIndex !== sourcePile.length - 1) {
+        return null;
+      }
+
+      const sourceCard = sourcePile[sourceCardIndex];
+
+      // Loop through all foundation piles to find a valid spot
+      for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
+        const foundationPile = this.gameState.foundationPiles[i];
+        const topCard = foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null;
+
+        // Rule for moving to an empty foundation (must be an Ace)
+        if (!topCard) {
+          if (sourceCard.rank === 'A') {
+            return { destPileType: 'foundationPiles', destPileIndex: i };
+          }
+        }
+        // Rule for moving to a non-empty foundation
+        else {
+          if (sourceCard.suit === topCard.suit && getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1) {
+            return { destPileType: 'foundationPiles', destPileIndex: i };
+          }
+        }
+      }
+      // If no valid move was found after checking all piles
+      return null;
     },
   },
 };

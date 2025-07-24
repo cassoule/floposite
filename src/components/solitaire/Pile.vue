@@ -14,10 +14,11 @@
       :key="card.suit + card.rank"
       :card="card"
       :card-index="index"
-      :style="{ top: type === 'tableauPiles' ? `${index * 25}px` : '0' }"
+      :style="cardStyle(index)"
       class="card-in-pile"
       @card-drag-started="handleCardDrag"
       @card-drag-ended="handleCardDragEnd"
+      @card-clicked="handleCardClick"
       :is-hidden="dragStartIndex !== null && index >= dragStartIndex && card.faceUp"
     />
   </div>
@@ -27,7 +28,7 @@
 import Card from './Card.vue';
 
 const CARD_WIDTH = 100;
-const CARD_HEIGHT = 140;
+const CARD_HEIGHT = 145;
 const STACK_OFFSET = 25;
 
 export default {
@@ -55,13 +56,30 @@ export default {
     }
   },
   methods: {
+    cardStyle(index) {
+      switch (this.type) {
+        case 'tableauPiles':
+          return `top: ${index * 25}px`
+        case 'wastePile':
+          let leftM = 0
+          if (this.pile.length === 2) {
+            leftM = index >= this.pile.length - 2 ? (index - this.pile.length + 2) * 25 : 0
+          } else if (this.pile.length > 2) {
+            leftM = index >= this.pile.length - 3 ? (index - this.pile.length + 3) * 25 : 0
+          }
+          return `left: ${leftM}px`
+        default:
+          return `top: 0px`
+      }
+    },
     handleCardDrag(event, cardIndex) {
-      this.dragStartIndex = cardIndex;
+      this.dragStartIndex = this.type === 'wastePile' ? this.pile.length - 1 : cardIndex;
 
       // Create the complete "source" object.
       const stackToDrag = this.type === 'tableauPiles'
         ? this.pile.slice(cardIndex)
         : [this.pile[this.pile.length - 1]];
+
 
       const previewElement = this.createDragPreview(stackToDrag);
 
@@ -135,6 +153,16 @@ export default {
 
       return container;
     },
+
+    handleCardClick(cardIndex) {
+      const sourceInfo = {
+        sourcePileType: this.type,
+        sourcePileIndex: this.pileIndex,
+        sourceCardIndex: cardIndex,
+      };
+
+      this.$emit('auto-move-triggered', sourceInfo);
+    }
   },
 };
 </script>
@@ -143,9 +171,12 @@ export default {
 .pile {
   position: relative;
   width: 100px; /* Adjust card width */
-  height: 140px; /* Adjust card height */
+  height: 145px; /* Adjust card height */
   border: 2px solid #555;
   border-radius: 5px;
+}
+.stockPile {
+  cursor: pointer !important;
 }
 .empty-pile-placeholder {
   width: 100%;

@@ -5,6 +5,7 @@
     :draggable="card.faceUp"
     @dragstart.stop="onDragStart"
     @dragend.stop="onDragEnd"
+    @click="onClick"
   >
     <img
       v-if="card.faceUp"
@@ -52,6 +53,12 @@ export default {
     onDragEnd() {
       this.$emit('card-drag-ended');
     },
+
+    onClick() {
+      if (this.card.faceUp) {
+        this.$emit('card-clicked', this.cardIndex);
+      }
+    },
   },
 };
 </script>
@@ -59,11 +66,10 @@ export default {
 <style scoped>
 .card-container {
   width: 100px;
-  height: 140px;
+  height: 145px;
   cursor: grab;
-  /* Use 'visibility' instead of 'opacity' to ensure the layout space is preserved */
   opacity: 1;
-  transition: opacity 0s; /* No transition needed */
+  transition: opacity 0.2s; /* No transition needed */
 }
 .card-container.is-hidden {
   opacity: 0;
