@@ -308,7 +308,10 @@ export default {
 .foundations,
 .tableau-section {
   display: flex;
-  gap: 15px;
+  gap: 7px;
+}
+.foundations {
+  margin-left: 50px;
 }
 .back-btn {
   position: absolute;

@@ -59,13 +59,13 @@ export default {
     cardStyle(index) {
       switch (this.type) {
         case 'tableauPiles':
-          return `top: ${index * 25}px`
+          return `top: ${index * 10}px`
         case 'wastePile':
           let leftM = 0
           if (this.pile.length === 2) {
-            leftM = index >= this.pile.length - 2 ? (index - this.pile.length + 2) * 25 : 0
+            leftM = index >= this.pile.length - 2 ? (index - this.pile.length + 2) * 10 : 0
           } else if (this.pile.length > 2) {
-            leftM = index >= this.pile.length - 3 ? (index - this.pile.length + 3) * 25 : 0
+            leftM = index >= this.pile.length - 3 ? (index - this.pile.length + 3) * 10 : 0
           }
           return `left: ${leftM}px`
         default:
@@ -189,7 +189,8 @@ export default {
 @media(max-width: 850px) {
   .pile {
     width: 50px;
-    height: 70px;
+    height: 72px;
+    border: 1px solid #555;
   }
 }
 @media(max-width: 550px) {
