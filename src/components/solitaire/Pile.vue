@@ -59,7 +59,7 @@ export default {
     cardStyle(index) {
       switch (this.type) {
         case 'tableauPiles':
-          return `top: ${index * 10}px`
+          return `top: ${index * 25}px`
         case 'wastePile':
           let leftM = 0
           if (this.pile.length === 2) {
