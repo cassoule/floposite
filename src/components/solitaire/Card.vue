@@ -85,7 +85,7 @@ export default {
 @media(max-width: 850px) {
   .card-container {
     width: 50px;
-    height: 70px;
+    height: 72px;
   }
 }
 @media(max-width: 550px) {
