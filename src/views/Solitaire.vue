@@ -3,16 +3,24 @@
   <v-layout class="w-100">
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8">
       <div class="w-100">
-        <h1 class="text-white mb-4 d-flex w-100" style="position: relative; width: fit-content; place-items: center">
-          Solitaire
+        <div class="text-white mb-4 d-flex flex-wrap w-100" style="position: relative; place-items: baseline; gap: .5em">
+          <div v-if="gameState?.isSOTD" class="d-flex mr-2" style="place-items: center; gap: .5em">
+            <v-icon class="mdi mdi-trophy-outline mr-2" />
+            <h1 style="font-size: 1.8rem" rounded="lg">Solitaire Of The Day</h1>
+          </div>
+          <div v-if="gameState && !gameState.isSOTD" class="d-flex mr-2" style="place-items: center; gap: .5em">
+            <v-icon class="mdi mdi-cards-spade mr-2" />
+            <h1 style="font-size: 1.8rem" rounded="lg">Solitaire</h1>
+          </div>
+          <p v-if="!gameState || gameState?.isSOTD" class="font-weight-medium">{{timeLeft()}}</p>
           <v-spacer></v-spacer>
-          <v-btn variant="flat" color="primary" rounded="lg" @click="handleRestart">Rejouer</v-btn>
-        </h1>
+          <v-btn v-if="gameState" variant="flat" color="primary" rounded="lg" @click="handleReset">Abandonner</v-btn>
+        </div>
         <div v-if="isLoading" class="loading-overlay">
-          <div class="spinner">Chargement...</div>
+          <div class="spinner">...</div>
         </div>
 
-        <div v-if="gameState" class="solitaire-board pb-16 mb-16" :key="Date.now()" :disabled="gameState.isDone">
+        <div v-if="gameState" class="solitaire-board pb-16" :key="Date.now()">
           <div class="top-section">
             <div class="stock-and-waste">
               <Pile
@@ -52,7 +60,129 @@
             />
           </div>
         </div>
-        <div v-else>Chargement...</div>
+        <div v-else>
+          <v-alert variant="tonal" color="secondary" rounded="xl">
+            <div class="menu" style="gap: 1em">
+              <v-card class="d-flex flex-column" variant="text" color="white" style="flex-basis: 75%; gap: 1em">
+                <v-card-title>
+                  <v-icon class="mdi mdi-trophy-outline" />
+                  Solitaire Of The Day
+                </v-card-title>
+                <v-card-text>
+                  <p>Jouer un tableau commun à tout le monde généré chaque jour, pour tenter de gagner des FlopoCoins et apparaître dans le classement.</p>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn class="buy-btn" block variant="flat" color="primary" rounded="lg" @click="handleRestartSotd">Jouer</v-btn>
+                </v-card-actions>
+              </v-card>
+              <v-divider
+                vertical
+                class="d-none d-sm-flex"
+              />
+              <v-divider class="d-flex d-sm-none" />
+              <v-card class="d-flex flex-column" variant="text" color="white" style="flex-basis: 50%; gap: 1em">
+                <v-card-title>
+                  <v-icon class="mdi mdi-cards-spade" />
+                  Solitaire
+                </v-card-title>
+                <v-card-text>
+                  <p>Jouer un tableau aléatoire de Solitaire.</p>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn variant="flat" block color="primary" class="rounded-lg" @click="handleRestart">Jouer</v-btn>
+                </v-card-actions>
+              </v-card>
+            </div>
+          </v-alert>
+        </div>
+
+        <div v-if="!gameState" class="my-16">
+          <v-alert variant="tonal" color="secondary" rounded="xl">
+            <v-card variant="text" color="secondary" rounded="xl">
+              <v-card-title class="text-white">Classement SOTD {{new Date().toLocaleDateString()}}</v-card-title>
+              <v-card-subtitle>Des prix seront distribués aux 3 premiers du classement à la fin de chaque journée.</v-card-subtitle>
+              <v-card-text>
+                <v-row class="text-secondary">
+                  <v-col cols="6" class="text-right">
+                    Coups
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    Temps
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    Pts
+                  </v-col>
+                </v-row>
+
+                <v-row class="text-white font-weight-bolder">
+                  <v-col cols="3" style="width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis" title="@cassoule">
+                    @cassoule
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    100
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    5:56.2
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    140
+                  </v-col>
+                </v-row>
+                <v-row class="text-white font-weight-bolder">
+                  <v-col cols="3" style="width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis" title="@cassoule">
+                    @cassoule
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    100
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    5:56.2
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    140
+                  </v-col>
+                </v-row>
+                <v-row class="text-white font-weight-bolder">
+                  <v-col cols="3" style="width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis" title="@cassoule">
+                    @cassoule
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    100
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    5:56.2
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    140
+                  </v-col>
+                </v-row>
+                <v-row class="text-white font-weight-bolder">
+                  <v-col cols="3" style="width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis" title="@cassoule">
+                    @cassoule
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    100
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    5:56.2
+                  </v-col>
+                  <v-col cols="3" class="text-right">
+                    140
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-alert>
+        </div>
+
+        <div v-if="gameState && gameState.isSOTD" :key="Date.now()+'-stats'" style="position: fixed; bottom: 1em; left: 1em">
+          <v-card variant="tonal" rounded="xl" style="backdrop-filter: blur(100px); --webkit-backdrop-filter: blur(100px);">
+            <v-card-text class="d-flex py-1" style="gap: 2rem;">
+              <p>{{gameState.score}} points</p>
+              <p>{{gameState.moves}} coups</p>
+            </v-card-text>
+          </v-card>
+        </div>
       </div>
     </v-main>
 
@@ -87,10 +217,10 @@ export default {
   data() {
     return {
       gameState: null,
-      draggedCardSourceInfo: null, // Stores info about the card being dragged
-      // In a real app, this would come from your auth system
+      draggedCardSourceInfo: null,
       userId: null,
       isLoading: false,
+      now: Date.now()
     };
   },
   async mounted() {
@@ -108,6 +238,19 @@ export default {
     }
   },
   methods: {
+    timeLeft() {
+      const endOfDay = new Date(this.now);
+      endOfDay.setHours(24, 0, 0, 0);
+
+      const ms = (endOfDay - this.now);
+
+      const totalSeconds = Math.floor(ms / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+      return `Temps restant : ${hours}h ${minutes}m`;
+    },
+
     async handleRestart() {
       try {
         const response = await api.startNewGame(this.userId);
@@ -117,10 +260,28 @@ export default {
       }
     },
 
+    async handleRestartSotd() {
+      try {
+        const response = await api.startSOTD(this.userId);
+        this.gameState = response.data.gameState;
+      } catch (error) {
+        console.error('Failed to start new game:', error);
+      }
+    },
+
+    async handleReset() {
+      try {
+        const response = await api.resetGame(this.userId);
+        this.gameState = null;
+      } catch (error) {
+        console.error('Failed to reset game:', error);
+      }
+    },
+
     async fetchGameState() {
       try {
         const response = await api.getGameState(this.userId);
-        this.gameState = response.data.gameState;
+        this.gameState = response?.data?.gameState;
       } catch (error) {
         console.error('Failed to load game state:', error);
       }
@@ -153,7 +314,9 @@ export default {
 
       try {
         const response = await api.moveCard(movePayload);
-        if (response.data.win) {
+        this.gameState.score = response.data.gameState.score
+        this.gameState.moves = response.data.gameState.moves
+        if (response.data.win && !this.oldState?.isDone) {
           alert('C\'est gagné');
         }
       } catch (error) {
@@ -186,8 +349,10 @@ export default {
 
       try {
         const response = await api.moveCard({ userId: this.userId, ...movePayload });
+        this.gameState.score = response.data.gameState.score
+        this.gameState.moves = response.data.gameState.moves
         // On success, our optimistic state is correct. We do nothing.
-        if (response.data.win) {
+        if (response.data.win && !this.oldState?.isDone) {
           alert('Bien joué !');
         }
       } catch (error) {
@@ -322,5 +487,41 @@ export default {
 .loading-overlay {
   position: absolute;
   bottom: 0;
+}
+
+.buy-btn {
+  z-index: 1;
+  border-radius: 10px !important;
+  background:
+    radial-gradient(
+      ellipse farthest-corner at right bottom,
+      #fedb37 0%,
+      #fdb931 8%,
+      #9f7928 30%,
+      #8a6e2f 40%,
+      transparent 200%
+    ),
+    radial-gradient(
+      ellipse farthest-corner at left top,
+      #ffffff 0%,
+      #ffffac 8%,
+      #d1b464 25%,
+      #5d4a1f 62.5%,
+      #5d4a1f 100%
+    );
+  transition:
+    0.3s ease-in-out,
+    0.6s ease-in-out box-shadow;
+  box-shadow: 0 0 0 0 transparent;
+}
+
+.menu {
+  display: flex;
+}
+
+@media (max-width: 600px) {
+  .menu {
+    flex-direction: column;
+  }
 }
 </style>

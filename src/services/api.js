@@ -8,6 +8,12 @@ export default {
   startNewGame(userId) {
     return axios.post(`${API_URL}/solitaire/start`, { userId });
   },
+  startSOTD(userId) {
+    return axios.post(`${API_URL}/solitaire/start/sotd`, { userId });
+  },
+  resetGame(userId) {
+    return axios.post(`${API_URL}/solitaire/reset`, { userId })
+  },
   /**
    * Gets the current game state for a user.
    * Creates a new game if one doesn't exist.
