@@ -1,4 +1,4 @@
-# [Floposite](https://floposite.netlify.app)
+# [Floposite](https://floposite.com)
 
 - some mini games
 - some fun features
