@@ -155,17 +155,29 @@
                   v-for="(stats, index) in rankings"
                   :key="stats.id"
                   class="text-white font-weight-bolder"
+                  style="border-radius: 10px"
+                  :style="
+                    stats.user_id === userId
+                      ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)'
+                      : ''
+                  "
                 >
                   <v-col
                     cols="3"
-                    style="width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis"
+                    style="display: flex; width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis; gap: .7em; align-items: center"
                     :title="'@' + stats.globalName"
                   >
-                    #{{index+1}}&nbsp;@{{ stats.globalName }}
+                    <h3>#{{index+1}}</h3>
+                    <v-img
+                      :src="avatars[stats.id]"
+                      color="transparent"
+                      style="border-radius: 50%; min-width: 30px; max-width: 30px; height: 30px"
+                    />
+                    <p>@{{ stats.globalName }}</p>
                   </v-col>
-                  <v-col cols="3" class="text-right"> {{ stats.score }} </v-col>
-                  <v-col cols="3" class="text-right"> {{ stats.moves }} </v-col>
-                  <v-col cols="3" class="text-right"> {{ formatFinishTime(stats.time) }} </v-col>
+                  <v-col cols="3" class="d-flex align-center justify-end"> {{ stats.score }} </v-col>
+                  <v-col cols="3" class="d-flex align-center justify-end"> {{ stats.moves }} </v-col>
+                  <v-col cols="3" class="d-flex align-center justify-end"> {{ formatFinishTime(stats.time) }} </v-col>
                 </v-row>
 
                 <v-row v-if="!rankings || rankings.length === 0" class="mt-4 mb-1 text-white font-weight-bolder">
@@ -281,7 +293,8 @@
 
 <script>
 import Pile from '../components/solitaire/Pile.vue'
-import api from '../services/api' // Adjust path if needed
+import api from '../services/api'
+import axios from 'axios' // Adjust path if needed
 
 function getRankValue(rank) {
   if (rank === 'A') return 1
@@ -310,6 +323,8 @@ export default {
 
       userSeed: null,
       rankings: null,
+
+      avatars: {},
     }
   },
   async mounted() {
@@ -322,6 +337,7 @@ export default {
       await this.getRankings()
       await this.fetchGameState(this.userId)
       this.isLoading = false
+      this.fetchAvatars()
       if (this.gameState?.isDone) {
         this.winDialog = true
       }
@@ -372,6 +388,28 @@ export default {
         this.rankings = response.data.rankings
       } catch (error) {
         console.error('Failed to fetch rankings:', error)
+      }
+    },
+
+    fetchAvatars() {
+      this.rankings.forEach(async (stats) => {
+        this.avatars[stats.id] = await this.getAvatar(stats.id)
+      })
+    },
+
+    async getAvatar(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
+      try {
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        return response.data.avatarUrl
+      } catch (e) {
+        console.error('flAPI error:', e)
       }
     },
 
