@@ -5,8 +5,17 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_FLAPI_URL || 'http://localhost:3000';
 
 export default {
-  startNewGame(userId) {
-    return axios.post(`${API_URL}/solitaire/start`, { userId });
+  getRankings() {
+    return axios.get(`${API_URL}/solitaire/sotd/rankings`);
+  },
+  startNewGame(userId, userSeed) {
+    return axios.post(`${API_URL}/solitaire/start`, { userId, userSeed });
+  },
+  startSOTD(userId) {
+    return axios.post(`${API_URL}/solitaire/start/sotd`, { userId });
+  },
+  resetGame(userId) {
+    return axios.post(`${API_URL}/solitaire/reset`, { userId })
   },
   /**
    * Gets the current game state for a user.
