@@ -114,6 +114,9 @@ export default {
       return "Défaite...";
     },
     timeLeft() {
+      if (this.endGameDialog) {
+        return 0
+      }
       let tl = Math.min(
         Math.floor((((this.now - (this.foundLobby?.lastmove || this.now)) / 1000) * 100) / 60),
         100,

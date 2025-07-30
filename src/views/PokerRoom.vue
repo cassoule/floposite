@@ -408,18 +408,18 @@ export default {
           <span class="ml-16" style="float: right">
             <v-btn
               v-if="
-                discordId === room.host_id &&
-                (!room.playing ||
-                  room.waiting_for_restart ||
-                  room.current_turn === 4 ||
-                  room.curent_turn === null)
+                discordId === room?.host_id &&
+                (!room?.playing ||
+                  room?.waiting_for_restart ||
+                  room?.current_turn === 4 ||
+                  room?.curent_turn === null)
               "
               :text="room?.playing ? 'Manche suivante' : 'Commencer'"
               class="text-none mr-4"
               color="white"
               variant="tonal"
               rounded="lg"
-              :disabled="Object.keys(room.players).length - Object.keys(room.afk).length < 2"
+              :disabled="Object.keys(room?.players)?.length - Object.keys(room?.afk)?.length < 2"
               @click="startGame"
             />
             <v-btn

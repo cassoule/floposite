@@ -51,6 +51,9 @@ export default {
 
   computed: {
     timeLeft() {
+      if (this.endGameDialog) {
+        return 0
+      }
       let tl = Math.min(
         Math.floor((((this.now - (this.foundLobby?.lastmove || this.now)) / 1000) * 100) / 60),
         100,
@@ -327,7 +330,7 @@ export default {
           {{ message }}
         </v-card-text>
         <v-card-actions>
-          <v-btn class="rounded-lg" text="Ok" variant="tonal" @click="reload"></v-btn>
+          <v-btn class="rounded-lg" text="Ok" variant="tonal" @click="endGameDialog = false" @click.stop="reload"></v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
