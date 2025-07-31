@@ -73,7 +73,7 @@ export default {
 
   methods: {
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL, {
+      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',

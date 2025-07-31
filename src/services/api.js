@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // IMPORTANT: Replace this with your actual backend URL
 // For local development, it might be 'http://localhost:25578'
-const API_URL = import.meta.env.VITE_FLAPI_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_FLAPI_URL || 'http://localhost:3000/api';
 
 export default {
   getRankings() {

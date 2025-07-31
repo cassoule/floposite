@@ -68,20 +68,20 @@ export default {
 
   methods: {
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL, {
+      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
       })
 
-      this.socket.on('new-poker-room', async () => {
+      this.socket.on('poker-update', async () => {
         await this.getRooms()
       })
     },
 
     async createRoom() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/create-poker-room'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/create'
       try {
         const response = await axios.post(url, { creatorId: this.discordId })
         this.$router.push(`/poker/${response.data.roomId}`)
@@ -91,7 +91,7 @@ export default {
     },
 
     async getRooms() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-rooms'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker'
       try {
         const response = await axios.get(url)
         this.rooms = response.data.rooms
@@ -103,7 +103,6 @@ export default {
     async getUsers() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
-        console.log(fetchUrl)
         const response = await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',

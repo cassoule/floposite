@@ -145,10 +145,6 @@
       <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
       <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
       <v-tab value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
-      <v-tab value="votes" icon>
-        <i class="mdi mdi-timer-outline" />
-        <v-badge v-if="active_polls && unseenActivePoll" dot color="primary" />
-      </v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab" class="w-100">
@@ -577,76 +573,6 @@
               class="skin-bg"
               :style="`background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 80%)`"
             ></div>
-          </div>
-        </div>
-      </v-tabs-window-item>
-
-      <v-tabs-window-item value="votes">
-        <div
-          class="votes-containers"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
-        >
-          <v-card
-            v-for="[key, poll] in Object.entries(active_polls)"
-            :key="key"
-            class="votes-card"
-            :variant="poll.voters.includes(discordId) ? 'plain' : 'tonal'"
-          >
-            <div v-if="poll.requiredMajority - poll.for > 0">
-              <v-card-title
-                ><span style="font-weight: bold">{{ poll.username.username }}</span> propose de
-                timeout
-                <span style="font-weight: bold">{{ poll.toUsername.username }}</span></v-card-title
-              >
-              <v-card-subtitle
-                >Pendant
-                <span style="font-weight: bold">{{
-                  poll.time_display.replaceAll('*', '')
-                }}</span></v-card-subtitle
-              >
-              <v-card-subtitle
-                >Il manque {{ poll.requiredMajority - poll.for }} vote(s)</v-card-subtitle
-              >
-              <v-card-text class="d-flex align-end">
-                {{ ((new Date(poll.endTime).getTime() - Date.now()) / 1000).toFixed() }}s restantes
-                <v-spacer />
-                <div v-if="!poll.voters.includes(discordId)">
-                  <v-btn
-                    text="Oui"
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    class="mr-2"
-                    @click="timeoutVote(key, true)"
-                  />
-                  <v-btn
-                    text="Non"
-                    color="primary"
-                    variant="tonal"
-                    style="border: 1px solid #5865f2"
-                    rounded="lg"
-                    @click="timeoutVote(key, false)"
-                  />
-                </div>
-                <div v-else>Tu as voté !</div>
-              </v-card-text>
-            </div>
-            <div v-else>
-              <v-card-title
-                ><span style="font-weight: bold">{{ poll.toUsername.username }}</span> a été
-                timeout</v-card-title
-              >
-              <v-card-subtitle
-                >Pendant
-                <span style="font-weight: bold">{{
-                  poll.time_display.replaceAll('*', '')
-                }}</span></v-card-subtitle
-              >
-              <v-card-subtitle class="pb-3">{{ poll.for }} ont voté pour</v-card-subtitle>
-            </div>
-          </v-card>
-          <div v-if="Object.keys(active_polls)?.length === 0" class="pt-16 pl-5">
-            <p class="pt-16 w-100 text-center">Aucun vote en cours</p>
           </div>
         </div>
       </v-tabs-window-item>
@@ -1863,7 +1789,7 @@ export default {
 
     initSocket() {
       // Connect to your bot's Socket.IO server
-      this.socket = io(import.meta.env.VITE_FLAPI_URL, {
+      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
@@ -2072,22 +1998,6 @@ export default {
         this.active_slowmodes = response.data.slowmodes
       } catch (e) {
         console.error('flAPI error:', e)
-      }
-    },
-
-    async sendMessage() {
-      let msg = this.message
-      this.message = null
-      this.showSendingToast()
-      try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/send-message', {
-          userId: this.discordId,
-          channelId: '1368908514545631262',
-          message: msg,
-        })
-        this.showSentToast()
-      } catch (e) {
-        this.showErrorToast(e.response.data.error)
       }
     },
 

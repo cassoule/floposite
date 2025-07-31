@@ -111,80 +111,69 @@ export default {
   methods: {
     time,
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL, {
+      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
       })
 
-      this.socket.on('message', (data) => {
-        console.log('room message', data)
-      })
-
-      this.socket.on('new-poker-room', async () => {
+      this.socket.on('poker-update', async (data) => {
         const initialRoom = this.room
         await this.getRoom()
-        if (initialRoom === this.room) window.location.reload()
-        this.raiseValue =
-          (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
-      })
-
-      this.socket.on('player-joined', async () => {
-        await this.getRoom()
-      })
-
-      this.socket.on('poker-room-started', async () => {
-        await this.getRoom()
-        this.raiseValue =
-          (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
-      })
-
-      this.socket.on('room-start', async (data) => {
-        console.log('room start', data)
-      })
-
-      this.socket.on('player-fold', async (data) => {
-        if (data.roomId === this.room.id) {
-          this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} ` : ''}FOLDED`, true)
-        }
-
-      })
-
-      this.socket.on('player-check', async (data) => {
-        if (data.roomId === this.room.id) {
-          this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}CHECK`, false)
+        switch (data.type) {
+          case 'player-joined':
+            break;
+          case 'room-started':
+            this.raiseValue =
+              (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
+            break;
+          case 'room-start':
+            console.log('room start', data)
+            break;
+          default:
+            if (initialRoom === this.room) window.location.reload()
+            this.raiseValue =
+              (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
+            break;
         }
       })
 
-      this.socket.on('player-call', async (data) => {
+      this.socket.on('poker-toast', async (data) => {
         if (data.roomId === this.room.id) {
-          this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}CALL`, false)
-        }
-      })
-
-      this.socket.on('player-raise', async (data) => {
-        if (data.roomId === this.room.id) {
-          this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}RAISE par ${data.amount}`, false)
-        }
-      })
-
-      this.socket.on('player-winner', async (data) => {
-        if (data.roomId === this.room.id) {
-          let playerNames = ''
-          data.playerIds.forEach((playerId, index) => {
-            if (index > 0) {
-              playerNames += ', '
-            }
-            playerNames += this.room.players[playerId].globalName
-          })
-          this.showSuccessOrWarningToast(`${data.playerIds.includes(this.discordId) ? `Tu a gagné ` : playerNames + (data.playerIds.length > 1 ? ' ont gagné ' : ' a gagné ')}${data.amount}`, false)
+          await this.getRoom()
+          switch (data.type) {
+            case 'player-fold':
+              this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} ` : ''}FOLDED`, true)
+              break;
+            case 'player-check':
+              this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}CHECK`, false)
+              break;
+            case 'player-call':
+              this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}CALL`, false)
+              break;
+            case 'player-raise':
+              this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}RAISE par ${data.amount}`, false)
+              break;
+            case 'player-winner':
+              let playerNames = ''
+              data.playerIds.forEach((playerId, index) => {
+                if (index > 0) {
+                  playerNames += ', '
+                }
+                playerNames += this.room.players[playerId].globalName
+              })
+              this.showSuccessOrWarningToast(`${data.playerIds.includes(this.discordId) ? `Tu as gagné ` : playerNames + (data.playerIds.length > 1 ? ' ont gagné ' : ' a gagné ')}${data.amount}`, false)
+              break;
+            default:
+              break;
+          }
         }
       })
     },
 
     async getRoom() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-rooms/' + this.room_id
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/' + this.room_id
       try {
         const response = await axios.get(url)
         this.room = response.data.room
@@ -195,7 +184,7 @@ export default {
     },
 
     async joinRoom() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/join'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/join'
       try {
         const response = await axios.post(url, { userId: this.discordId, roomId: this.room_id })
       } catch (e) {
@@ -205,7 +194,7 @@ export default {
     },
 
     async handleAccept(id) {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/accept'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/accept'
       try {
         const response = await axios.post(url, { userId: id, roomId: this.room_id })
       } catch (e) {
@@ -215,7 +204,7 @@ export default {
     },
 
     async leaveRoom() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/leave'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/leave'
       try {
         this.$router.push('/poker')
         const response = await axios.post(url, { userId: this.discordId, roomId: this.room_id })
@@ -229,8 +218,8 @@ export default {
       const url =
         import.meta.env.VITE_FLAPI_URL +
         (this.room?.waiting_for_restart || this.room?.current_turn === 4
-          ? '/poker-room/next-round'
-          : '/poker-room/start')
+          ? '/poker/next-hand'
+          : '/poker/start')
       try {
         const response = await axios.post(url, { roomId: this.room_id })
       } catch (e) {
@@ -240,7 +229,7 @@ export default {
     },
 
     async handleFold() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/action/fold'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/fold'
       try {
         const response = await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
       } catch (e) {
@@ -250,7 +239,7 @@ export default {
     },
 
     async handleCheck() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/action/check'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/check'
       try {
         const response = await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
       } catch (e) {
@@ -260,7 +249,7 @@ export default {
     },
 
     async handleCall() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/action/call'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/call'
       try {
         const response = await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
       } catch (e) {
@@ -270,7 +259,7 @@ export default {
     },
 
     async handleRaise() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker-room/action/raise'
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/raise'
       try {
         const response = await axios.post(url, {
           roomId: this.room_id,
