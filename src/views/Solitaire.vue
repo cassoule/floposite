@@ -95,8 +95,9 @@
                     color="primary"
                     rounded="lg"
                     @click="handleRestartSotd"
-                    >Jouer</v-btn
                   >
+                    Jouer
+                  </v-btn>
                 </v-card-actions>
               </v-card>
               <v-divider vertical class="d-none d-sm-flex" />
@@ -349,7 +350,7 @@ export default {
   methods: {
     formatFinishTime(startAt, endAt=null) {
       const start = new Date(startAt)
-      const end = new Date(endAt)
+      const end = endAt ? new Date(endAt) : new Date()
 
       let remainder = endAt ? end - start : startAt
 

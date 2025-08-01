@@ -114,6 +114,9 @@ export default {
       return "Défaite...";
     },
     timeLeft() {
+      if (this.endGameDialog) {
+        return 0
+      }
       let tl = Math.min(
         Math.floor((((this.now - (this.foundLobby?.lastmove || this.now)) / 1000) * 100) / 60),
         100,
@@ -177,7 +180,7 @@ export default {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
     // Make sure to replace with your actual API URL
-    this.socket = io(import.meta.env.VITE_FLAPI_URL, {
+    this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
       withCredentials: false,
       extraHeaders: {
         'ngrok-skip-browser-warning': 'true',
