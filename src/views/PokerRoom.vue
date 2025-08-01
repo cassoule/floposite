@@ -214,6 +214,17 @@ export default {
       await this.getRoom()
     },
 
+    async handleKick(id) {
+      const url = import.meta.env.VITE_FLAPI_URL + '/poker/kick'
+      try {
+        const response = await axios.post(url, { commandUserId: this.discordId, userId: id, roomId: this.room.id })
+        this.showSuccessOrWarningToast(`Joueur ${this.room.players[id].globalName} expulsé`, true)
+      } catch (e) {
+        console.log(e)
+      }
+      await this.getRoom()
+    },
+
     async startGame() {
       const url =
         import.meta.env.VITE_FLAPI_URL +
@@ -413,10 +424,11 @@ export default {
             />
             <v-btn
               v-if="!hasJoinedRoom"
-              text="S'asseoir"
+              :text="room?.fakeMoney ? 'S\'asseoir' : 'S\'asseoir pour ' + formatAmount(room?.minBet) + ' FC'"
               class="text-none"
               color="primary"
               rounded="lg"
+              :disabled="room?.fakeMoney ? false : room?.minBet > (users.find(u => u.id === discordId)?.coins ?? 0)"
               :loading="isInQueue"
               @click="joinRoom"
             />
@@ -604,9 +616,6 @@ export default {
               <v-card-subtitle class="mb-3" :title="player.bank + ' FC'">
                 {{ formatAmount(player.bank) }} FC
               </v-card-subtitle>
-              <v-card-subtitle class="mb-3" :title="player.bank + ' FC'">
-                {{ users.find(u => u.id === player.id)?.elo ? users.find(u => u.id === player.id)?.elo + ' FlopoElo' : 'Non Classé' }}
-              </v-card-subtitle>
               <div>
                 <v-card-text
                   v-if="player.id === discordId || !room.playing || room.current_turn === 4"
@@ -631,6 +640,13 @@ export default {
                 >
                   {{ player.solve }}
                 </v-card-text>
+              </div>
+              <div v-if="discordId === room?.host_id && player.id !== room?.host_id && !(room.playing && (room.current_turn !== null && room.current_turn !== 4))">
+                <v-card-actions class="pa-0 ma-0">
+                  <v-btn block variant="flat" density="compact" class="text-none" color="error" rounded="xl" @click="handleKick(player.id)">
+                    Kick
+                  </v-btn>
+                </v-card-actions>
               </div>
             </v-card>
             <div v-if="Object.values(room?.queue).length > 0" class="mt-6 ml-6 d-flex flex-column">

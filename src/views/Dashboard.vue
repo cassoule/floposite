@@ -587,7 +587,7 @@
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
 
-  <div v-else-if="users" style="width: fit-content; margin-top: 5rem; margin-bottom: 3rem">
+  <div v-else-if="users" class="user-tab">
     <div>
       <v-img
         v-if="avatar"
