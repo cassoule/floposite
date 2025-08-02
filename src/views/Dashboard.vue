@@ -151,7 +151,6 @@
       <v-tabs-window-item value="games">
         <div
           class="actions-container"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
         >
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Tic Tac Toe</v-card-title>
@@ -226,20 +225,21 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>Loup-Garou</v-card-title>
+          <v-card class="red-action-card bg-black" variant="flat">
+            <v-card-title>Erynies</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de ce loup-garou un peu particulier, de 4 à 8 joueurs.</p>
+              <p>Joue une partie de ce loup-garou un peu particulier, à partir de 4 joueurs.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
                 text="Jouer"
                 class="text-none"
                 append-icon="mdi-fire-circle"
-                color="primary"
+                color="#520701"
                 variant="flat"
                 rounded="lg"
                 style="border-radius: 10px !important"
+                @click="$router.push('/erynies')"
               />
             </v-card-text>
           </v-card>
@@ -285,7 +285,6 @@
       <v-tabs-window-item value="commandes">
         <div
           class="actions-container"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
         >
           <v-card class="action-card" variant="tonal">
             <v-card-title>Modif Pseudo</v-card-title>
@@ -693,6 +692,25 @@
             </v-card-text>
           </v-card>
 
+          <v-card class="red-action-card" variant="flat">
+            <v-card-title>Erynies</v-card-title>
+            <v-card-subtitle>
+              <p>Joue une partie de ce loup-garou un peu particulier, à partir de 4 joueurs.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-fire-circle"
+                color="#520701"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/erynies')"
+              />
+            </v-card-text>
+          </v-card>
+
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title> <!--Blackjack-->
             <v-card-subtitle>
@@ -728,24 +746,6 @@
               />
             </v-card-text>
           </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Loup-Garou-->
-            <v-card-subtitle>
-              <!--              <p>Joue une partie de ce loup-garou un peu particulier, de 4 à 8 joueurs.</p>-->
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-fire-circle"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
         </div>
       </v-tabs-window-item>
     </v-tabs-window>
@@ -753,14 +753,16 @@
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
 
-  <div v-if="users" class="leaderboard-container pl-3">
+  <div v-if="users" class="leaderboard-container">
     <h2 style="display: flex; place-content: space-between">
       Classement
       <span
         class="text-capitalize text-secondary cursor-pointer rounded-lg"
+        style="user-select: none"
         @click="leaderboardSwitch"
-        >{{ leaderboardType }}</span
-      >
+        >
+        {{ leaderboardType }}
+      </span>
     </h2>
     <div class="leaderboard">
       <div
@@ -2307,10 +2309,9 @@ button:disabled {
 .leaderboard {
   float: right;
   background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 #5865f211;
   border-radius: 15px;
   padding: 6px 5px;
-  height: 700px;
+  height: 805px;
   overflow-y: scroll;
   transition: 2s ease;
 }
@@ -2376,16 +2377,17 @@ button:disabled {
 }
 
 .actions-container {
-  height: 390px;
+  height: 438px !important;
   overflow-y: scroll;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 15px 0;
 }
 
 .action-card {
   position: relative;
   margin-top: 10px;
   background: transparent !important;
-  border-radius: 15px !important;
+  border-radius: 0 15px 15px 0 !important;
+  border-left: 3px solid #fff !important;
 }
 .action-card::before {
   content: '';
@@ -2401,6 +2403,42 @@ button:disabled {
 .action-card:hover::before {
   transform: translateX(30%);
 }
+
+.red-action-card{
+  position: relative;
+  margin-top: 10px;
+  background: transparent !important;
+  border-radius: 0 15px 15px 0 !important;
+  border-left: 3px solid #fff !important;
+}
+.red-action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 150%;
+  height: 100%;
+  background: radial-gradient(circle at 5% 50%, #170201, #9B030222 200%) !important;
+  transform: translateX(30%);
+  z-index: -1;
+  transition: 0.2s ease-in-out;
+}
+.red-action-card:hover::before {
+  transform: translateX(20%);
+}
+.red-action-card::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  z-index: -2;
+  top: 0;
+  left: 0;
+  width: 104%;
+  height: 100%;
+  background: url('/erynies_card_back.png') no-repeat center center;
+  background-size: 100% auto;
+}
+
 
 .disabled-card::after {
   content: 'Prochainement';
@@ -2504,6 +2542,7 @@ button:disabled {
   }
   .leaderboard {
     width: 100%;
+    height: fit-content;
   }
   .leaderboard-container {
     width: 100%;
