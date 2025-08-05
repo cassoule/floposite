@@ -2145,7 +2145,7 @@ export default {
 
     async handleDailyQuery() {
       try {
-        const response = await axios.get(
+        const response = await axios.post(
           import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily',
         )
       } catch (e) {
