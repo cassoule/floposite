@@ -121,6 +121,7 @@
           variant="tonal"
           rounded="lg"
           style="border: 1px solid #5865f2"
+          :key="Date.now() + '-daily-reward'"
           @click="handleDailyQuery"
         >
           <v-icon
@@ -2148,6 +2149,7 @@ export default {
         const response = await axios.get(
           import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily',
         )
+        this.user.dailyQueried = true
       } catch (e) {
         console.log(e)
       }

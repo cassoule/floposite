@@ -254,7 +254,6 @@
               <v-alert-title>Statistiques</v-alert-title>
               <v-card-text class="px-0 pb-2">
                 <div class="d-flex justify-space-between flex-wrap" style="gap: 1em">
-                  <h3>{{ formatFinishTime(gameState.startTime, gameState.endTime) }}</h3>
                   <h3>{{ gameState.moves }} coups</h3>
                   <h3>{{ gameState.score }} points</h3>
                 </div>
@@ -352,7 +351,7 @@ export default {
       const start = new Date(startAt)
       const end = endAt ? new Date(endAt) : new Date()
 
-      let remainder = endAt ? end - start : startAt
+      let remainder = endAt ? end - start : start
 
       const hours = Math.floor(remainder / 3600000)
       remainder %= 3600000
