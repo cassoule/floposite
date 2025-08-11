@@ -5,12 +5,13 @@ export default {
 </script>
 
 <template>
-  <div class="erynies-bg"></div>
+<!--  <div class="erynies-bg"></div>
   <v-layout>
     <v-main>
       <h1>Erynies</h1>
     </v-main>
-  </v-layout>
+  </v-layout>-->
+  <iframe src="/godot/erinyes.html" style="width: 100%; height: 100%; border: none"></iframe>
 </template>
 
 <style scoped>

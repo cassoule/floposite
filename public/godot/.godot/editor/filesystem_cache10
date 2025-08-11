@@ -1,0 +1,12 @@
+ea4bc82a6ad023ab7ee23ee620429895
+::res://::1754429951
+erinyes.apple-touch-icon.png::CompressedTexture2D::5083177910757776923::1754429950::1754429989::1::::<><><>0<>0<>dec9556e74328b2266c63d6bb22f74a3<>res://.godot/imported/erinyes.apple-touch-icon.png-53ac20960dabf03506ad417e03e2ed2a.ctex::
+erinyes.icon.png::CompressedTexture2D::2650013319272169484::1754429950::1754429989::1::::<><><>0<>0<>7fa316e55df3eb876b2e0e6cf810a701<>res://.godot/imported/erinyes.icon.png-6053a77de4deb5974df66b5e0c346849.ctex::
+erinyes.png::CompressedTexture2D::1585277585849173040::1754429950::1754429989::1::::<><><>0<>0<>890a567a8d8db34eebb187568f80590b<>res://.godot/imported/erinyes.png-99efcfe8f793863717f1e1a5237488fb.ctex::
+export_presets.cfg::TextFile::-1::1754429951::0::1::::<><><>0<>0<><>::
+icon.svg::CompressedTexture2D/CompressedTexture2D::2912782833647809103::1754426973::1754426985::1::::<><><>0<>0<>4fb90a10f1a3359e82312b8b8f72132c<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+MainMenu.gd::GDScript::7989758783858005920::1754427727::0::1::::<>Control<><>0<>0<><>::
+MainMenu.tscn::PackedScene::1101478151873619124::1754429652::0::1::::<><><>0<>0<><>::uid://dl3kfo12xepdo::::res://MainMenu.gd
+Game.tscn::PackedScene::306150357116807011::1754429652::0::1::::<><><>0<>0<><>::uid://dikg1d4itrj10::::res://Game.gd
+Game.gd::GDScript::7741827513081217833::1754428355::0::1::::<>Control<><>0<>0<><>::
+Network.gd::GDScript::8270199820902268402::1754429601::0::1::::<>Node<><>0<>0<><>::
