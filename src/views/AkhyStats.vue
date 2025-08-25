@@ -422,7 +422,7 @@ export default {
                         }}
                       </h3>
                     </div>
-                    <h4>#1 SOTD le {{ new Date(game.timestamp).toLocaleDateString() }}</h4>
+                    <h4>#1 SOTD le {{ new Date(game.timestamp - 60000).toLocaleDateString() }}</h4>
                   </div>
                   <div
                     class="d-flex"
@@ -436,7 +436,7 @@ export default {
               </v-card-text>
               <v-card-subtitle class="text-right pb-2"
                 >{{ game.type }} -
-                {{ new Date(game.timestamp).toLocaleDateString() }}</v-card-subtitle
+                {{ new Date(game.timestamp - 60000).toLocaleDateString() }}</v-card-subtitle
               >
             </v-card>
           </v-list-item>
