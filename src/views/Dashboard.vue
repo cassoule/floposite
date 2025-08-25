@@ -759,6 +759,7 @@
       Classement
       <span
         class="text-capitalize text-secondary cursor-pointer rounded-lg"
+        style="user-select: none"
         @click="leaderboardSwitch"
         >{{ leaderboardType }}</span
       >
@@ -783,6 +784,7 @@
             width: 100%;
             padding: 0.5em 1em;
           "
+          v-if="akhy"
         >
           <span style="color: #ddd; display: flex; place-items: center; gap: 0.7rem">
             <v-img
@@ -792,7 +794,13 @@
             />
             @{{ akhy?.globalName }}
           </span>
-          {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
+          <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center;">
+            {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
+          </div>
+          <div v-else style="display: flex; place-items: center;">
+            <v-img :src="rankIcon(akhy.elo)" width="20" height="20" />
+          </div>
+
           <v-menu activator="parent" location="end" open-on-hover transition="scale-transition">
             <v-list
               width="250"
@@ -2221,6 +2229,24 @@ export default {
         payoutTime: 300,
       }
     },
+
+    rankIcon(elo) {
+      if (elo < 900) {
+        return '';
+      } else if (elo < 1100) {
+        return '/ranks_icons/bronze.svg';
+      } else if (elo < 1300) {
+        return '/ranks_icons/silver.svg';
+      } else if (elo < 1600) {
+        return '/ranks_icons/gold.svg';
+      } else if (elo < 2000) {
+        return '/ranks_icons/diamond.svg';
+      } else if (elo >= 2000) {
+        return '/ranks_icons/master.svg';
+      } else {
+        return '';
+      }
+    }
   },
 
   beforeUnmount() {
