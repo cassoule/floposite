@@ -51,7 +51,6 @@ export default {
       discordId: null,
 
       rooms: null,
-      avatars: {},
       users: {},
 
       roomCreationDialog: false,
@@ -85,7 +84,6 @@ export default {
     await this.getRooms()
     this.initSocket()
     await this.getUsers()
-    this.fetchAvatars()
 
     this.roomFakeMoney = this.users.find(u => u.id === this.discordId)?.coins ? false : true
   },
@@ -148,29 +146,6 @@ export default {
           withCredentials: false,
         })
         this.usersByElo = response.data
-      } catch (e) {
-        console.error('flAPI error:', e)
-      }
-    },
-
-    fetchAvatars() {
-      this.users.forEach(async (user) => {
-        this.avatars[user.id] = await this.getAvatar(user.id)
-      })
-    },
-
-    async getAvatar(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
-      try {
-        console.log(fetchUrl)
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
-        return response.data.avatarUrl
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -333,7 +308,7 @@ export default {
                   :style="`transform: translateX(calc(-10px * ${index})); z-index: 1;`"
                 >
                   <v-img
-                    :src="avatars[player.id]"
+                    :src="player.avatar"
                     color="transparent"
                     style="border-radius: 50%; width: 20px; height: 20px"
                   />

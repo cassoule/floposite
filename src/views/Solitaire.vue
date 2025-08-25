@@ -168,7 +168,6 @@
                     style="display: flex; width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis; gap: .7em; align-items: center"
                     :title="'@' + stats.globalName"
                   >
-                    <h3>#{{index+1}}</h3>
                     <v-img
                       :src="avatars[stats.id]"
                       color="transparent"

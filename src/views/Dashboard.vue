@@ -786,7 +786,7 @@
         >
           <span style="color: #ddd; display: flex; place-items: center; gap: 0.7rem">
             <v-img
-              :src="avatars[akhy.id]"
+              :src="akhy.avatarUrl"
               color="transparent"
               style="border-radius: 50%; width: 20px; height: 20px"
             />
@@ -809,7 +809,7 @@
                   style="display: flex; place-content: start; place-items: center; gap: 0.7rem"
                 >
                   <v-img
-                    :src="avatars[akhy.id]"
+                    :src="akhy.avatarUrl"
                     color="transparent"
                     max-width="30"
                     style="border-radius: 50%; width: 20px; height: 30px"
@@ -858,6 +858,9 @@
               </v-list-item>
               <v-list-item>
                 <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoElo </v-list-item-subtitle>
+              </v-list-item>
+              <v-list-item class="mb-1">
+                <v-btn class="text-none" color="primary" block rounded density="comfortable" @click="$router.push('/akhy/' + akhy.id)">Profil</v-btn>
               </v-list-item>
             </v-list>
           </v-menu>
