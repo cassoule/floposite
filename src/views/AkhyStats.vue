@@ -291,7 +291,7 @@ export default {
                     <h2>{{ game.p1 === $route.params.id ? game.p2_score.toFixed(0) : game.p1_score.toFixed(0) }}</h2>
                   </div>
                   <div class="d-flex" style="place-items: center; place-content: end; width: 33%">
-                    <h3 class="username">{{ game.p1 === $route.params.id ? users.find(u => u.id ===game.p2)?.globalName : users.find(u => u.id ===game.p1)?.globalName + 'aaa' }}</h3>
+                    <h3 class="username">{{ game.p1 === $route.params.id ? users.find(u => u.id ===game.p2)?.globalName : users.find(u => u.id ===game.p1)?.globalName }}</h3>
                     <v-img class="ml-2" :src="game.p1 === $route.params.id ? users.find(u => u.id ===game.p2)?.avatarUrl : users.find(u => u.id ===game.p1)?.avatarUrl" :max-width="30" :height="30" rounded="circle"></v-img>
                   </div>
                 </div>
