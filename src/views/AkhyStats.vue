@@ -281,16 +281,16 @@ export default {
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">
               <v-card-text class="pb-0">
                 <div class="d-flex justify-space-between">
-                  <div class="d-flex" style="place-items: center">
+                  <div class="d-flex w-33" style="place-items: center; place-content: start">
                     <v-img class="mr-2" :src="game.p1 === $route.params.id ? users.find(u => u.id ===game.p1)?.avatarUrl : users.find(u => u.id ===game.p2)?.avatarUrl" :width="30" :height="30" rounded="circle"></v-img>
                     <h3 class="username">{{game.p1 === $route.params.id ? users.find(u => u.id ===game.p1)?.globalName : users.find(u => u.id ===game.p2)?.globalName}}</h3>
                   </div>
-                  <div class="d-flex" style="gap: .5rem">
+                  <div class="d-flex w-33" style="gap: .5rem; place-items: center; place-content: center">
                     <h2>{{ game.p1 === $route.params.id ? game.p1_score.toFixed(0) : game.p2_score.toFixed(0) }}</h2>
                     <h2>-</h2>
                     <h2>{{ game.p1 === $route.params.id ? game.p2_score.toFixed(0) : game.p1_score.toFixed(0) }}</h2>
                   </div>
-                  <div class="d-flex" style="place-items: center">
+                  <div class="d-flex w-33" style="place-items: center; place-content: end">
                     <h3 class="username">{{ game.p1 === $route.params.id ? users.find(u => u.id ===game.p2)?.globalName : users.find(u => u.id ===game.p1)?.globalName }}</h3>
                     <v-img class="ml-2" :src="game.p1 === $route.params.id ? users.find(u => u.id ===game.p2)?.avatarUrl : users.find(u => u.id ===game.p1)?.avatarUrl" :width="30" :height="30" rounded="circle"></v-img>
                   </div>
