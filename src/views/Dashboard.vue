@@ -807,6 +807,8 @@
               <v-list-item class="px-2">
                 <v-list-item-title
                   style="display: flex; place-content: start; place-items: center; gap: 0.7rem"
+                  class="cursor-pointer"
+                  @click="$router.push('/akhy/' + akhy.id)"
                 >
                   <v-img
                     :src="akhy.avatarUrl"
@@ -851,7 +853,7 @@
                   class="pa-0 ma-0"
                   color="secondary"
                   line-width="2"
-                  :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0]"
+                  :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0,0]"
                   style="position: absolute; left: 0; top: 0"
                   title="Evolution de l'elo"
                 />
@@ -859,8 +861,8 @@
               <v-list-item>
                 <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoElo </v-list-item-subtitle>
               </v-list-item>
-              <v-list-item class="mb-1">
-                <v-btn class="text-none" color="primary" block rounded density="comfortable" @click="$router.push('/akhy/' + akhy.id)">Profil</v-btn>
+              <v-list-item class="pb-1 px-3">
+                <v-btn class="text-none" color="primary" block rounded density="comfortable" @click="$router.push('/akhy/' + akhy.id)">Voir plus</v-btn>
               </v-list-item>
             </v-list>
           </v-menu>
