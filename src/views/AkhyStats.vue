@@ -186,14 +186,14 @@ export default {
       } else {
         return 'draw-card'
       }
-    }
+    },
   },
 }
 </script>
 
 <template>
   <v-layout class="w-100">
-    <v-main class="d-flex pt-16" style="place-items: start; place-content: start; gap: 2em;">
+    <v-main class="d-flex pt-16" style="place-items: start; place-content: start; gap: 2em">
       <div v-if="user && !loading" class="w-100">
         <div class="d-flex w-100" style="gap: 2em; flex-wrap: wrap">
           <v-img
@@ -234,7 +234,6 @@ export default {
           variant="tonal"
           style="border: 2px solid #ffffff55"
         >
-
           <v-list-item class="py-4 graphs">
             <h2>FlopoCoins</h2>
             <v-sparkline
@@ -244,8 +243,8 @@ export default {
               color="primary"
               line-width="1"
               :model-value="
-            sparkline?.length > 1 ? sparkline?.map((entry) => entry.user_new_amount) : [0, 0]
-          "
+                sparkline?.length > 1 ? sparkline?.map((entry) => entry.user_new_amount) : [0, 0]
+              "
               title="Evolution de l'elo"
             />
           </v-list-item>
@@ -272,44 +271,173 @@ export default {
           bg-color="#181818"
           base-color="white"
           variant="tonal"
-          style="border: 2px solid #ffffff55; max-height: 500px;"
+          style="border: 2px solid #ffffff55; max-height: 500px"
         >
-          <v-list-item class="pt-4 position-sticky top-0 w-100" rounded="0" style="backdrop-filter: blur(5px); z-index: 100">
+          <v-list-item
+            class="pt-4 position-sticky top-0 w-100"
+            rounded="0"
+            style="backdrop-filter: blur(5px); z-index: 100"
+          >
             <h2>Historique des parties</h2>
           </v-list-item>
-          <v-list-item v-if="games.length > 0" v-for="game in games.filter(g => g.type !== 'POKER_ROUND')" class="pb-3 ">
+          <v-list-item
+            v-if="games.filter((g) => g.type !== 'POKER_ROUND').length > 0"
+            v-for="game in games.filter((g) => g.type !== 'POKER_ROUND').reverse()"
+            class="pb-3"
+          >
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">
-              <v-card-text class="pb-0">
-                <div class="d-flex justify-space-between">
-                  <div class="d-flex" style="place-items: center; justify-content: start; width: 33%">
-                    <v-img class="mr-2" :src="game.p1 === $route.params.id ? users.find(u => u.id ===game.p1)?.avatarUrl : users.find(u => u.id ===game.p2)?.avatarUrl" :max-width="30" :height="30" rounded="circle"></v-img>
-                    <h3 class="username">{{game.p1 === $route.params.id ? users.find(u => u.id ===game.p1)?.globalName : users.find(u => u.id ===game.p2)?.globalName}}</h3>
-                  </div>
-                  <div class="d-flex" style="gap: .5rem; place-items: center; place-content: center; width: 33%">
-                    <h2>{{ game.p1 === $route.params.id ? game.p1_score.toFixed(0) : game.p2_score.toFixed(0) }}</h2>
-                    <h2>-</h2>
-                    <h2>{{ game.p1 === $route.params.id ? game.p2_score.toFixed(0) : game.p1_score.toFixed(0) }}</h2>
-                  </div>
-                  <div class="d-flex" style="place-items: center; place-content: end; width: 33%">
-                    <h3 class="username">{{ game.p1 === $route.params.id ? users.find(u => u.id ===game.p2)?.globalName : users.find(u => u.id ===game.p1)?.globalName }}</h3>
-                    <v-img class="ml-2" :src="game.p1 === $route.params.id ? users.find(u => u.id ===game.p2)?.avatarUrl : users.find(u => u.id ===game.p1)?.avatarUrl" :max-width="30" :height="30" rounded="circle"></v-img>
-                  </div>
-                </div>
-                <div class="d-flex justify-space-between mt-2">
-                  <h4>{{game.p1 === $route.params.id ? game.p1_elo : game.p2_elo}} FlopoElo</h4>
-                  <h4>{{game.p1 === $route.params.id ? game.p2_elo : game.p1_elo}} FlopoElo</h4>
-                </div>
-                <h4 class="mt-1">{{
-                    (() => {
-                      const diff = game.p1 === $route.params.id
-                        ? game.p1_new_elo - game.p1_elo
-                        : game.p2_new_elo - game.p2_elo;
+              <v-card-text v-if="game.type !== 'SOTD'" class="pb-0">
+                <div class="d-flex justify-space-between" style="place-items: center">
+                  <div
+                    class="d-flex flex-column"
+                    style="place-items: start; justify-content: start; width: 33%; gap: 1em"
+                  >
+                    <div class="d-flex" style="place-items: center; justify-content: start">
+                      <v-img
+                        class="mr-2"
+                        :src="
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p1)?.avatarUrl
+                            : users.find((u) => u.id === game.p2)?.avatarUrl
+                        "
+                        :width="30"
+                        :height="30"
+                        rounded="circle"
+                      ></v-img>
+                      <h3
+                        class="username"
+                        :title="
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p1)?.globalName
+                            : users.find((u) => u.id === game.p2)?.globalName
+                        "
+                      >
+                        {{
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p1)?.globalName
+                            : users.find((u) => u.id === game.p2)?.globalName
+                        }}
+                      </h3>
+                    </div>
+                    <h4>{{ game.p1 === $route.params.id ? game.p1_elo : game.p2_elo }} Elo</h4>
+                    <h4>
+                      {{
+                        (() => {
+                          const diff =
+                            game.p1 === $route.params.id
+                              ? game.p1_new_elo - game.p1_elo
+                              : game.p2_new_elo - game.p2_elo
 
-                      return diff > 0 ? `+${diff}` : diff;
-                    })()
-                  }}</h4>
+                          return diff > 0 ? `+${diff}` : diff
+                        })()
+                      }}
+                    </h4>
+                  </div>
+                  <div
+                    class="d-flex"
+                    style="gap: 0.5rem; place-items: center; place-content: center; width: 33%"
+                  >
+                    <h2 class="bg-dark px-2 py-1 rounded" style="width: 30px; text-align: center">
+                      {{
+                        game.p1 === $route.params.id
+                          ? game.p1_score.toFixed(0)
+                          : game.p2_score.toFixed(0)
+                      }}
+                    </h2>
+                    <h2>-</h2>
+                    <h2 class="bg-dark px-2 py-1 rounded" style="width: 30px; text-align: center">
+                      {{
+                        game.p1 === $route.params.id
+                          ? game.p2_score.toFixed(0)
+                          : game.p1_score.toFixed(0)
+                      }}
+                    </h2>
+                  </div>
+                  <div
+                    class="d-flex flex-column"
+                    style="place-items: end; justify-content: start; width: 33%; gap: 1em"
+                  >
+                    <div class="d-flex" style="place-items: center; place-content: start">
+                      <h3
+                        class="username"
+                        :title="
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p2)?.globalName
+                            : users.find((u) => u.id === game.p1)?.globalName
+                        "
+                      >
+                        {{
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p2)?.globalName
+                            : users.find((u) => u.id === game.p1)?.globalName
+                        }}
+                      </h3>
+                      <v-img
+                        class="ml-2"
+                        :src="
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p2)?.avatarUrl
+                            : users.find((u) => u.id === game.p1)?.avatarUrl
+                        "
+                        :width="30"
+                        :height="30"
+                        rounded="circle"
+                      ></v-img>
+                    </div>
+                    <h4>{{ game.p1 === $route.params.id ? game.p2_elo : game.p1_elo }} Elo</h4>
+                    <h4>&nbsp;</h4>
+                  </div>
+                </div>
               </v-card-text>
-              <v-card-subtitle class="text-right pb-2">{{ game.type }} - {{ new Date(game.timestamp).toLocaleDateString() }}</v-card-subtitle>
+              <v-card-text v-else class="pb-0">
+                <div class="d-flex justify-space-between" style="place-items: start">
+                  <div
+                    class="d-flex flex-column"
+                    style="place-items: start; justify-content: start; width: 33%; gap: 1em"
+                  >
+                    <div class="d-flex" style="place-items: center; justify-content: start">
+                      <v-img
+                        class="mr-2"
+                        :src="
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p1)?.avatarUrl
+                            : users.find((u) => u.id === game.p2)?.avatarUrl
+                        "
+                        :width="30"
+                        :height="30"
+                        rounded="circle"
+                      ></v-img>
+                      <h3
+                        class="username"
+                        :title="
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p1)?.globalName
+                            : users.find((u) => u.id === game.p2)?.globalName
+                        "
+                      >
+                        {{
+                          game.p1 === $route.params.id
+                            ? users.find((u) => u.id === game.p1)?.globalName
+                            : users.find((u) => u.id === game.p2)?.globalName
+                        }}
+                      </h3>
+                    </div>
+                    <h4>#1 SOTD le {{ new Date(game.timestamp).toLocaleDateString() }}</h4>
+                  </div>
+                  <div
+                    class="d-flex"
+                    style="gap: 0.5rem; place-items: end; place-content: end; width: 33%"
+                  >
+                    <h2 class="bg-dark px-2 py-1 rounded" style="text-align: center">
+                      {{ game.p1_score.toFixed(0) }}
+                    </h2>
+                  </div>
+                </div>
+              </v-card-text>
+              <v-card-subtitle class="text-right pb-2"
+                >{{ game.type }} -
+                {{ new Date(game.timestamp).toLocaleDateString() }}</v-card-subtitle
+              >
             </v-card>
           </v-list-item>
           <v-list-item v-else>
@@ -359,7 +487,7 @@ export default {
   left: -50%;
   width: 150%;
   height: 100%;
-  background: radial-gradient(circle at 23% 50%, #3eaa3e, #00000000 23%) !important;
+  background: radial-gradient(circle at 23% 23%, #3eaa3e, #00000000 23%) !important;
   z-index: -1;
 }
 
@@ -373,7 +501,7 @@ export default {
   left: -50%;
   width: 150%;
   height: 100%;
-  background: radial-gradient(circle at 23% 50%, #aa3e3e, #00000000 23%) !important;
+  background: radial-gradient(circle at 23% 23%, #aa3e3e, #00000000 23%) !important;
   z-index: -1;
 }
 
@@ -387,7 +515,7 @@ export default {
   left: -50%;
   width: 150%;
   height: 100%;
-  background: radial-gradient(circle at 23% 50%, #5865f2, #00000000 23%) !important;
+  background: radial-gradient(circle at 23% 23%, #5865f2, #00000000 23%) !important;
   z-index: -1;
 }
 
@@ -401,7 +529,7 @@ export default {
   }
 
   .username {
-    max-width: 60px;
+    max-width: 70px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

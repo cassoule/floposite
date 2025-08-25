@@ -1836,6 +1836,11 @@ export default {
       this.socket.on('disconnect', () => {
         console.log('Disconnected from WebSocket server')
       })
+
+      this.socket.on('daily-queried', async () => {
+        this.showSuccessOrWarningToast('+200 FlopoCoins, récompense journalière récupérée', false)
+        await this.getUsers()
+      })
     },
 
     async fetchUsername(id) {
