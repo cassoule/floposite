@@ -18,12 +18,19 @@
           >
             <v-icon class="mdi mdi-cards-spade mr-2" />
             <h1 style="font-size: 1.8rem" rounded="lg">Solitaire</h1>
+            <p
+              v-if="gameState?.hardMode"
+              class="bg-error py-1 px-3 ml-2 mt-2 rounded-xl"
+            >
+              Hard Mode
+            </p>
           </div>
           <p v-if="!gameState || gameState?.isSOTD" class="font-weight-medium">{{ timeLeft() }}</p>
           <v-spacer></v-spacer>
-          <v-btn v-if="gameState" variant="flat" color="primary" rounded="lg" @click="handleReset"
-            >Abandonner</v-btn
-          >
+          <v-btn v-if="gameState" class="text-none" prepend-icon="mdi-undo-variant" variant="tonal" color="gray" rounded="lg" @click="handleUndo">Revenir en arrière</v-btn>
+          <v-btn v-if="gameState" class="text-none" variant="flat" color="error" rounded="lg" @click="handleReset">
+            Abandonner
+          </v-btn>
         </div>
         <div v-if="isLoading" class="loading-overlay">
           <div class="spinner">...</div>
@@ -112,8 +119,20 @@
                   <v-icon class="mdi mdi-cards-spade" />
                   Solitaire
                 </v-card-title>
-                <v-card-text>
+                <v-card-text class="pb-0 mb-0">
                   <p>Jouer un tableau aléatoire de Solitaire.</p>
+                  <div class="d-flex" style="place-items: center; place-content: start; gap: 1rem">
+                    <v-switch v-model="hardMode" color="primary" inset hide-details>
+                      <template #prepend>
+                        Facile
+                      </template>
+                      <template #label>
+                        <p >Difficile</p>
+                      </template>
+                    </v-switch>
+                    <v-icon class="mdi mdi-information-outline mt-1" title="Piochez 3 cartes à la fois en mode difficile"></v-icon>
+                  </div>
+
                 </v-card-text>
                 <v-card-actions>
                   <v-btn-group
@@ -195,7 +214,7 @@
         </div>
 
         <div
-          v-if="gameState && gameState.isSOTD"
+          v-if="gameState"
           :key="Date.now() + '-stats'"
           style="position: fixed; bottom: 1em; left: 1em"
         >
@@ -248,7 +267,7 @@
           <v-card-subtitle class="px-6 text-secondary">
             Seed : {{ gameState?.seed }}
           </v-card-subtitle>
-          <v-card-text v-if="gameState?.isSOTD" class="text-secondary">
+          <v-card-text class="text-secondary">
             <v-alert variant="tonal" color="white" class="rounded-xl mb-4">
               <v-alert-title>Statistiques</v-alert-title>
               <v-card-text class="px-0 pb-2">
@@ -258,8 +277,8 @@
                 </div>
               </v-card-text>
             </v-alert>
-            <p>Tu as validé une partie du SOTD.</p>
-            <p>
+            <p v-if="gameState?.isSOTD">Tu as validé une partie du SOTD.</p>
+            <p v-if="gameState?.isSOTD">
               S'il s'agit de ta meilleure partie aujourd'hui tu peux la retrouver dans le
               classement.
             </p>
@@ -316,6 +335,8 @@ export default {
       userId: null,
       isLoading: false,
       now: Date.now(),
+
+      hardMode: false,
 
       seedChoiceDialog: false,
       winDialog: false,
@@ -415,7 +436,7 @@ export default {
     async handleRestart() {
       await this.getRankings()
       try {
-        const response = await api.startNewGame(this.userId, this.userSeed)
+        const response = await api.startNewGame(this.userId, this.userSeed, this.hardMode)
         this.gameState = response.data.gameState
       } catch (error) {
         console.error('Failed to start new game:', error)
@@ -526,6 +547,21 @@ export default {
         console.warn('Invalid move detected by server. Reverting UI.')
         this.gameState = oldState // Roll back on error
       } finally {
+        this.isLoading = false
+      }
+    },
+
+    async handleUndo() {
+      this.isLoading = true
+      const oldState = JSON.parse(JSON.stringify(this.gameState))
+
+      try {
+        const response = await api.undoMove(this.userId)
+        this.gameState = { ...response.data.gameState }
+        this.isLoading = false
+      } catch (error) {
+        console.error('Failed to undo move:', error)
+        this.gameState = oldState
         this.isLoading = false
       }
     },

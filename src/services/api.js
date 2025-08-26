@@ -8,8 +8,8 @@ export default {
   getRankings() {
     return axios.get(`${API_URL}/solitaire/sotd/rankings`);
   },
-  startNewGame(userId, userSeed) {
-    return axios.post(`${API_URL}/solitaire/start`, { userId, userSeed });
+  startNewGame(userId, userSeed, hardMode = false) {
+    return axios.post(`${API_URL}/solitaire/start`, { userId, userSeed, hardMode });
   },
   startSOTD(userId) {
     return axios.post(`${API_URL}/solitaire/start/sotd`, { userId });
@@ -48,4 +48,8 @@ export default {
   drawCard(userId) {
     return axios.post(`${API_URL}/solitaire/draw`, { userId });
   },
+
+  undoMove(userId) {
+    return axios.post(`${API_URL}/solitaire/undo`, { userId });
+  }
 };
