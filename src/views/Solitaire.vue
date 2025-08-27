@@ -1,8 +1,8 @@
 <!-- Solitaire.vue -->
 <template>
   <v-layout class="w-100">
-    <v-main class="d-flex w-100 mb-16 pb-16 mt-8">
-      <div class="w-100">
+    <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="height: 130vh">
+      <div class="w-100" >
         <div
           class="text-white mb-4 d-flex flex-wrap w-100"
           style="position: relative; place-items: baseline; gap: 0.5em"
@@ -272,8 +272,8 @@
               <v-alert-title>Statistiques</v-alert-title>
               <v-card-text class="px-0 pb-2">
                 <div class="d-flex justify-space-between flex-wrap" style="gap: 1em">
-                  <h3>{{ gameState.moves }} coups</h3>
-                  <h3>{{ gameState.score }} points</h3>
+                  <h3>{{ gameState?.moves }} coups</h3>
+                  <h3>{{ gameState?.score }} points</h3>
                 </div>
               </v-card-text>
             </v-alert>
@@ -321,6 +321,10 @@ function getRankValue(rank) {
   if (rank === 'Q') return 12
   if (rank === 'K') return 13
   return parseInt(rank, 10)
+}
+
+function getCardColor(suit) {
+  return (suit === 'h' || suit === 'd') ? 'red' : 'black';
 }
 
 export default {
@@ -519,12 +523,12 @@ export default {
       if (this.isLoading) return
 
       // Find a valid foundation pile destination for the clicked card
-      const destinationInfo = this.findValidFoundationMove(sourceInfo)
+      const destinationInfo = this.findBestAutoMove(sourceInfo)
 
-      // If a valid destination was found
+      // If a valid destination was found, process it
       if (destinationInfo) {
-        const movePayload = { ...sourceInfo, ...destinationInfo }
-        await this.processMove(movePayload)
+          const movePayload = { ...sourceInfo, ...destinationInfo };
+          await this.processMove(movePayload);
       }
     },
 
@@ -619,7 +623,7 @@ export default {
       }
     },
 
-    findValidFoundationMove(sourceInfo) {
+    findBestAutoMove(sourceInfo) {
       const { sourcePileType, sourcePileIndex, sourceCardIndex } = sourceInfo
 
       let sourcePile =
@@ -628,33 +632,62 @@ export default {
           : this.gameState.wastePile
 
       // Can only auto-move the top card of a stack
-      if (sourceCardIndex !== sourcePile.length - 1) {
+      /*if (sourceCardIndex !== sourcePile.length - 1) {
         return null
-      }
+      }*/
 
       const sourceCard = sourcePile[sourceCardIndex]
 
-      // Loop through all foundation piles to find a valid spot
-      for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
-        const foundationPile = this.gameState.foundationPiles[i]
-        const topCard = foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
+      if (sourceCardIndex === sourcePile.length - 1) {
+        for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
+          const foundationPile = this.gameState.foundationPiles[i]
+          const topCard = foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
 
-        // Rule for moving to an empty foundation (must be an Ace)
-        if (!topCard) {
-          if (sourceCard.rank === 'A') {
-            return { destPileType: 'foundationPiles', destPileIndex: i }
+          // Rule for moving to an empty foundation (must be an Ace)
+          if (!topCard) {
+            if (sourceCard.rank === 'A') {
+              return { destPileType: 'foundationPiles', destPileIndex: i }
+            }
           }
-        }
-        // Rule for moving to a non-empty foundation
-        else {
-          if (
-            sourceCard.suit === topCard.suit &&
-            getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1
-          ) {
-            return { destPileType: 'foundationPiles', destPileIndex: i }
+          // Rule for moving to a non-empty foundation
+          else {
+            if (
+              sourceCard.suit === topCard.suit &&
+              getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1
+            ) {
+              return { destPileType: 'foundationPiles', destPileIndex: i }
+            }
           }
         }
       }
+
+      for (let i = 0; i < this.gameState.tableauPiles.length; i++) {
+        // If the source is a tableau pile, you can't move it to itself.
+        if (sourcePileType === 'tableauPiles' && sourcePileIndex === i) {
+          continue;
+        }
+
+        const destPile = this.gameState.tableauPiles[i];
+        const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : null;
+
+        if (!topCard) { // Moving a King to an empty tableau pile
+          if (sourceCard.rank === 'K') {
+            return { destPileType: 'tableauPiles', destPileIndex: i };
+          }
+        } else { // Moving to a non-empty tableau pile
+          const sourceColor = getCardColor(sourceCard.suit);
+          const destColor = getCardColor(topCard.suit);
+          const sourceValue = getRankValue(sourceCard.rank);
+          const destValue = getRankValue(topCard.rank);
+
+          if (sourceColor !== destColor && destValue - sourceValue === 1) {
+            return { destPileType: 'tableauPiles', destPileIndex: i };
+          }
+        }
+      }
+
+      // Loop through all foundation piles to find a valid spot
+
       // If no valid move was found after checking all piles
       return null
     },
