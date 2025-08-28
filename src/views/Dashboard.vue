@@ -24,13 +24,15 @@
         style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1; height: 100%; width: 100%"
       />
       <v-img
+        class="cursor-pointer"
         :src="avatar"
         lazy-src="anon.png"
         width="70"
         color="transparent"
         style="border-radius: 50%; width: 70px; height: 70px"
+        @click="$router.push('/akhy/' + discordId)"
       />
-      <h1>
+      <h1 class="cursor-pointer" @click="$router.push('/akhy/' + discordId)">
         Salut <span style="color: #5865f2">@{{ user?.globalName }}</span>
       </h1>
       <span
@@ -70,7 +72,7 @@
       </p>
 
       <p class="mt-3">
-        {{ elos[discordId] }} FlopoElo
+        {{ elos[discordId] }} FlopoRank
         <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
           elos[discordId] < Math.max(...elo_graphs[discordId], 0)
             ? Math.max(...elo_graphs[discordId], 0) + ' PB'
@@ -157,7 +159,7 @@
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Tic Tac Toe</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoElo.</p>
+              <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -192,7 +194,7 @@
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Puissance 4</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>
+              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -266,7 +268,7 @@
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title><!--Chess-->
             <v-card-subtitle style="text-wrap: wrap">
-<!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoElo.</p>-->
+<!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>-->
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -659,7 +661,7 @@
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Puissance 4</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>
+              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -715,7 +717,7 @@
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title><!--Chess-->
             <v-card-subtitle>
-              <!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoElo.</p>-->
+              <!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>-->
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -867,7 +869,7 @@
                 />
               </v-list-item>
               <v-list-item>
-                <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoElo </v-list-item-subtitle>
+                <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoRank </v-list-item-subtitle>
               </v-list-item>
               <v-list-item class="pb-1 px-3">
                 <v-btn class="text-none" color="primary" block rounded density="comfortable" @click="$router.push('/akhy/' + akhy.id)">Voir plus</v-btn>
@@ -1797,7 +1799,7 @@ export default {
       this.buyCoins()
     },
     leaderboardSwitch() {
-      this.leaderboardType = this.leaderboardType === 'coins' ? 'elo' : 'coins'
+      this.leaderboardType = this.leaderboardType === 'coins' ? 'rank' : 'coins'
       this.leaderboardUsers = this.leaderboardType === 'coins' ? this.users : this.usersByElo
     },
 
