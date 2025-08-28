@@ -394,7 +394,10 @@ export default {
               color="white"
               variant="tonal"
               rounded="lg"
-              :disabled="Object.keys(room?.players)?.length - Object.keys(room?.afk)?.length < 2"
+              :disabled="
+                (Object.keys(room?.players)?.length - Object.keys(room?.afk)?.length < 2) ||
+                Object.values(room?.players).filter(p => p.bank === 0).length > 0
+              "
               @click="startGame"
             />
             <v-btn

@@ -20,7 +20,7 @@ const routes = [
   { path: '/poker/:id', component: PokerRoom },
   { path: '/solitaire', component: Solitaire },
   { path: '/akhy/:id', component: AkhyStats },
-  { path: '/erynies', component: EryniesHome },
+  //{ path: '/erynies', component: EryniesHome },
 ]
 
 const router = createRouter({
