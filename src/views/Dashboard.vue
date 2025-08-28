@@ -154,7 +154,6 @@
       <v-tabs-window-item value="games">
         <div
           class="actions-container"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
         >
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Tic Tac Toe</v-card-title>
@@ -229,28 +228,29 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>Loup-Garou</v-card-title>
+          <v-card class="red-action-card bg-black disabled-card" variant="flat">
+            <v-card-title>Erynies</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de ce loup-garou un peu particulier, de 4 à 8 joueurs.</p>
+              <p>Joue une partie de ce loup-garou un peu particulier, à partir de 4 joueurs.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
                 text="Jouer"
                 class="text-none"
                 append-icon="mdi-fire-circle"
-                color="primary"
+                color="#520701"
                 variant="flat"
                 rounded="lg"
                 style="border-radius: 10px !important"
+                @click="$router.push('/erynies')"
               />
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title> <!--Blackjack-->
+<!--          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title> &lt;!&ndash;Blackjack&ndash;&gt;
             <v-card-subtitle style="text-wrap: wrap">
-<!--              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>-->
+&lt;!&ndash;              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>&ndash;&gt;
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -266,9 +266,9 @@
           </v-card>
 
           <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Chess-->
+            <v-card-title>?</v-card-title>&lt;!&ndash;Chess&ndash;&gt;
             <v-card-subtitle style="text-wrap: wrap">
-<!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>-->
+&lt;!&ndash;              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>&ndash;&gt;
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -281,14 +281,13 @@
                 style="border-radius: 10px !important"
               />
             </v-card-text>
-          </v-card>
+          </v-card>-->
         </div>
       </v-tabs-window-item>
 
       <v-tabs-window-item value="commandes">
         <div
           class="actions-container"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
         >
           <v-card class="action-card" variant="tonal">
             <v-card-title>Modif Pseudo</v-card-title>
@@ -317,14 +316,14 @@
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
-                text="10K FlopoCoins"
+                text="5K FlopoCoins"
                 class="text-none"
                 append-icon="mdi-play"
                 color="primary"
                 variant="flat"
                 rounded="lg"
                 style="border-radius: 10px !important"
-                :disabled="user?.coins < 10000"
+                :disabled="user?.coins < 5000"
                 @click="spamPingModal = true"
               />
             </v-card-text>
@@ -350,10 +349,10 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
+          <v-card class="action-card" variant="tonal">
             <v-card-title>Time-Out</v-card-title>
             <v-card-subtitle>
-              <p>Time-out quelqu'un pendant 6 heures</p>
+              <p>Time-out quelqu'un pendant 12 heures</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -365,6 +364,7 @@
                 rounded="lg"
                 style="border-radius: 10px !important"
                 :disabled="user?.coins < 100000"
+                @click="timeoutModal = true"
               />
             </v-card-text>
           </v-card>
@@ -372,8 +372,10 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="predictions">
-        <div
-          style="
+        <div class="actions-container">
+          <div
+
+            style="
             position: absolute;
             z-index: 2;
             padding: 0.7em 0.5em;
@@ -382,37 +384,37 @@
             place-content: space-between;
             backdrop-filter: blur(5px);
           "
-        >
-          <h2 class="text-white">Prédictions</h2>
-          <v-btn
-            class="text-none"
-            variant="flat"
-            color="primary"
-            text="Nouvelle Prédi"
-            style="border-radius: 10px"
-            @click="prediModal = true"
-          />
-        </div>
-        <div
-          v-if="active_predis"
-          class="predis-containers pt-12"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
-        >
-          <v-card
-            v-for="[key, predi] in Object.entries(active_predis)"
-            :key="key"
-            class="votes-card"
-            :variant="
+          >
+            <h2 class="text-white">Prédictions</h2>
+            <v-btn
+              class="text-none"
+              variant="flat"
+              color="primary"
+              text="Nouvelle Prédi"
+              style="border-radius: 10px"
+              @click="prediModal = true"
+            />
+          </div>
+          <div
+            v-if="active_predis"
+            class="predis-containers pt-12"
+            :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+          >
+            <v-card
+              v-for="[key, predi] in Object.entries(active_predis)"
+              :key="key"
+              class="votes-card"
+              :variant="
               ((predi.endTime - Date.now()) / 1000).toFixed() < 0 || predi.closed
                 ? 'plain'
                 : 'tonal'
             "
-          >
-            <div>
-              <v-img
-                :src="avatars[predi.creatorId]"
-                color="transparent"
-                style="
+            >
+              <div>
+                <v-img
+                  :src="avatars[predi.creatorId]"
+                  color="transparent"
+                  style="
                   border-radius: 50%;
                   width: 25px;
                   height: 25px;
@@ -420,123 +422,124 @@
                   right: 1em;
                   top: 1em;
                 "
-              />
-              <v-card-text class="font-weight-bold pr-0 mr-12">
-                {{ predi.label }}
-              </v-card-text>
-              <v-card-subtitle class="pb-3">
-                {{ predi.options[0].votes.length + predi.options[1].votes.length }}
-                vote(s) - Prédi de {{ users.find((u) => u.id === predi.creatorId).globalName }}
-              </v-card-subtitle>
-              <v-card-subtitle class="d-flex pb-2" style="place-content: space-between">
-                <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
-                  {{ predi.options[0].label }}
-                </p>
-                <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
-                  {{ predi.options[1].label }}
-                </p>
-              </v-card-subtitle>
-              <v-card-text class="px-0">
-                <div
-                  class="animate__animated animate__fadeIn"
-                  style="text-align: right; position: absolute"
-                  :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${predi.options[0].percent - 100}%); background: #5865f2; border: 2px solid #5865f277`"
-                >
-                  <p class="pr-4" style="transform: translateY(-25px)">
-                    {{ predi.options[0].percent.toFixed(1) }}%
+                />
+                <v-card-text class="font-weight-bold pr-0 mr-12">
+                  {{ predi.label }}
+                </v-card-text>
+                <v-card-subtitle class="pb-3">
+                  {{ predi.options[0].votes.length + predi.options[1].votes.length }}
+                  vote(s) - Prédi de {{ users.find((u) => u.id === predi.creatorId).globalName }}
+                </v-card-subtitle>
+                <v-card-subtitle class="d-flex pb-2" style="place-content: space-between">
+                  <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
+                    {{ predi.options[0].label }}
                   </p>
-                </div>
-                <div
-                  class="animate__animated animate__fadeIn"
-                  style="text-align: left; position: absolute"
-                  :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${100 - predi.options[1].percent}%); background: #aa3e3e; border: 2px solid #aa3e3e77`"
-                >
-                  <p class="pl-4" style="transform: translateY(-25px)">
-                    {{ predi.options[1].percent.toFixed(1) }}%
+                  <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
+                    {{ predi.options[1].label }}
                   </p>
-                </div>
-              </v-card-text>
-              <v-card-subtitle class="d-flex justify-space-between pt-2">
-                <div style="display: flex; place-content: start; gap: 0">
+                </v-card-subtitle>
+                <v-card-text class="px-0">
                   <div
-                    v-for="(vote, index) in predi.options[0].votes"
-                    :key="vote.id + Date.now()"
-                    :style="`transform: translateX(calc(-12px * ${index})); z-index: 1;`"
+                    class="animate__animated animate__fadeIn"
+                    style="text-align: right; position: absolute"
+                    :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${predi.options[0].percent - 100}%); background: #5865f2; border: 2px solid #5865f277`"
                   >
-                    <v-img
-                      :src="avatars[vote.id]"
-                      color="transparent"
-                      style="border-radius: 50%; width: 20px; height: 20px"
-                    />
+                    <p class="pr-4" style="transform: translateY(-25px)">
+                      {{ predi.options[0].percent.toFixed(1) }}%
+                    </p>
                   </div>
-                </div>
-                <div
-                  style="display: flex; flex-direction: row-reverse; place-content: start; gap: 0"
-                >
                   <div
-                    v-for="(vote, index) in predi.options[1].votes"
-                    :key="vote.id + Date.now()"
-                    :style="`transform: translateX(calc(12px * ${index})); z-index: 1;`"
+                    class="animate__animated animate__fadeIn"
+                    style="text-align: left; position: absolute"
+                    :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${100 - predi.options[1].percent}%); background: #aa3e3e; border: 2px solid #aa3e3e77`"
                   >
-                    <v-img
-                      :src="avatars[vote.id]"
-                      color="transparent"
-                      style="border-radius: 50%; width: 20px; height: 20px"
-                    />
+                    <p class="pl-4" style="transform: translateY(-25px)">
+                      {{ predi.options[1].percent.toFixed(1) }}%
+                    </p>
                   </div>
-                </div>
-              </v-card-subtitle>
-              <v-card-text class="d-flex align-end">
-                <p v-if="!predi.closed">
-                  {{
-                    ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
-                      ? ((predi.closingTime - Date.now()) / 1000).toFixed() +
+                </v-card-text>
+                <v-card-subtitle class="d-flex justify-space-between pt-2">
+                  <div style="display: flex; place-content: start; gap: 0">
+                    <div
+                      v-for="(vote, index) in predi.options[0].votes"
+                      :key="vote.id + Date.now()"
+                      :style="`transform: translateX(calc(-12px * ${index})); z-index: 1;`"
+                    >
+                      <v-img
+                        :src="avatars[vote.id]"
+                        color="transparent"
+                        style="border-radius: 50%; width: 20px; height: 20px"
+                      />
+                    </div>
+                  </div>
+                  <div
+                    style="display: flex; flex-direction: row-reverse; place-content: start; gap: 0"
+                  >
+                    <div
+                      v-for="(vote, index) in predi.options[1].votes"
+                      :key="vote.id + Date.now()"
+                      :style="`transform: translateX(calc(12px * ${index})); z-index: 1;`"
+                    >
+                      <v-img
+                        :src="avatars[vote.id]"
+                        color="transparent"
+                        style="border-radius: 50%; width: 20px; height: 20px"
+                      />
+                    </div>
+                  </div>
+                </v-card-subtitle>
+                <v-card-text class="d-flex align-end">
+                  <p v-if="!predi.closed">
+                    {{
+                      ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
+                        ? ((predi.closingTime - Date.now()) / 1000).toFixed() +
                         's restantes pour voter'
-                      : ((predi.endTime - Date.now()) / 1000).toFixed() > 0
-                        ? Math.max(((predi.endTime - Date.now()) / 1000).toFixed(), 0) +
+                        : ((predi.endTime - Date.now()) / 1000).toFixed() > 0
+                          ? Math.max(((predi.endTime - Date.now()) / 1000).toFixed(), 0) +
                           's avant les résultats'
-                        : 'Prédi terminée, en attente de validation'
-                  }}
-                </p>
-                <p v-else>Prédi terminée, les FlopoCoins ont été distribués</p>
+                          : 'Prédi terminée, en attente de validation'
+                    }}
+                  </p>
+                  <p v-else>Prédi terminée, les FlopoCoins ont été distribués</p>
 
-                <v-spacer />
-                <div v-if="!predi.options[0].votes.find((v) => v?.voter === discordId)">
-                  <v-btn
-                    :text="
+                  <v-spacer />
+                  <div v-if="!predi.options[0].votes.find((v) => v?.voter === discordId)">
+                    <v-btn
+                      :text="
                       ((predi.closingTime - Date.now()) / 1000).toFixed() > 0 ? 'Voter' : 'Voir'
                     "
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    @click="setSelectedPredi(predi, key)"
-                    @click.stop="prediVoteModal = true"
-                  />
-                </div>
-                <div v-else>Tu as voté !</div>
-              </v-card-text>
+                      color="primary"
+                      variant="flat"
+                      rounded="lg"
+                      @click="setSelectedPredi(predi, key)"
+                      @click.stop="prediVoteModal = true"
+                    />
+                  </div>
+                  <div v-else>Tu as voté !</div>
+                </v-card-text>
+              </div>
+            </v-card>
+            <div v-if="Object.keys(active_predis)?.length === 0" class="pt-16 pl-5">
+              <p class="pt-16 w-100 text-center">Aucune prédi en cours</p>
             </div>
-          </v-card>
-          <div v-if="Object.keys(active_predis)?.length === 0" class="pt-16 pl-5">
-            <p class="pt-16 w-100 text-center">Aucune prédi en cours</p>
           </div>
-        </div>
-        <div
-          v-else
-          style="width: 100%; display: flex; place-content: center; place-items: center"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
-        >
-          <v-progress-circular
-            :size="70"
-            :width="10"
-            color="primary"
-            indeterminate
-          ></v-progress-circular>
+          <div
+            v-else
+            style="width: 100%; display: flex; place-content: center; place-items: center"
+            :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+          >
+            <v-progress-circular
+              :size="70"
+              :width="10"
+              color="primary"
+              indeterminate
+            ></v-progress-circular>
+          </div>
         </div>
       </v-tabs-window-item>
 
       <v-tabs-window-item value="skins">
-        <div class="inventory" :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'">
+        <div class="inventory actions-container">
           <div
             v-for="skin in user_inventory"
             :key="skin.id"
@@ -591,7 +594,7 @@
   </div>
 
   <div v-else-if="users" class="user-tab">
-    <div>
+    <div class="pt-12 pb-16">
       <v-img
         v-if="avatar"
         :src="avatar"
@@ -622,7 +625,6 @@
       <v-tabs-window-item value="games">
         <div
           class="actions-container"
-          :style="discordId === devId ? 'height: 333px;' : 'height: 444px;'"
         >
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Tic Tac Toe</v-card-title>
@@ -696,10 +698,29 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title> <!--Blackjack-->
+          <v-card class="red-action-card bg-black disabled-card" variant="flat">
+            <v-card-title>Erynies</v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Joue une partie de ce loup-garou un peu particulier, à partir de 4 joueurs.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-fire-circle"
+                color="#520701"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/erynies')"
+              />
+            </v-card-text>
+          </v-card>
+
+<!--          <v-card class="action-card disabled-card" variant="tonal" disabled>
+            <v-card-title>?</v-card-title> &lt;!&ndash;Blackjack&ndash;&gt;
             <v-card-subtitle>
-              <!--              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>-->
+              &lt;!&ndash;              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>&ndash;&gt;
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -715,9 +736,9 @@
           </v-card>
 
           <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Chess-->
+            <v-card-title>?</v-card-title>&lt;!&ndash;Chess&ndash;&gt;
             <v-card-subtitle>
-              <!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>-->
+              &lt;!&ndash;              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>&ndash;&gt;
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -730,25 +751,7 @@
                 style="border-radius: 10px !important"
               />
             </v-card-text>
-          </v-card>
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title><!--Loup-Garou-->
-            <v-card-subtitle>
-              <!--              <p>Joue une partie de ce loup-garou un peu particulier, de 4 à 8 joueurs.</p>-->
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-fire-circle"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
+          </v-card>-->
         </div>
       </v-tabs-window-item>
     </v-tabs-window>
@@ -756,15 +759,16 @@
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
 
-  <div v-if="users" class="leaderboard-container pl-3">
+  <div v-if="users" class="leaderboard-container">
     <h2 style="display: flex; place-content: space-between">
       Classement
       <span
         class="text-capitalize text-secondary cursor-pointer rounded-lg"
         style="user-select: none"
         @click="leaderboardSwitch"
-        >{{ leaderboardType }}</span
-      >
+        >
+        {{ leaderboardType }}
+      </span>
     </h2>
     <div class="leaderboard">
       <div
@@ -1135,7 +1139,7 @@
       </v-card-text>
       <v-card-text class="d-flex justify-end">
         <v-btn
-          text="10K FlopoCoins"
+          text="5K FlopoCoins"
           class="text-none"
           append-icon="mdi-play"
           color="primary"
@@ -1197,6 +1201,59 @@
           :disabled="!slowmodeForm.id"
           @click="slowmode"
           @click.stop="slowmodeModal = false"
+        />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="timeoutModal" class="modals" max-width="800" scroll-strategy="reposition">
+    <v-card class="modal-card" variant="tonal">
+      <v-card-title>Time-Out</v-card-title>
+      <v-card-subtitle>
+        <p>Time-out quelqu'un pendant 12 heures</p>
+      </v-card-subtitle>
+      <v-card-text class="d-flex" style="gap: 1em">
+        <v-select
+          v-model="timeoutForm.id"
+          placeholder="Akhy"
+          clearable
+          :items="users"
+          item-value="id"
+          item-title="globalName"
+          variant="outlined"
+          class="text-white w-50"
+          rounded="lg"
+          density="comfortable"
+          hint="Tu peux retirer ton time-out en te mettant toi-même"
+          persistent-hint
+        >
+          <template #item="{ props, item }" style="background: transparent !important">
+            <v-list-item v-bind="props" rounded="lg" color="primary">
+              <template #title>
+                <div style="display: flex; place-items: center; place-content: start; gap: 1em">
+                  <v-img
+                    :src="avatars[item.raw.id]"
+                    color="transparent"
+                    style="border-radius: 50%; max-width: 40px; height: 40px"
+                  />
+                  <p>{{ item.raw.globalName }}</p>
+                </div>
+              </template>
+            </v-list-item>
+          </template>
+        </v-select>
+      </v-card-text>
+      <v-card-text class="d-flex justify-end">
+        <v-btn
+          text="100K FlopoCoins"
+          class="text-none"
+          append-icon="mdi-play"
+          color="primary"
+          variant="flat"
+          rounded="lg"
+          :disabled="!timeoutForm.id"
+          @click="timeout"
+          @click.stop="timeoutModal = false"
         />
       </v-card-text>
     </v-card>
@@ -1720,6 +1777,7 @@ export default {
       nicknameModal: false,
       spamPingModal: false,
       slowmodeModal: false,
+      timeoutModal: false,
       prediModal: false,
       prediVoteModal: false,
 
@@ -1739,6 +1797,9 @@ export default {
         id: null,
       },
       slowmodeForm: {
+        id: null,
+      },
+      timeoutForm: {
         id: null,
       },
       prediForm: {
@@ -1847,8 +1908,8 @@ export default {
         console.log('Disconnected from WebSocket server')
       })
 
-      this.socket.on('daily-queried', async () => {
-        this.showSuccessOrWarningToast('+200 FlopoCoins, récompense journalière récupérée', false)
+      this.socket.on('daily-queried', async (data) => {
+        if (data.userId === this.discordId) this.showSuccessOrWarningToast('+200 FlopoCoins, récompense journalière récupérée', false)
         await this.getUsers()
       })
     },
@@ -2068,6 +2129,19 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/slowmode', {
           userId: this.slowmodeForm.id,
+          commandUserId: this.discordId,
+        })
+        this.showSuccessOrWarningToast(response.data.message, false)
+      } catch (e) {
+        this.showErrorToast(e.response.data.message)
+      }
+    },
+
+    async timeout() {
+      this.showCommandToast('Envoi de la commande...')
+      try {
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout', {
+          userId: this.timeoutForm.id,
           commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
@@ -2347,10 +2421,9 @@ button:disabled {
 .leaderboard {
   float: right;
   background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 #5865f211;
   border-radius: 15px;
   padding: 6px 5px;
-  height: 700px;
+  height: 805px;
   overflow-y: scroll;
   transition: 2s ease;
 }
@@ -2416,16 +2489,17 @@ button:disabled {
 }
 
 .actions-container {
-  height: 390px;
+  height: 438px !important;
   overflow-y: scroll;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 15px 0;
 }
 
 .action-card {
   position: relative;
   margin-top: 10px;
   background: transparent !important;
-  border-radius: 15px !important;
+  border-radius: 0 15px 15px 0 !important;
+  border-left: 3px solid #fff !important;
 }
 .action-card::before {
   content: '';
@@ -2442,6 +2516,42 @@ button:disabled {
   transform: translateX(30%);
 }
 
+.red-action-card{
+  position: relative;
+  margin-top: 10px;
+  background: transparent !important;
+  border-radius: 0 15px 15px 0 !important;
+  border-left: 3px solid #fff !important;
+}
+.red-action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 150%;
+  height: 100%;
+  background: radial-gradient(circle at 5% 50%, #170201, #9B030222 200%) !important;
+  transform: translateX(30%);
+  z-index: -1;
+  transition: 0.2s ease-in-out;
+}
+.red-action-card:hover::before {
+  transform: translateX(20%);
+}
+.red-action-card::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  z-index: -2;
+  top: 0;
+  left: 0;
+  width: 104%;
+  height: 100%;
+  background: url('/erynies_card_back.png') no-repeat center center;
+  background-size: 100% auto;
+}
+
+
 .disabled-card::after {
   content: 'Prochainement';
   position: absolute;
@@ -2449,7 +2559,11 @@ button:disabled {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 150% 50%, #0c1316cc, #0c131677 200%) !important;
+  z-index: 200;
+  background: radial-gradient(circle at 10% 0%, #5865f277, #0c131677 100%) !important;
+  backdrop-filter: blur(10px) grayscale(1);
+  border-radius: 0 15px 15px 0 !important;
+  overflow: hidden;
   display: flex;
   place-content: center;
   place-items: center;
@@ -2544,6 +2658,7 @@ button:disabled {
   }
   .leaderboard {
     width: 100%;
+    height: fit-content;
   }
   .leaderboard-container {
     width: 100%;
