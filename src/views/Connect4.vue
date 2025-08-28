@@ -25,9 +25,11 @@
 
         <div v-if="foundLobby" class="game-section">
           <div class="game-info">
-            <p>
+            <p class="d-flex align-center">
               <span :class="['player-indicator', playerValue === 'R' ? 'red' : 'yellow']"></span>
-              Tu joues contre <strong>{{ oppName }}</strong>
+              Tu joues contre
+              <strong class="text-primary ml-1">@{{ oppName }}</strong>
+              <v-img :src="oppAvatar" class="ml-1" :min-width="25" :max-width="25" :height="25" rounded="xl"></v-img>
             </p>
             <p class="turn-indicator" :class="{ 'my-turn': isMyTurn }">
               {{ gameOver ? 'Partie terminée' : (isMyTurn ? "C'est ton tour" : `C'est au tour de ${oppName}`) }}
@@ -98,6 +100,10 @@ export default {
     oppName() {
       if (!this.foundLobby) return '';
       return this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.name : this.foundLobby.p1.name;
+    },
+    oppAvatar() {
+      if (!this.foundLobby) return '';
+      return this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.avatar : this.foundLobby.p1.avatar;
     },
     playerValue() {
       if (!this.foundLobby) return null;
@@ -308,8 +314,8 @@ export default {
 
 .player-indicator {
   display: inline-block;
-  width: 1em;
-  height: 1em;
+  width: 1.2em;
+  height: 1.2em;
   border-radius: 50%;
   vertical-align: middle;
   margin-right: 0.5em;

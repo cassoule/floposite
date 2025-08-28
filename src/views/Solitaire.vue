@@ -1,8 +1,8 @@
 <!-- Solitaire.vue -->
 <template>
   <v-layout class="w-100">
-    <v-main class="d-flex w-100 mb-16 pb-16 mt-8">
-      <div class="w-100">
+    <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="height: 130vh">
+      <div class="w-100" >
         <div
           class="text-white mb-4 d-flex flex-wrap w-100"
           style="position: relative; place-items: baseline; gap: 0.5em"
@@ -18,12 +18,19 @@
           >
             <v-icon class="mdi mdi-cards-spade mr-2" />
             <h1 style="font-size: 1.8rem" rounded="lg">Solitaire</h1>
+            <p
+              v-if="gameState?.hardMode"
+              class="bg-error py-1 px-3 ml-2 mt-2 rounded-xl"
+            >
+              Hard Mode
+            </p>
           </div>
           <p v-if="!gameState || gameState?.isSOTD" class="font-weight-medium">{{ timeLeft() }}</p>
           <v-spacer></v-spacer>
-          <v-btn v-if="gameState" variant="flat" color="primary" rounded="lg" @click="handleReset"
-            >Abandonner</v-btn
-          >
+          <v-btn v-if="gameState" class="text-none" prepend-icon="mdi-undo-variant" variant="tonal" color="gray" rounded="lg" @click="handleUndo">Revenir en arrière</v-btn>
+          <v-btn v-if="gameState" class="text-none" variant="flat" color="error" rounded="lg" @click="handleReset">
+            Abandonner
+          </v-btn>
         </div>
         <div v-if="isLoading" class="loading-overlay">
           <div class="spinner">...</div>
@@ -112,8 +119,20 @@
                   <v-icon class="mdi mdi-cards-spade" />
                   Solitaire
                 </v-card-title>
-                <v-card-text>
+                <v-card-text class="pb-0 mb-0">
                   <p>Jouer un tableau aléatoire de Solitaire.</p>
+                  <div class="d-flex" style="place-items: center; place-content: start; gap: 1rem">
+                    <v-switch v-model="hardMode" color="primary" inset hide-details>
+                      <template #prepend>
+                        Facile
+                      </template>
+                      <template #label>
+                        <p >Difficile</p>
+                      </template>
+                    </v-switch>
+                    <v-icon class="mdi mdi-information-outline mt-1" title="Piochez 3 cartes à la fois en mode difficile"></v-icon>
+                  </div>
+
                 </v-card-text>
                 <v-card-actions>
                   <v-btn-group
@@ -168,7 +187,6 @@
                     style="display: flex; width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis; gap: .7em; align-items: center"
                     :title="'@' + stats.globalName"
                   >
-                    <h3>#{{index+1}}</h3>
                     <v-img
                       :src="avatars[stats.id]"
                       color="transparent"
@@ -196,7 +214,7 @@
         </div>
 
         <div
-          v-if="gameState && gameState.isSOTD"
+          v-if="gameState"
           :key="Date.now() + '-stats'"
           style="position: fixed; bottom: 1em; left: 1em"
         >
@@ -249,19 +267,18 @@
           <v-card-subtitle class="px-6 text-secondary">
             Seed : {{ gameState?.seed }}
           </v-card-subtitle>
-          <v-card-text v-if="gameState?.isSOTD" class="text-secondary">
+          <v-card-text class="text-secondary">
             <v-alert variant="tonal" color="white" class="rounded-xl mb-4">
               <v-alert-title>Statistiques</v-alert-title>
               <v-card-text class="px-0 pb-2">
                 <div class="d-flex justify-space-between flex-wrap" style="gap: 1em">
-                  <h3>{{ formatFinishTime(gameState.startTime, gameState.endTime) }}</h3>
-                  <h3>{{ gameState.moves }} coups</h3>
-                  <h3>{{ gameState.score }} points</h3>
+                  <h3>{{ gameState?.moves }} coups</h3>
+                  <h3>{{ gameState?.score }} points</h3>
                 </div>
               </v-card-text>
             </v-alert>
-            <p>Tu as validé une partie du SOTD.</p>
-            <p>
+            <p v-if="gameState?.isSOTD">Tu as validé une partie du SOTD.</p>
+            <p v-if="gameState?.isSOTD">
               S'il s'agit de ta meilleure partie aujourd'hui tu peux la retrouver dans le
               classement.
             </p>
@@ -306,6 +323,10 @@ function getRankValue(rank) {
   return parseInt(rank, 10)
 }
 
+function getCardColor(suit) {
+  return (suit === 'h' || suit === 'd') ? 'red' : 'black';
+}
+
 export default {
   name: 'Solitaire',
   components: {
@@ -318,6 +339,8 @@ export default {
       userId: null,
       isLoading: false,
       now: Date.now(),
+
+      hardMode: false,
 
       seedChoiceDialog: false,
       winDialog: false,
@@ -352,7 +375,7 @@ export default {
       const start = new Date(startAt)
       const end = endAt ? new Date(endAt) : new Date()
 
-      let remainder = endAt ? end - start : startAt
+      let remainder = endAt ? end - start : start
 
       const hours = Math.floor(remainder / 3600000)
       remainder %= 3600000
@@ -417,7 +440,7 @@ export default {
     async handleRestart() {
       await this.getRankings()
       try {
-        const response = await api.startNewGame(this.userId, this.userSeed)
+        const response = await api.startNewGame(this.userId, this.userSeed, this.hardMode)
         this.gameState = response.data.gameState
       } catch (error) {
         console.error('Failed to start new game:', error)
@@ -500,12 +523,12 @@ export default {
       if (this.isLoading) return
 
       // Find a valid foundation pile destination for the clicked card
-      const destinationInfo = this.findValidFoundationMove(sourceInfo)
+      const destinationInfo = this.findBestAutoMove(sourceInfo)
 
-      // If a valid destination was found
+      // If a valid destination was found, process it
       if (destinationInfo) {
-        const movePayload = { ...sourceInfo, ...destinationInfo }
-        await this.processMove(movePayload)
+          const movePayload = { ...sourceInfo, ...destinationInfo };
+          await this.processMove(movePayload);
       }
     },
 
@@ -528,6 +551,21 @@ export default {
         console.warn('Invalid move detected by server. Reverting UI.')
         this.gameState = oldState // Roll back on error
       } finally {
+        this.isLoading = false
+      }
+    },
+
+    async handleUndo() {
+      this.isLoading = true
+      const oldState = JSON.parse(JSON.stringify(this.gameState))
+
+      try {
+        const response = await api.undoMove(this.userId)
+        this.gameState = { ...response.data.gameState }
+        this.isLoading = false
+      } catch (error) {
+        console.error('Failed to undo move:', error)
+        this.gameState = oldState
         this.isLoading = false
       }
     },
@@ -585,7 +623,7 @@ export default {
       }
     },
 
-    findValidFoundationMove(sourceInfo) {
+    findBestAutoMove(sourceInfo) {
       const { sourcePileType, sourcePileIndex, sourceCardIndex } = sourceInfo
 
       let sourcePile =
@@ -594,33 +632,62 @@ export default {
           : this.gameState.wastePile
 
       // Can only auto-move the top card of a stack
-      if (sourceCardIndex !== sourcePile.length - 1) {
+      /*if (sourceCardIndex !== sourcePile.length - 1) {
         return null
-      }
+      }*/
 
       const sourceCard = sourcePile[sourceCardIndex]
 
-      // Loop through all foundation piles to find a valid spot
-      for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
-        const foundationPile = this.gameState.foundationPiles[i]
-        const topCard = foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
+      if (sourceCardIndex === sourcePile.length - 1) {
+        for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
+          const foundationPile = this.gameState.foundationPiles[i]
+          const topCard = foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
 
-        // Rule for moving to an empty foundation (must be an Ace)
-        if (!topCard) {
-          if (sourceCard.rank === 'A') {
-            return { destPileType: 'foundationPiles', destPileIndex: i }
+          // Rule for moving to an empty foundation (must be an Ace)
+          if (!topCard) {
+            if (sourceCard.rank === 'A') {
+              return { destPileType: 'foundationPiles', destPileIndex: i }
+            }
           }
-        }
-        // Rule for moving to a non-empty foundation
-        else {
-          if (
-            sourceCard.suit === topCard.suit &&
-            getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1
-          ) {
-            return { destPileType: 'foundationPiles', destPileIndex: i }
+          // Rule for moving to a non-empty foundation
+          else {
+            if (
+              sourceCard.suit === topCard.suit &&
+              getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1
+            ) {
+              return { destPileType: 'foundationPiles', destPileIndex: i }
+            }
           }
         }
       }
+
+      for (let i = 0; i < this.gameState.tableauPiles.length; i++) {
+        // If the source is a tableau pile, you can't move it to itself.
+        if (sourcePileType === 'tableauPiles' && sourcePileIndex === i) {
+          continue;
+        }
+
+        const destPile = this.gameState.tableauPiles[i];
+        const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : null;
+
+        if (!topCard) { // Moving a King to an empty tableau pile
+          if (sourceCard.rank === 'K') {
+            return { destPileType: 'tableauPiles', destPileIndex: i };
+          }
+        } else { // Moving to a non-empty tableau pile
+          const sourceColor = getCardColor(sourceCard.suit);
+          const destColor = getCardColor(topCard.suit);
+          const sourceValue = getRankValue(sourceCard.rank);
+          const destValue = getRankValue(topCard.rank);
+
+          if (sourceColor !== destColor && destValue - sourceValue === 1) {
+            return { destPileType: 'tableauPiles', destPileIndex: i };
+          }
+        }
+      }
+
+      // Loop through all foundation piles to find a valid spot
+
       // If no valid move was found after checking all piles
       return null
     },

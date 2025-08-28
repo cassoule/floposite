@@ -32,6 +32,7 @@ export default {
       allPlayersArray: [],
       queue: [],
       oppName: null,
+      oppAvatar: null,
       value: null,
 
       foundLobby: null,
@@ -94,6 +95,10 @@ export default {
           this.foundLobby?.p1.id === this.discordId
             ? this.foundLobby?.p2.name
             : this.foundLobby?.p1.name
+        this.oppAvatar =
+          this.foundLobby?.p1.id === this.discordId
+            ? this.foundLobby?.p2.avatar
+            : this.foundLobby?.p1.avatar
         this.playerName =
           this.foundLobby?.p1.id === this.discordId
             ? this.foundLobby?.p1.name
@@ -301,10 +306,12 @@ export default {
       <div class="mt-0" style="width: 300px">
         <p class="mb-3">FlopoElo : {{ this.elo ?? 'Non Classé' }}</p>
         <div>
-          <p v-if="oppName" id="oppNameCont">
-            Tu joues contre <span id="oppName" class="text-primary">{{ oppName }}</span>
+          <p v-if="oppName" id="oppNameCont" class="d-flex" style="place-items: end">
+            Tu joues contre
+            <span id="oppName" class="text-primary ml-1">@{{ oppName }}</span>
+            <v-img :src="oppAvatar" class="ml-1" :min-width="25" :max-width="25" :height="25" rounded="xl"></v-img>
           </p>
-          <span v-if="oppName">{{ oppElo ? `${oppElo} FlopoElo` : 'non classé' }}</span>
+          <span v-if="oppName" class="font-italic">{{ oppElo ? `${oppElo} FlopoElo` : 'Non classé' }}</span>
         </div>
         <p v-if="oppName" id="valueCont">
           Tu joues les <span id="value" class="text-primary">{{ value }}</span>

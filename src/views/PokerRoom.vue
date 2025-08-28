@@ -34,7 +34,6 @@ export default {
 
       now: Date.now(),
       users: {},
-      avatars: {},
     }
   },
 
@@ -44,7 +43,6 @@ export default {
 
     await this.getUsers()
     this.initSocket()
-    this.fetchAvatars()
     await this.getRoom()
   },
 
@@ -371,29 +369,6 @@ export default {
         console.error('flAPI error:', e)
       }
     },
-
-    fetchAvatars() {
-      this.users.forEach(async (user) => {
-        this.avatars[user.id] = await this.getAvatar(user.id)
-      })
-    },
-
-    async getAvatar(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
-      try {
-        console.log(fetchUrl)
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
-        return response.data.avatarUrl
-      } catch (e) {
-        console.error('flAPI error:', e)
-      }
-    },
   },
 }
 </script>
@@ -556,7 +531,7 @@ export default {
               </div>
               <v-card-title style="display: flex; place-items: center; gap: 0.5rem">
                 <v-img
-                  :src="avatars[player.id]"
+                  :src="player.avatar"
                   class="bg-primary"
                   width="20"
                   max-width="20"

@@ -24,13 +24,15 @@
         style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1; height: 100%; width: 100%"
       />
       <v-img
+        class="cursor-pointer"
         :src="avatar"
         lazy-src="anon.png"
         width="70"
         color="transparent"
         style="border-radius: 50%; width: 70px; height: 70px"
+        @click="$router.push('/akhy/' + discordId)"
       />
-      <h1>
+      <h1 class="cursor-pointer" @click="$router.push('/akhy/' + discordId)">
         Salut <span style="color: #5865f2">@{{ user?.globalName }}</span>
       </h1>
       <span
@@ -70,7 +72,7 @@
       </p>
 
       <p class="mt-3">
-        {{ elos[discordId] }} FlopoElo
+        {{ elos[discordId] }} FlopoRank
         <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
           elos[discordId] < Math.max(...elo_graphs[discordId], 0)
             ? Math.max(...elo_graphs[discordId], 0) + ' PB'
@@ -121,6 +123,7 @@
           variant="tonal"
           rounded="lg"
           style="border: 1px solid #5865f2"
+          :key="Date.now() + '-daily-reward'"
           @click="handleDailyQuery"
         >
           <v-icon
@@ -155,7 +158,7 @@
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Tic Tac Toe</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoElo.</p>
+              <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -190,7 +193,7 @@
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Puissance 4</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>
+              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -265,7 +268,7 @@
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title><!--Chess-->
             <v-card-subtitle style="text-wrap: wrap">
-<!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoElo.</p>-->
+<!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>-->
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -657,7 +660,7 @@
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Puissance 4</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoElo.</p>
+              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -732,7 +735,7 @@
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title><!--Chess-->
             <v-card-subtitle>
-              <!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoElo.</p>-->
+              <!--              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>-->
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -784,16 +787,23 @@
             width: 100%;
             padding: 0.5em 1em;
           "
+          v-if="akhy"
         >
           <span style="color: #ddd; display: flex; place-items: center; gap: 0.7rem">
             <v-img
-              :src="avatars[akhy.id]"
+              :src="akhy.avatarUrl"
               color="transparent"
               style="border-radius: 50%; width: 20px; height: 20px"
             />
             @{{ akhy?.globalName }}
           </span>
-          {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
+          <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center;">
+            {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
+          </div>
+          <div v-else style="display: flex; place-items: center;">
+            <v-img :src="rankIcon(akhy.elo)" width="20" height="20" />
+          </div>
+
           <v-menu activator="parent" location="end" open-on-hover transition="scale-transition">
             <v-list
               width="250"
@@ -808,9 +818,11 @@
               <v-list-item class="px-2">
                 <v-list-item-title
                   style="display: flex; place-content: start; place-items: center; gap: 0.7rem"
+                  class="cursor-pointer"
+                  @click="$router.push('/akhy/' + akhy.id)"
                 >
                   <v-img
-                    :src="avatars[akhy.id]"
+                    :src="akhy.avatarUrl"
                     color="transparent"
                     max-width="30"
                     style="border-radius: 50%; width: 20px; height: 30px"
@@ -852,13 +864,16 @@
                   class="pa-0 ma-0"
                   color="secondary"
                   line-width="2"
-                  :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0]"
+                  :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0,0]"
                   style="position: absolute; left: 0; top: 0"
                   title="Evolution de l'elo"
                 />
               </v-list-item>
               <v-list-item>
-                <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoElo </v-list-item-subtitle>
+                <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoRank </v-list-item-subtitle>
+              </v-list-item>
+              <v-list-item class="pb-1 px-3">
+                <v-btn class="text-none" color="primary" block rounded density="comfortable" @click="$router.push('/akhy/' + akhy.id)">Voir plus</v-btn>
               </v-list-item>
             </v-list>
           </v-menu>
@@ -1785,7 +1800,7 @@ export default {
       this.buyCoins()
     },
     leaderboardSwitch() {
-      this.leaderboardType = this.leaderboardType === 'coins' ? 'elo' : 'coins'
+      this.leaderboardType = this.leaderboardType === 'coins' ? 'rank' : 'coins'
       this.leaderboardUsers = this.leaderboardType === 'coins' ? this.users : this.usersByElo
     },
 
@@ -1831,6 +1846,11 @@ export default {
 
       this.socket.on('disconnect', () => {
         console.log('Disconnected from WebSocket server')
+      })
+
+      this.socket.on('daily-queried', async () => {
+        this.showSuccessOrWarningToast('+200 FlopoCoins, récompense journalière récupérée', false)
+        await this.getUsers()
       })
     },
 
@@ -2150,6 +2170,7 @@ export default {
         const response = await axios.get(
           import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily',
         )
+        this.user.dailyQueried = true
       } catch (e) {
         console.log(e)
       }
@@ -2211,6 +2232,24 @@ export default {
         payoutTime: 300,
       }
     },
+
+    rankIcon(elo) {
+      if (elo < 900) {
+        return '';
+      } else if (elo < 1100) {
+        return '/ranks_icons/bronze.svg';
+      } else if (elo < 1300) {
+        return '/ranks_icons/silver.svg';
+      } else if (elo < 1600) {
+        return '/ranks_icons/gold.svg';
+      } else if (elo < 2000) {
+        return '/ranks_icons/diamond.svg';
+      } else if (elo >= 2000) {
+        return '/ranks_icons/master.svg';
+      } else {
+        return '';
+      }
+    }
   },
 
   beforeUnmount() {

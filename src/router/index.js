@@ -7,6 +7,7 @@ import Connect4 from '../views/Connect4.vue'
 import PokerHome from '../views/PokerHome.vue'
 import PokerRoom from '../views/PokerRoom.vue'
 import Solitaire from '../views/Solitaire.vue'
+import AkhyStats from '../views/AkhyStats.vue'
 import EryniesHome from '../views/EryniesHome.vue'
 
 const routes = [
@@ -18,6 +19,7 @@ const routes = [
   { path: '/poker', component: PokerHome },
   { path: '/poker/:id', component: PokerRoom },
   { path: '/solitaire', component: Solitaire },
+  { path: '/akhy/:id', component: AkhyStats },
   { path: '/erynies', component: EryniesHome },
 ]
 

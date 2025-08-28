@@ -2,7 +2,24 @@
 /*@import "tailwindcss";*/
 
 ::-webkit-scrollbar {
-  display: none;
+  width: 8px;              /* size of the scrollbar */
+  height: 8px;        /* for horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* fully hide the track */
+  margin: 30px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #dddddd77; /* color of the indicator */
+  border-radius: 10px;        /* round edges */
+  border: 2px solid transparent; /* ensures track stays hidden */
+
+}
+
+*{
+  scrollbar-width: none;
 }
 
 body {
