@@ -472,12 +472,12 @@ export default {
           >
             <div class="d-flex py-16" style="place-content: center; flex-wrap: wrap">
               <div v-for="card in room.tapis" :key="card" class="mr-2 mb-2">
-                <v-img :src="'/cards/' + card + '.png'" :alt="card" width="80" />
+                <v-img :src="'/cards/webp/' + card + '.webp'" :alt="card" width="80" />
               </div>
               <div v-for="card in [1, 2, 3, 4, 5]">
                 <v-img
                   v-if="room.tapis.length < card"
-                  :src="'/cards/card_back.png'"
+                  :src="'/cards/webp/card_back.webp'"
                   width="80"
                   class="mr-2 mb-2"
                 />
@@ -601,15 +601,15 @@ export default {
                   style="place-content: center; gap: 1rem"
                 >
                   <div v-for="card in player.hand" :key="card">
-                    <v-img :src="'/cards/' + card + '.png'" :alt="card" width="70"></v-img>
+                    <v-img :src="'/cards/webp/' + card + '.webp'" :alt="card" width="70"></v-img>
                   </div>
                 </v-card-text>
                 <v-card-text v-else class="d-flex" style="place-content: center; gap: 1rem">
                   <div>
-                    <v-img :src="'/cards/card_back.png'" alt="back_card" width="70"></v-img>
+                    <v-img :src="'/cards/webp/card_back.webp'" alt="back_card" width="70"></v-img>
                   </div>
                   <div>
-                    <v-img :src="'/cards/card_back.png'" alt="back_card" width="70"></v-img>
+                    <v-img :src="'/cards/webp/card_back.webp'" alt="back_card" width="70"></v-img>
                   </div>
                 </v-card-text>
                 <v-card-text

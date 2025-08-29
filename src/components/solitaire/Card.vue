@@ -1,7 +1,7 @@
 <!-- Card.vue -->
 <template>
   <div
-    class="bg-white rounded"
+    class="rounded"
     :class="['card-container', { 'is-hidden': isHidden }]"
     :draggable="card.faceUp"
     @dragstart.stop="onDragStart"
@@ -71,6 +71,9 @@ export default {
   cursor: grab;
   opacity: 1;
   transition: opacity 0.2s; /* No transition needed */
+  background-image: url("/cards/webp/card_back.webp");
+  background-size: cover;
+  background-position: center center;
 }
 .card-container.is-hidden {
   opacity: 0;
