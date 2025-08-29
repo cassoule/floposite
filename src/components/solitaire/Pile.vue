@@ -136,7 +136,7 @@ export default {
       cards.forEach((card, index) => {
 
         const img = document.createElement('img');
-        img.src = `/cards/${card.rank}${card.suit}.png`;
+        img.src = `/cards/webp/${card.rank}${card.suit}.webp`;
         // Style the individual card images
         img.style.position = 'absolute';
         img.style.width = `${CARD_WIDTH}px` // Same as your Card.vue component

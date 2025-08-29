@@ -638,6 +638,12 @@ export default {
 
       const sourceCard = sourcePile[sourceCardIndex]
 
+      if (sourcePileType === 'wastePile') {
+        if (sourceCardIndex !== sourcePile.length - 1) {
+          return;
+        }
+      }
+
       if (sourceCardIndex === sourcePile.length - 1) {
         for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
           const foundationPile = this.gameState.foundationPiles[i]

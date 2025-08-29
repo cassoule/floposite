@@ -1,6 +1,7 @@
 <!-- Card.vue -->
 <template>
   <div
+    class="bg-white rounded"
     :class="['card-container', { 'is-hidden': isHidden }]"
     :draggable="card.faceUp"
     @dragstart.stop="onDragStart"
@@ -9,13 +10,13 @@
   >
     <img
       v-if="card.faceUp"
-      :src="`/cards/${card.rank}${card.suit}.png`"
+      :src="`/cards/webp/${card.rank}${card.suit}.webp`"
       :alt="`${card.rank} of ${card.suit}`"
       class="card-image"
     />
     <img
       v-else
-      src="/cards/card_back.png"
+      src="/cards/webp/card_back.webp"
       alt="card back"
       class="card-back"
     />
