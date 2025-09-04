@@ -257,7 +257,78 @@ export default {
 
     reload() {
       location.reload()
-    }
+    },
+
+    rankIcon(elo) {
+      if (elo < 900) {
+        return '';
+      } else if (elo < 1100) {
+        return '/ranks_icons/bronze.svg';
+      } else if (elo < 1300) {
+        return '/ranks_icons/silver.svg';
+      } else if (elo < 1600) {
+        return '/ranks_icons/gold.svg';
+      } else if (elo < 2000) {
+        return '/ranks_icons/diamond.svg';
+      } else if (elo >= 2000) {
+        return '/ranks_icons/master.svg';
+      } else {
+        return '';
+      }
+    },
+
+    rankDiv(elo) {
+      if (!elo) {
+        return ''
+      }
+      if (elo < 900) {
+        return ''
+      } else if (elo < 1100) {
+        if (elo < 950) {
+          return 'I'
+        } else if (elo < 1000) {
+          return 'II'
+        } else if (elo < 1050) {
+          return 'III'
+        } else {
+          return 'IV'
+        }
+      } else if (elo < 1300) {
+        if (elo < 1150) {
+          return 'I'
+        } else if (elo < 1200) {
+          return 'II'
+        } else if (elo < 1250) {
+          return 'III'
+        } else {
+          return 'IV'
+        }
+      } else if (elo < 1600) {
+        if (elo < 1375) {
+          return 'I'
+        } else if (elo < 1450) {
+          return 'II'
+        } else if (elo < 1525) {
+          return 'III'
+        } else {
+          return 'IV'
+        }
+      } else if (elo < 2000) {
+        if (elo < 1700) {
+          return 'I'
+        } else if (elo < 1800) {
+          return 'II'
+        } else if (elo < 1900) {
+          return 'III'
+        } else {
+          return 'IV'
+        }
+      } else if (elo >= 2000) {
+        return ''
+      } else {
+        return ''
+      }
+    },
   },
 }
 </script>
@@ -304,14 +375,28 @@ export default {
         </div>
       </div>
       <div class="mt-0" style="width: 300px">
-        <p class="mb-3">FlopoElo : {{ this.elo ?? 'Non Classé' }}</p>
+        <p class="mb-3" style="display: flex; justify-content: start; align-items: center; gap: 1em;">
+          <v-img v-if="this.elo" :src="rankIcon(this.elo)" max-width="20" height="20">
+            <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
+              <p style="font-weight: 400;">{{rankDiv(this.elo)}}</p>
+            </div>
+          </v-img>
+          {{ this.elo ? this.elo + ' Elo' : 'Non Classé' }}
+        </p>
         <div>
           <p v-if="oppName" id="oppNameCont" class="d-flex" style="place-items: end">
             Tu joues contre
             <span id="oppName" class="text-primary ml-1">@{{ oppName }}</span>
             <v-img :src="oppAvatar" class="ml-1" :min-width="25" :max-width="25" :height="25" rounded="xl"></v-img>
           </p>
-          <span v-if="oppName" class="font-italic">{{ oppElo ? `${oppElo} FlopoElo` : 'Non classé' }}</span>
+          <span v-if="oppName" class="font-italic" style="display: flex; align-items: center; justify-content: start; gap: 1em">
+            <v-img v-if="oppElo" :src="rankIcon(oppElo)" max-width="20" height="20">
+              <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
+                <p style="font-weight: 400;">{{rankDiv(oppElo)}}</p>
+              </div>
+            </v-img>
+            {{ oppElo ? `${oppElo} Elo` : 'Non classé' }}
+          </span>
         </div>
         <p v-if="oppName" id="valueCont">
           Tu joues les <span id="value" class="text-primary">{{ value }}</span>
