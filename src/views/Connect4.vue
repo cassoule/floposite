@@ -2,6 +2,14 @@
   <v-layout>
     <v-main class="d-flex" style="place-items: start; place-content: start; gap: 2em; flex-wrap: wrap">
       <div class="mt-8">
+        <p style="display: flex; justify-content: start; align-items: center; gap: .5em;">
+          <v-img v-if="elo" :src="rankIcon(elo)" min-width="20" max-width="20" height="20">
+            <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
+              <p style="font-weight: 400;">{{rankDiv(elo)}}</p>
+            </div>
+          </v-img>
+          {{ elo ? elo + ' Elo' : 'Non Classé' }}
+        </p>
         <h1 class="text-white" style="position: relative;">Puissance 4</h1>
 
           <v-btn
@@ -14,23 +22,31 @@
             :disabled="foundLobby !== null && foundLobby !== undefined"
             style="border-radius: 10px"
             @click="joinQueue"
-          />
-          <p v-if="!foundLobby && queue.length > 0" class="mb-3">
-            {{ !foundLobby && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
-            <span v-for="(p, index) in queue" :key="p">
-              {{index > 1 ? ',' : ''}}
-              {{ p }}
-            </span>
-          </p>
+        />
+        <p v-if="!foundLobby && queue.length > 0" class="mb-3">
+          {{ !foundLobby && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
+          <span v-for="(p, index) in queue" :key="p">
+            {{index > 1 ? ',' : ''}}
+            {{ p }}
+          </span>
+        </p>
 
         <div v-if="foundLobby" class="game-section">
           <div class="game-info">
-            <p class="d-flex align-center">
+            <div class="d-flex align-center">
               <span :class="['player-indicator', playerValue === 'R' ? 'red' : 'yellow']"></span>
               Tu joues contre
               <strong class="text-primary ml-1">@{{ oppName }}</strong>
               <v-img :src="oppAvatar" class="ml-1" :min-width="25" :max-width="25" :height="25" rounded="xl"></v-img>
-            </p>
+              <p class="ml-3" style="display: flex; justify-content: start; align-items: center; gap: .5em;">
+                <v-img v-if="oppElo" :src="rankIcon(oppElo)" min-width="20" max-width="20" height="20">
+                  <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
+                    <p style="font-weight: 400;">{{rankDiv(oppElo)}}</p>
+                  </div>
+                </v-img>
+                {{ oppElo ? oppElo + ' Elo' : 'Non Classé' }}
+              </p>
+            </div>
             <p class="turn-indicator" :class="{ 'my-turn': isMyTurn }">
               {{ gameOver ? 'Partie terminée' : (isMyTurn ? "C'est ton tour" : `C'est au tour de ${oppName}`) }}
             </p>
@@ -77,6 +93,7 @@
 
 <script>
 import { io } from 'socket.io-client';
+import axios from 'axios'
 
 export default {
   name: 'Connect4',
@@ -94,6 +111,8 @@ export default {
       title: null,
       message: null,
       now: Date.now(),
+      oppElo: null,
+      elo: null,
     };
   },
   computed: {
@@ -172,7 +191,88 @@ export default {
       this.board = [];
       this.gameOver = false;
       this.winner = null;
-    }
+    },
+
+    async getElo(id) {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo'
+      try {
+        const response = await axios.get(fetchUrl)
+        return response.data.elo
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    rankIcon(elo) {
+      if (elo < 900) {
+        return '';
+      } else if (elo < 1100) {
+        return '/ranks_icons/bronze.svg';
+      } else if (elo < 1300) {
+        return '/ranks_icons/silver.svg';
+      } else if (elo < 1600) {
+        return '/ranks_icons/gold.svg';
+      } else if (elo < 2000) {
+        return '/ranks_icons/diamond.svg';
+      } else if (elo >= 2000) {
+        return '/ranks_icons/master.svg';
+      } else {
+        return '';
+      }
+    },
+
+    rankDiv(elo) {
+      if (!elo) {
+        return ''
+      }
+      if (elo < 900) {
+        return ''
+      } else if (elo < 1100) {
+        if (elo < 950) {
+          return 'I'
+        } else if (elo < 1000) {
+          return 'II'
+        } else if (elo < 1050) {
+          return 'III'
+        } else {
+          return 'IV'
+        }
+      } else if (elo < 1300) {
+        if (elo < 1150) {
+          return 'I'
+        } else if (elo < 1200) {
+          return 'II'
+        } else if (elo < 1250) {
+          return 'III'
+        } else {
+          return 'IV'
+        }
+      } else if (elo < 1600) {
+        if (elo < 1375) {
+          return 'I'
+        } else if (elo < 1450) {
+          return 'II'
+        } else if (elo < 1525) {
+          return 'III'
+        } else {
+          return 'IV'
+        }
+      } else if (elo < 2000) {
+        if (elo < 1700) {
+          return 'I'
+        } else if (elo < 1800) {
+          return 'II'
+        } else if (elo < 1900) {
+          return 'III'
+        } else {
+          return 'IV'
+        }
+      } else if (elo >= 2000) {
+        return ''
+      } else {
+        return ''
+      }
+    },
   },
   created() {
     this.interval = setInterval(() => {
@@ -182,10 +282,11 @@ export default {
   beforeDestroy() {
     clearInterval(this.interval)
   },
-  mounted() {
+  async mounted() {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
     // Make sure to replace with your actual API URL
+    this.elo = await this.getElo(this.discordId)
     this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
       withCredentials: false,
       extraHeaders: {
@@ -197,12 +298,13 @@ export default {
       console.log('Connected to server with socket ID:', this.socket.id);
     });
 
-    this.socket.on('connect4queue', (data) => {
+    this.socket.on('connect4queue', async (data) => {
       this.queue = data.queue;
       const myLobby = data.allPlayers.find(
         (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId
       );
       if (myLobby) {
+        this.oppElo = await this.getElo(myLobby.p1.id === this.discordId ? myLobby.p2.id : myLobby.p1.id)
         this.inQueue = false;
         this.foundLobby = myLobby;
         this.board = myLobby.board;

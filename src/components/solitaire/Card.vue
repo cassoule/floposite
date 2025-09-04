@@ -24,6 +24,8 @@
 </template>
 
 <script>
+import { getCardImagePath } from '@/utils/cardImages.js'
+
 export default {
   name: 'Card',
   props: {

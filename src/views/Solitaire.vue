@@ -1,6 +1,6 @@
 <!-- Solitaire.vue -->
 <template>
-  <v-layout class="w-100">
+  <v-layout class="w-100 mt-16">
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="height: 130vh">
       <div class="w-100" >
         <div
@@ -312,7 +312,8 @@
 <script>
 import Pile from '../components/solitaire/Pile.vue'
 import api from '../services/api'
-import axios from 'axios' // Adjust path if needed
+import axios from 'axios'
+import { getAllCardImagePaths } from '../utils/cardImages.js'
 
 function getRankValue(rank) {
   if (rank === 'A') return 1
@@ -358,6 +359,7 @@ export default {
       if (!this.userId) this.$router.push('/')
 
       this.isLoading = true
+      await this.preloadImages()
       await this.getRankings()
       await this.fetchGameState(this.userId)
       this.isLoading = false
@@ -697,6 +699,23 @@ export default {
       // If no valid move was found after checking all piles
       return null
     },
+
+    async preloadImages() {
+      const imagePaths = getAllCardImagePaths();
+      const promises = imagePaths.map(imagePath => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.src = imagePath;
+          img.onload = () => resolve();
+          img.onerror = () => {
+            console.warn('Failed to load image:', imagePath);
+            resolve();
+          };
+        })
+      });
+      await Promise.all(promises);
+      console.log('All cards preloaded');
+    }
   },
 }
 </script>
