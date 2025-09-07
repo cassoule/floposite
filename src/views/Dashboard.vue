@@ -97,12 +97,12 @@
       >
         <v-btn
           class="text-capitalize"
-          text="échanger"
-          append-icon="mdi-swap-horizontal"
-          color="dark"
+          text="FlopoMarket"
+          append-icon="mdi-cart"
+          color="primary"
           variant="flat"
           rounded="lg"
-          disabled
+          @click="$router.push('/market')"
         />
         <v-btn
           text="Acheter"
