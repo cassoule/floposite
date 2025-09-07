@@ -306,7 +306,7 @@ export default {
         return 'Non classé'
       }
       if (elo < 900) {
-        return 'Guez'
+        return 'Flop'
       } else if (elo < 1100) {
         if (elo < 950) {
           return 'Bronze I'
@@ -480,7 +480,7 @@ export default {
                 <h3>
                   {{ user_inventory?.length }} skins
                   <span style="color: rgba(255, 255, 255, 0.3)"
-                    >{{ inventoryValue?.toFixed(2) }}€</span
+                    >{{ inventoryValue?.toFixed(0) }} FlopoCoins</span
                   >
                 </h3>
                 <h3>
@@ -1114,7 +1114,7 @@ export default {
                       "
                       >{{ skin.displayName }}</span
                     >
-                    <span style="font-weight: bold">{{ skin.currentPrice.toFixed(2) }}€</span>
+                    <span>{{ skin.currentPrice.toFixed(0) }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">FlopoCoins</span></span>
                   </div>
 
                   <div
@@ -1226,9 +1226,10 @@ export default {
       class="mr-2 py-0"
       elevation="20"
       rounded="xl"
+      :color="`#${selectedSkin.tierColor}77`"
       bg-color="#181818"
       base-color="white"
-      variant="tonal"
+      variant="flat"
       :style="`border: 2px solid #${selectedSkin.tierColor}`"
     >
       <v-card-item class="pa-0">
@@ -1236,7 +1237,7 @@ export default {
           class="skin-video w-100"
           :volume="25"
           theme="dark"
-          color="primary"
+          :color="`#${selectedSkin.tierColor}`"
           autoplay
           floating
           controls-variant="hidden"
@@ -1246,7 +1247,7 @@ export default {
         ></v-video>
       </v-card-item>
       <div style="position: absolute; top: 10px; right: 10px; cursor: pointer">
-        <v-icon class="mdi mdi-close video-close-icon" @click="skinVideoDialog = false" />
+        <v-icon class="mdi mdi-close video-close-icon text-white" @click="skinVideoDialog = false" />
       </div>
     </v-card>
   </v-dialog>
@@ -1284,7 +1285,8 @@ export default {
   z-index: -1;
   width: 0;
   height: 0;
-  box-shadow: 0 0 10px 10px gray;
+  overflow: hidden;
+  box-shadow: 5px -5px 25px 25px #1c252677;
 }
 
 .win-card {
