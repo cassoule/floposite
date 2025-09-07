@@ -64,7 +64,7 @@
       </p>
       <p>
         {{ user_inventory?.length }} skins
-        <span style="color: rgba(255, 255, 255, 0.3)">{{ inventoryValue?.toFixed(0) }} FlopoCoins</span>
+        <span style="color: rgba(255, 255, 255, 0.3)">{{ formatAmount(inventoryValue?.toFixed(0)) }} Flopos</span>
       </p>
       <p>
         {{ user?.warns }} warns
@@ -574,7 +574,7 @@
                 >
               </div>
               <span class="d-flex" style="font-weight: bold; place-items: center; place-content: end">
-                {{ skin.currentPrice.toFixed(0) }}
+                {{ skin.currentPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
                 <v-img src="star.svg" class="ml-2" min-width="12px" max-width="12px" height="12px" />
               </span>
             </div>
@@ -587,9 +587,9 @@
       </v-tabs-window-item>
     </v-tabs-window>
 
-    <p v-if="tab === 'skins'" class="d-flex mt-2" style="place-items: center">Valeur totale : {{ inventoryValue?.toFixed(0) }} <v-img src="star.svg" class="ml-2" min-width="12px" max-width="12px" height="12px" /></p>
+    <p v-if="tab === 'skins'" class="d-flex mt-2" style="place-items: center">Valeur totale : {{ formatAmount(inventoryValue?.toFixed(0)) }} <v-img src="star.svg" class="ml-2" min-width="12px" max-width="12px" height="12px" /></p>
     <p v-else class="d-flex mt-2" style="place-items: center">
-      {{ formatAmount(user?.coins) }} FlopoCoins
+      {{ formatAmount(user?.coins) }} Flopos
       <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
     </p>
 

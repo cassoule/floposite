@@ -21,6 +21,7 @@ export default {
       user_isTimedOut: false,
       games: null,
       loading: true,
+      loadingInventory: true,
 
       skinVideoDialog: false,
       selectedSkin: null,
@@ -37,13 +38,16 @@ export default {
       this.sparkline = await this.getSparkline(id)
       this.elo = await this.getElo(id)
       this.elo_graph = await this.getEloGraph(id)
-      await this.getInventory()
-      this.fetchSkinsVideoUrls()
       await this.getActiveSlowmodes()
       await this.isTimedOut()
       await this.getGames()
     }
     this.loading = false
+    if (this.user) {
+      this.loadingInventory = true
+      await this.getInventory()
+      await this.fetchSkinsVideoUrls()
+    }
   },
 
   computed: {
@@ -139,11 +143,23 @@ export default {
       }
     },
 
-    fetchSkinsVideoUrls() {
-      this.user_inventory.forEach(async (s) => {
-        await this.getSkinVideoUrl(s)
-        await this.getSkinData(s)
-      })
+    async fetchSkinsVideoUrls() {
+      try {
+        if (!this.user_inventory?.length) {
+          this.loadingInventory = false
+          return
+        }
+
+        const tasks = this.user_inventory.map((s) =>
+          Promise.all([this.getSkinVideoUrl(s), this.getSkinData(s)])
+        )
+
+        await Promise.all(tasks)
+      } catch (e) {
+        console.error('inventory hydration error:', e)
+      } finally {
+        this.loadingInventory = false
+      }
     },
 
     async getSkinVideoUrl(skin) {
@@ -475,12 +491,12 @@ export default {
                 <h1 class="font-weight-bold">@{{ user.username }}</h1>
                 <h3 class="d-flex mt-2" style="place-items: baseline">
                   {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
-                  <span class="ml-1" style="color: rgba(255, 255, 255, 0.3)">FlopoCoins</span>
+                  <span class="ml-1" style="color: rgba(255, 255, 255, 0.3)">Flopos</span>
                 </h3>
-                <h3>
+                <h3 v-if="!loadingInventory">
                   {{ user_inventory?.length }} skins
                   <span style="color: rgba(255, 255, 255, 0.3)"
-                    >{{ inventoryValue?.toFixed(0) }} FlopoCoins</span
+                    >{{ inventoryValue?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} Flopos</span
                   >
                 </h3>
                 <h3>
@@ -1065,131 +1081,136 @@ export default {
         </v-list>
 
         <v-list
-          v-if="user_inventory"
           width="100%"
           class="mt-10 py-0 position-relative"
           rounded="xl"
           bg-color="#181818"
           variant="tonal"
-          style="border: 2px solid #ffffff55; max-height: 500px"
+          style="border: 2px solid #ffffff55; max-height: 570px"
         >
           <v-list-item
             class="pt-4 position-sticky top-0 w-100"
             rounded="0"
             style="backdrop-filter: blur(5px); z-index: 2"
           >
-            <h2>Inventaire</h2>
+            <h2>Inventaire <span class="ml-4" style="font-size: .8em">{{user_inventory?.length}} skins</span></h2>
+          </v-list-item>
+          <v-list-item v-if="loadingInventory" class="d-flex" style="justify-content: center">
+            <v-progress-circular class="pt-12 pb-16" :size="50" width="10" color="primary" indeterminate></v-progress-circular>
           </v-list-item>
           <v-list-item
-            v-if="user_inventory.length > 0"
+            v-else-if="user_inventory?.length > 0"
             class="pb-3 px-0"
             style="z-index: 1; user-select: none"
           >
             <div class="inventory px-4">
-              <div
-                v-for="skin in user_inventory"
-                :key="skin.id"
-                class="inventory-item"
-                :style="`border-radius: 10px;`"
-              >
+              <div class="inventory-grid">
                 <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    place-content: space-between;
-                    min-width: 400px;
-                    width: 100%;
-                    padding: 0.5em 1em;
-                    gap: 1rem;
-                  "
+                  v-for="skin in user_inventory"
+                  :key="skin.id"
+                  class="inventory-item"
+                  :style="`border-radius: 10px`"
                 >
-                  <div style="display: flex; place-content: space-between; gap: 1em">
-                    <span
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      place-content: space-between;
+                      width: 400px;
+                      padding: 0.5em 1em;
+                      gap: 1rem;
+                    "
+                  >
+                    <div style="display: flex; place-content: space-between; gap: 1em">
+                      <span
+                        style="
+                          font-weight: bold;
+                          color: #ddd;
+                          overflow: hidden;
+                          white-space: nowrap;
+                          text-overflow: ellipsis;
+                        "
+                      >
+                        {{ skin.displayName }}
+                      </span>
+                      <span>{{ skin.currentPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span>
+                    </div>
+
+                    <div
                       style="
-                        font-weight: bold;
-                        color: #ddd;
-                        overflow: hidden;
-                        white-space: nowrap;
-                        text-overflow: ellipsis;
-                      "
-                      >{{ skin.displayName }}</span
+                    display: flex;
+                    place-content: space-between;
+                    place-items: center;
+                    width: 100%;
+                    gap: 1em;
+                  "
                     >
-                    <span>{{ skin.currentPrice.toFixed(0) }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">FlopoCoins</span></span>
-                  </div>
+                      <v-img
+                        :src="getImageUrl(skin, skinsData[skin.uuid])"
+                        class="skin-img"
+                        height="25"
+                        min-width="70"
+                        max-width="70"
+                      />
+                      <v-icon
+                        v-if="skinsVideoUrls[skin.uuid] !== null"
+                        class="mdi mdi-television"
+                        @click="skinVideoDialog = true"
+                        @click.stop="selectedSkin = skin"
+                      ></v-icon>
+                    </div>
 
-                  <div
-                    style="
-                      display: flex;
-                      place-content: space-between;
-                      place-items: center;
-                      width: 100%;
-                      gap: 1em;
-                    "
-                  >
-                    <v-img
-                      :src="getImageUrl(skin, skinsData[skin.uuid])"
-                      class="skin-img"
-                      height="25"
-                      min-width="70"
-                      max-width="70"
-                    />
-                    <v-icon
-                      v-if="skinsVideoUrls[skin.uuid] !== null"
-                      class="mdi mdi-television"
-                      @click="skinVideoDialog = true"
-                      @click.stop="selectedSkin = skin"
-                    ></v-icon>
-                  </div>
-
-                  <div
-                    style="
-                      display: flex;
-                      place-content: space-between;
-                      place-items: center;
-                      width: 100%;
-                      gap: 1em;
-                    "
-                  >
-                    <v-spacer></v-spacer>
-                    <div class="d-flex" style="gap: 1em">
-                      <div v-for="(chroma, index) in skinsData[skin.uuid].chromas">
-                        <v-img v-if="chroma.swatch" :src="chroma.swatch" class="rounded-lg" width="30px" height="30px" :style="`${index + 1 === skin.currentChroma ? 'border: 2px solid #' + skin.tierColor : ''}`" />
-                        <span v-if="!chroma.swatch" class="font-weight-bold">{{
-                            getChromaName(skin, skinsData[skin.uuid])
-                          }}
-                        </span>
+                    <div
+                      style="
+                    display: flex;
+                    place-content: space-between;
+                    place-items: center;
+                    width: 100%;
+                    gap: 1em;
+                  "
+                    >
+                      <v-spacer></v-spacer>
+                      <div class="d-flex" style="gap: 1em">
+                        <div v-for="(chroma, index) in skinsData[skin.uuid].chromas">
+                          <v-img v-if="chroma.swatch" :src="chroma.swatch" class="rounded-lg" width="30px" height="30px" :style="`${index + 1 === skin.currentChroma ? 'border: 2px solid #' + skin.tierColor : ''}`" />
+                          <span v-if="!chroma.swatch" class="font-weight-bold">{{
+                              getChromaName(skin, skinsData[skin.uuid])
+                            }}
+                      </span>
+                        </div>
                       </div>
+                    </div>
+                    <div
+                      style="
+                    display: flex;
+                    place-content: space-between;
+                    place-items: center;
+                    width: 100%;
+                    gap: 1em;
+                  "
+                    >
+                      <v-progress-linear
+                        :model-value="(skin.currentLvl / skinsData[skin.uuid].levels.length) * 100"
+                        :color="'#' + skin.tierColor"
+                      ></v-progress-linear>
+                      <p>
+                        Lvl&nbsp;<span class="font-weight-bold">{{ skin.currentLvl }}</span
+                      >/{{ skinsData[skin.uuid].levels.length }}
+                      </p>
                     </div>
                   </div>
                   <div
-                    style="
-                      display: flex;
-                      place-content: space-between;
-                      place-items: center;
-                      width: 100%;
-                      gap: 1em;
-                    "
-                  >
-                    <v-progress-linear
-                      :model-value="(skin.currentLvl / skinsData[skin.uuid].levels.length) * 100"
-                      :color="'#' + skin.tierColor"
-                    ></v-progress-linear>
-                    <p>
-                      Lvl&nbsp;<span class="font-weight-bold">{{ skin.currentLvl }}</span
-                      >/{{ skinsData[skin.uuid].levels.length }}
-                    </p>
-                  </div>
+                    class="skin-bg"
+                    :style="`background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 80%)`"
+                  ></div>
                 </div>
-                <div
-                  class="skin-bg"
-                  :style="`background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 80%)`"
-                ></div>
               </div>
             </div>
           </v-list-item>
           <v-list-item v-else>
             <p class="text-center pt-12 pb-16">Aucun skin dans l'inventaire</p>
           </v-list-item>
+
         </v-list>
       </div>
 
@@ -1332,16 +1353,26 @@ export default {
 }
 
 .inventory {
-  flex-direction: row;
+  flex-direction: column;
   overflow-y: hidden;
   overflow-x: scroll;
   scrollbar-width: auto;
   user-select: none;
 }
 
-.inventory .inventory-item {
-  flex-grow: 1;
-  flex-shrink: 0;
+.inventory-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, auto);
+  gap: .2em;
+}
+
+.inventory-item {
+  position: relative;
+  width: 400px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: 0.3s ease-in-out;
   user-select: none;
 }
 
