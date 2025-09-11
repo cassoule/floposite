@@ -164,6 +164,42 @@ export default {
     reload() {
       location.reload()
     },
+    handleUnload(evt) {
+      //try { evt.preventDefault?.(); } catch {}
+
+      this.leaveQueueSync({ reason: 'unload' });
+    },
+
+    leaveQueueSync(meta = {}) {
+      const payload = {
+        discordId: this.discordId,   // set this in mounted()
+        game: 'tictactoe',
+        ...meta,
+      };
+
+      // 1) Fire-and-forget HTTP that survives page close
+      if (!this.inQueue) return
+      const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`;
+      try {
+        if (navigator.sendBeacon) {
+          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+          navigator.sendBeacon(url, blob);
+        } else {
+          // Fallback for older browsers
+          fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true, // critical
+          }).catch(() => {});
+        }
+      } catch {}
+
+      // 2) Best-effort socket emit (may not flush on unload, but fine as a bonus)
+      if (this.socket?.connected) {
+        try { this.socket.emit('tictactoe:queue:leave', payload); } catch {}
+      }
+    },
     joinQueue() {
       this.inQueue = true;
       this.socket.emit('connect4queue', { playerId: this.discordId });
@@ -274,12 +310,26 @@ export default {
       }
     },
   },
+  beforeRouteLeave(to, from, next) {
+    this.leaveQueueSync({ reason: 'route-leave' });
+    next();
+  },
   created() {
+    this._boundHandleUnload = (e) => this.handleUnload(e);
+
+    window.addEventListener('beforeunload', this._boundHandleUnload);
+    window.addEventListener('pagehide', this._boundHandleUnload);
+
     this.interval = setInterval(() => {
       this.now = Date.now()
     }, 1000)
   },
   beforeDestroy() {
+    window.removeEventListener('beforeunload', this._boundHandleUnload);
+    window.removeEventListener('pagehide', this._boundHandleUnload);
+
+    this.leaveQueueSync({ reason: 'component-destroy' });
+
     clearInterval(this.interval)
   },
   async mounted() {

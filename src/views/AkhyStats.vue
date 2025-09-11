@@ -1133,7 +1133,7 @@ export default {
                       >
                         {{ skin.displayName }}
                       </span>
-                      <span>{{ skin.currentPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span>
+                      <span>{{ skin.currentPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;') }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span>
                     </div>
 
                     <div

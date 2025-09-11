@@ -228,6 +228,25 @@
             </v-card-text>
           </v-card>
 
+          <v-card class="action-card" variant="tonal">
+            <v-card-title>Blackjack</v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Mise tes FlopoCoins au Blackjack</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-cards"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/blackjack')"
+              />
+            </v-card-text>
+          </v-card>
+
           <v-card class="red-action-card bg-black disabled-card" variant="flat">
             <v-card-title>Erynies</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
@@ -247,24 +266,7 @@
             </v-card-text>
           </v-card>
 
-<!--          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title> &lt;!&ndash;Blackjack&ndash;&gt;
-            <v-card-subtitle style="text-wrap: wrap">
-&lt;!&ndash;              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>&ndash;&gt;
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-cards"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
-
+<!--
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title>&lt;!&ndash;Chess&ndash;&gt;
             <v-card-subtitle style="text-wrap: wrap">
@@ -596,6 +598,7 @@
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
 
+  <!--  Not akhy UI -->
   <div v-else-if="users" class="user-tab">
     <div class="pt-12 pb-16">
       <v-img
@@ -720,23 +723,7 @@
             </v-card-text>
           </v-card>
 
-<!--          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title> &lt;!&ndash;Blackjack&ndash;&gt;
-            <v-card-subtitle>
-              &lt;!&ndash;              <p>Mise tes FlopoCoins au Blackjack, de 1 à 4 joueurs par table.</p>&ndash;&gt;
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-cards"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>
+<!--
 
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title>&lt;!&ndash;Chess&ndash;&gt;
@@ -894,6 +881,8 @@
 
   <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 
+
+<!--  DIALOGS -->
   <v-dialog
     v-model="coinsModal"
     class="modals"
@@ -2289,8 +2278,9 @@ export default {
 
     async isTimedOut() {
       try {
+        const id = this.discordId
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout', {
-          userId: this.discordId,
+          userId: id,
         })
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
