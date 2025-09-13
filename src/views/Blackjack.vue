@@ -197,8 +197,19 @@
       </v-row>
 
       <!-- Snackbar -->
-      <v-snackbar v-model="snackbar.show" :timeout="2500" location="bottom right">
+      <v-snackbar
+        v-model="snackbar.show"
+        class="cursor-pointer"
+        :timeout="2000"
+        location="bottom right"
+        color="primary"
+        rounded="lg"
+        close-on-content-click
+      >
         {{ snackbar.msg }}
+        <template #actions>
+          <v-icon>mdi-cards</v-icon>
+        </template>
       </v-snackbar>
     </v-main>
 

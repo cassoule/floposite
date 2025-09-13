@@ -156,7 +156,10 @@
           class="actions-container"
         >
           <v-card class="action-card bg-black" variant="tonal">
-            <v-card-title>Tic Tac Toe</v-card-title>
+            <v-card-title>
+              Tic Tac Toe
+              <v-chip size="small" style="float: right">1v1</v-chip>
+            </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.</p>
             </v-card-subtitle>
@@ -173,7 +176,10 @@
           </v-card>
 
           <v-card class="action-card bg-black" variant="tonal">
-            <v-card-title>Flopoker</v-card-title>
+            <v-card-title>
+              Flopoker
+              <v-chip size="small" style="float: right">Multi</v-chip>
+            </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
             </v-card-subtitle>
@@ -191,7 +197,10 @@
           </v-card>
 
           <v-card class="action-card bg-black" variant="tonal">
-            <v-card-title>Puissance 4</v-card-title>
+            <v-card-title>
+              Puissance 4
+              <v-chip size="small" style="float: right">1v1</v-chip>
+            </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.</p>
             </v-card-subtitle>
@@ -210,7 +219,10 @@
           </v-card>
 
           <v-card class="action-card bg-black" variant="tonal">
-            <v-card-title>Solitaire</v-card-title>
+            <v-card-title>
+              Solitaire
+              <v-chip size="small" style="float: right">Solo</v-chip>
+            </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Tente de gagner quelques FlopoCoins au solitaire.</p>
             </v-card-subtitle>
@@ -229,7 +241,10 @@
           </v-card>
 
           <v-card class="action-card" variant="tonal">
-            <v-card-title>Blackjack</v-card-title>
+            <v-card-title>
+              Blackjack
+              <v-chip size="small" style="float: right">Multi</v-chip>
+            </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Mise tes FlopoCoins au Blackjack</p>
             </v-card-subtitle>
