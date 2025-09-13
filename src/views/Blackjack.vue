@@ -75,7 +75,7 @@
                 :src="'/cards/webp/' + c + '.webp'"
                 max-width="70px"
               ></v-img>
-              <div class="hand-total ml-3">{{ myTotalText }}</div>
+              <div class="hand-total ml-3" v-if="myTotalText !== '0'">{{ myTotalText }}</div>
             </div>
 
             <!-- Betting panel -->
@@ -591,6 +591,8 @@ export default {
   align-items: center;
   gap: 0.25rem;
   margin-top: 0.2rem;
+  flex-wrap: wrap;
+  width: 100%;
 }
 .cards-mini .total {
   margin-left: 0.25rem;
