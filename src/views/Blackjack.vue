@@ -31,7 +31,7 @@
       <v-row v-else class="pb-8" no-gutters>
         <!-- Table -->
         <v-col cols="12" lg="8" class="pr-lg-4 order-2 order-lg-1">
-          <v-card class="px-5 pt-4 pb-5" variant="tonal" rounded="xl">
+          <v-card class="px-5 pt-4 pb-5 smooth-cards dealer-card" variant="tonal" rounded="xl">
             <!-- Dealer -->
             <div class="d-flex align-center justify-space-between mb-3">
               <h3 class="">Dealer</h3>
@@ -54,7 +54,7 @@
           </v-card>
 
           <!-- My hand -->
-          <v-card v-if="me" class="mt-4 px-5 pt-3 pb-4" variant="tonal" rounded="xl">
+          <v-card v-if="me" class="mt-4 px-5 pt-3 pb-4 smooth-cards me-card" variant="tonal" rounded="xl">
             <div class="d-flex align-center justify-space-between mb-2">
               <div class="d-flex align-center" style="gap: 0.5rem">
                 <v-img :src="me.avatar" width="40px" rounded="circle"></v-img>
@@ -79,37 +79,40 @@
             </div>
 
             <!-- Betting panel -->
-            <div v-if="room.status === 'betting' && !me.currentBet" class="d-flex align-center bet-panel">
+            <div v-if="room.status === 'betting' && !me.currentBet" class="d-flex flex-column align-center bet-panel pt-14">
+              <div class="w-100 d-flex align-center justify-end">
+                <v-text-field
+                  v-model.number="bet"
+                  variant="outlined"
+                  rounded="lg"
+                  base-color="primary"
+                  type="number"
+                  density="compact"
+                  :max="room.maxBet"
+                  :min="room.minBet"
+                  style="max-width: 120px"
+                  hide-details
+                />
+                <v-btn
+                  class="ml-3"
+                  variant="flat"
+                  color="primary"
+                  :disabled="bet < room.minBet || bet > room.maxBet"
+                  rounded="lg"
+                  @click="placeBet"
+                >Miser</v-btn
+                >
+              </div>
               <v-slider
                 v-model="bet"
                 :min="room.minBet"
                 :max="room.maxBet"
                 :step="betStep"
                 color="primary"
-                class="flex-1 mr-3"
+                class="px-1 w-100"
                 thumb-label
                 hide-details
               />
-              <v-text-field
-                v-model.number="bet"
-                variant="outlined"
-                rounded="lg"
-                base-color="primary"
-                type="number"
-                density="compact"
-                :max="room.maxBet"
-                :min="room.minBet"
-                style="max-width: 120px"
-                hide-details
-              />
-              <v-btn
-                class="ml-3"
-                color="primary"
-                :disabled="bet < room.minBet || bet > room.maxBet"
-                rounded="lg"
-                @click="placeBet"
-                >Miser</v-btn
-              >
             </div>
 
             <!-- Action bar -->
@@ -152,13 +155,13 @@
               >
             </div>
 
-            <div v-else class="text-white-70 text-caption">Prochaine manche imminente…</div>
+            <div v-else class="text-white-70 text-caption" style="position: absolute; bottom: 15px">Prochaine manche imminente…</div>
           </v-card>
         </v-col>
 
         <!-- Sidebar: players -->
         <v-col cols="12" lg="4" class="order-3 mt-4 order-lg-2 mt-lg-0">
-          <v-card class="px-5 pt-3 pb-4" variant="tonal" rounded="xl">
+          <v-card class="px-5 pt-3 pb-4 smooth-cards sidebar" variant="tonal" rounded="xl">
             <div class="d-flex align-center justify-space-between mb-2">
               <div class="text-subtitle-2">
                 <span class="font-weight-bold">Joueurs</span> ({{ room.players.length }})
@@ -257,7 +260,7 @@ export default {
           await this.getRoom()
         }
       }
-    }, 250)
+    }, 500)
 
     this._onVis = () => {
       if (document.visibilityState === 'visible') this.getRoom()
@@ -319,7 +322,7 @@ export default {
     },
     prettyTimeLeft() {
       if (!this.room?.phase_ends_at) return '—'
-      const left = Math.max(0, this.room.phase_ends_at - this.nowTick)
+      const left = Math.max(1.5, this.room.phase_ends_at - this.nowTick)
       const s = Math.ceil(left / 1000)-1
       const mm = String(Math.floor(s / 60)).padStart(2, '0')
       const ss = String(Math.floor(s % 60)).padStart(2, '0')
@@ -679,5 +682,20 @@ export default {
   top: 1rem;
   left: 1rem;
   border-radius: 12px;
+}
+
+.smooth-cards {
+  transition: .5s ease-in-out;
+}
+.sidebar {
+  min-height: 100px;
+  max-height: 430px;
+  overflow-y: scroll;
+}
+.me-card {
+  min-height: 235px;
+}
+.dealer-card {
+  min-height: 180px;
 }
 </style>
