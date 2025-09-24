@@ -122,36 +122,44 @@
               style="gap: 0.5rem"
             >
               <v-btn
+                class="text-none"
                 color="primary"
                 variant="flat"
                 rounded="lg"
+                append-icon="mdi-plus"
                 @click="doAction('hit')"
                 :disabled="!canHit"
-                >Tirer</v-btn
+                >Hit</v-btn
               >
               <v-btn
+                class="text-none"
                 color="primary"
                 variant="flat"
                 rounded="lg"
+                append-icon="mdi-hand-back-right-outline"
                 @click="doAction('stand')"
                 :disabled="!canStand"
-                >Rester</v-btn
+                >Hold</v-btn
               >
               <v-btn
+                class="text-none"
                 color="primary"
                 variant="flat"
                 rounded="lg"
+                append-icon="mdi-cash-multiple"
                 @click="doAction('double')"
                 :disabled="!canDouble"
-                >Doubler</v-btn
+                >Double</v-btn
               >
               <v-btn
-                color="error"
-                variant="flat"
+                class="text-none"
+                color="secondary"
+                variant="outlined"
                 rounded="lg"
-                @click="doAction('surrender')"
+                append-icon="mdi-call-split"
+                  @click="doAction('surrender')"
                 :disabled="!canSurrender"
-                >Abandon</v-btn
+                >Split</v-btn
               >
             </div>
 
