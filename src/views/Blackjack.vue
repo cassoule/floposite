@@ -1,6 +1,9 @@
 <template>
   <v-layout class="w-100">
+
     <v-main class="text-secondary w-100" :key="Date.now()">
+
+
       <!-- Header -->
       <v-row class="align-center mt-12 mb-8" no-gutters>
         <v-col cols="12" class="d-flex align-center justify-space-between" style="flex-wrap: wrap; gap: 1em">
@@ -157,7 +160,7 @@
                 variant="outlined"
                 rounded="lg"
                 append-icon="mdi-call-split"
-                  @click="doAction('surrender')"
+                @click="doAction('surrender')"
                 :disabled="!canSurrender"
                 >Split</v-btn
               >
