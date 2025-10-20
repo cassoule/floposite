@@ -481,13 +481,13 @@ export default {
     // Called when a drag operation starts from any valid pile.
     // The 'sourceInfo' object is now fully detailed.
     handleDragStart(sourceInfo) {
-      if (this.isLoading) return
+      if (this.isLoading || this.gameState.autocompleting) return
       this.draggedCardSourceInfo = sourceInfo
     },
 
     // Called when a card is dropped onto a valid destination pile.
     async handleDrop(destinationInfo) {
-      if (!this.draggedCardSourceInfo || this.isLoading) return
+      if (!this.draggedCardSourceInfo || this.isLoading || this.gameState.autocompleting) return
 
       this.isLoading = true
 
