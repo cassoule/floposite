@@ -419,15 +419,21 @@ export default {
         },
       })
 
-      this.socket.on('connect', async () => {
+      this.socket.on('connect', () => {
         console.log('Connected to WebSocket server')
       })
 
-      this.socket.on('solitaire:update', async (payload) => {
-        console.log('Received solitaire update:', payload)
+      this.socket.on('solitaire:update', (payload) => {
         if (payload?.userId === this.userId) {
-          console.log(payload.moveData)
-          await this.processMove(payload.moveData)
+          let i = 0;
+          const interval = setInterval(() => {
+            const move = payload.moves[i];
+            this.processMove(move);
+            i++;
+            if (i >= payload.moves.length) {
+              clearInterval(interval); // stop when done
+            }
+          }, 100);
         }
       })
     },
@@ -539,13 +545,13 @@ export default {
     // Called when a drag operation starts from any valid pile.
     // The 'sourceInfo' object is now fully detailed.
     handleDragStart(sourceInfo) {
-      if (this.isLoading || this.gameState.autocompleting) return
+      if (this.isLoading) return
       this.draggedCardSourceInfo = sourceInfo
     },
 
     // Called when a card is dropped onto a valid destination pile.
     async handleDrop(destinationInfo) {
-      if (!this.draggedCardSourceInfo || this.isLoading || this.gameState.autocompleting) return
+      if (!this.draggedCardSourceInfo || this.isLoading) return
 
       this.isLoading = true
 
