@@ -2,7 +2,7 @@
 <template>
   <v-layout class="w-100 mt-16">
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="height: 130vh">
-      <div class="w-100" >
+      <div class="w-100">
         <div
           class="text-white mb-4 d-flex flex-wrap w-100"
           style="position: relative; place-items: baseline; gap: 0.5em"
@@ -18,17 +18,30 @@
           >
             <v-icon class="mdi mdi-cards-spade mr-2" />
             <h1 style="font-size: 1.8rem" rounded="lg">Solitaire</h1>
-            <p
-              v-if="gameState?.hardMode"
-              class="bg-error py-1 px-3 ml-2 mt-2 rounded-xl"
-            >
+            <p v-if="gameState?.hardMode" class="bg-error py-1 px-3 ml-2 mt-2 rounded-xl">
               Hard Mode
             </p>
           </div>
           <p v-if="!gameState || gameState?.isSOTD" class="font-weight-medium">{{ timeLeft() }}</p>
           <v-spacer></v-spacer>
-          <v-btn v-if="gameState" class="text-none" prepend-icon="mdi-undo-variant" variant="tonal" color="gray" rounded="lg" @click="handleUndo">Revenir en arrière</v-btn>
-          <v-btn v-if="gameState" class="text-none" variant="flat" color="error" rounded="lg" @click="handleReset">
+          <v-btn
+            v-if="gameState"
+            class="text-none"
+            prepend-icon="mdi-undo-variant"
+            variant="tonal"
+            color="gray"
+            rounded="lg"
+            @click="handleUndo"
+            >Revenir en arrière</v-btn
+          >
+          <v-btn
+            v-if="gameState"
+            class="text-none"
+            variant="flat"
+            color="error"
+            rounded="lg"
+            @click="handleReset"
+          >
             Abandonner
           </v-btn>
         </div>
@@ -123,16 +136,16 @@
                   <p>Jouer un tableau aléatoire de Solitaire.</p>
                   <div class="d-flex" style="place-items: center; place-content: start; gap: 1rem">
                     <v-switch v-model="hardMode" color="primary" inset hide-details>
-                      <template #prepend>
-                        Facile
-                      </template>
+                      <template #prepend> Facile </template>
                       <template #label>
-                        <p >Difficile</p>
+                        <p>Difficile</p>
                       </template>
                     </v-switch>
-                    <v-icon class="mdi mdi-information-outline mt-1" title="Piochez 3 cartes à la fois en mode difficile"></v-icon>
+                    <v-icon
+                      class="mdi mdi-information-outline mt-1"
+                      title="Piochez 3 cartes à la fois en mode difficile"
+                    ></v-icon>
                   </div>
-
                 </v-card-text>
                 <v-card-actions>
                   <v-btn-group
@@ -161,8 +174,8 @@
                 Classement SOTD {{ new Date().toLocaleDateString() }}
               </v-card-title>
               <v-card-subtitle>
-                Le premier du classement recevra 1000 FlopoCoins à la fin de chaque
-                journée (en plus des 1000 gagnés lors de la première complétion).
+                Le premier du classement recevra 1000 FlopoCoins à la fin de chaque journée (en plus
+                des 1000 gagnés lors de la première complétion).
               </v-card-subtitle>
               <v-card-text>
                 <v-row v-if="rankings && rankings.length > 0" class="text-secondary">
@@ -184,7 +197,15 @@
                 >
                   <v-col
                     cols="3"
-                    style="display: flex; width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis; gap: .7em; align-items: center"
+                    style="
+                      display: flex;
+                      width: 25%;
+                      overflow: hidden;
+                      text-wrap: nowrap;
+                      text-overflow: ellipsis;
+                      gap: 0.7em;
+                      align-items: center;
+                    "
                     :title="'@' + stats.globalName"
                   >
                     <v-img
@@ -194,15 +215,30 @@
                     />
                     <p>@{{ stats.globalName }}</p>
                   </v-col>
-                  <v-col cols="3" class="d-flex align-center justify-end"> {{ stats.score }} </v-col>
-                  <v-col cols="3" class="d-flex align-center justify-end"> {{ stats.moves }} </v-col>
-                  <v-col cols="3" class="d-flex align-center justify-end"> {{ formatFinishTime(stats.time) }} </v-col>
+                  <v-col cols="3" class="d-flex align-center justify-end">
+                    {{ stats.score }}
+                  </v-col>
+                  <v-col cols="3" class="d-flex align-center justify-end">
+                    {{ stats.moves }}
+                  </v-col>
+                  <v-col cols="3" class="d-flex align-center justify-end">
+                    {{ formatFinishTime(stats.time) }}
+                  </v-col>
                 </v-row>
 
-                <v-row v-if="!rankings || rankings.length === 0" class="mt-4 mb-1 text-white font-weight-bolder">
+                <v-row
+                  v-if="!rankings || rankings.length === 0"
+                  class="mt-4 mb-1 text-white font-weight-bolder"
+                >
                   <v-col
                     cols="12"
-                    style="width: 25%; overflow: hidden; text-wrap: nowrap; text-overflow: ellipsis; text-align: center"
+                    style="
+                      width: 25%;
+                      overflow: hidden;
+                      text-wrap: nowrap;
+                      text-overflow: ellipsis;
+                      text-align: center;
+                    "
                     title="@cassoule"
                   >
                     Personne n'a complété le SOTD aujourd'hui
@@ -314,6 +350,7 @@ import Pile from '../components/solitaire/Pile.vue'
 import api from '../services/api'
 import axios from 'axios'
 import { getAllCardImagePaths } from '../utils/cardImages.js'
+import { io } from 'socket.io-client'
 
 function getRankValue(rank) {
   if (rank === 'A') return 1
@@ -325,7 +362,7 @@ function getRankValue(rank) {
 }
 
 function getCardColor(suit) {
-  return (suit === 'h' || suit === 'd') ? 'red' : 'black';
+  return suit === 'h' || suit === 'd' ? 'red' : 'black'
 }
 
 export default {
@@ -358,6 +395,7 @@ export default {
       this.userId = localStorage.getItem('discordId')
       if (!this.userId) this.$router.push('/')
 
+      this.initSocket()
       this.isLoading = true
       await this.preloadImages()
       await this.getRankings()
@@ -373,7 +411,27 @@ export default {
     }
   },
   methods: {
-    formatFinishTime(startAt, endAt=null) {
+    initSocket() {
+      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
+        withCredentials: false,
+        extraHeaders: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      })
+
+      this.socket.on('connect', async () => {
+        console.log('Connected to WebSocket server')
+      })
+
+      this.socket.on('solitaire:update', async (payload) => {
+        console.log('Received solitaire update:', payload)
+        if (payload?.userId === this.userId) {
+          console.log(payload.moveData)
+          await this.processMove(payload.moveData)
+        }
+      })
+    },
+    formatFinishTime(startAt, endAt = null) {
       const start = new Date(startAt)
       const end = endAt ? new Date(endAt) : new Date()
 
@@ -529,8 +587,8 @@ export default {
 
       // If a valid destination was found, process it
       if (destinationInfo) {
-          const movePayload = { ...sourceInfo, ...destinationInfo };
-          await this.processMove(movePayload);
+        const movePayload = { ...sourceInfo, ...destinationInfo }
+        await this.processMove(movePayload)
       }
     },
 
@@ -642,14 +700,15 @@ export default {
 
       if (sourcePileType === 'wastePile') {
         if (sourceCardIndex !== sourcePile.length - 1) {
-          return;
+          return
         }
       }
 
       if (sourceCardIndex === sourcePile.length - 1) {
         for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
           const foundationPile = this.gameState.foundationPiles[i]
-          const topCard = foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
+          const topCard =
+            foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
 
           // Rule for moving to an empty foundation (must be an Ace)
           if (!topCard) {
@@ -672,24 +731,26 @@ export default {
       for (let i = 0; i < this.gameState.tableauPiles.length; i++) {
         // If the source is a tableau pile, you can't move it to itself.
         if (sourcePileType === 'tableauPiles' && sourcePileIndex === i) {
-          continue;
+          continue
         }
 
-        const destPile = this.gameState.tableauPiles[i];
-        const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : null;
+        const destPile = this.gameState.tableauPiles[i]
+        const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : null
 
-        if (!topCard) { // Moving a King to an empty tableau pile
+        if (!topCard) {
+          // Moving a King to an empty tableau pile
           if (sourceCard.rank === 'K') {
-            return { destPileType: 'tableauPiles', destPileIndex: i };
+            return { destPileType: 'tableauPiles', destPileIndex: i }
           }
-        } else { // Moving to a non-empty tableau pile
-          const sourceColor = getCardColor(sourceCard.suit);
-          const destColor = getCardColor(topCard.suit);
-          const sourceValue = getRankValue(sourceCard.rank);
-          const destValue = getRankValue(topCard.rank);
+        } else {
+          // Moving to a non-empty tableau pile
+          const sourceColor = getCardColor(sourceCard.suit)
+          const destColor = getCardColor(topCard.suit)
+          const sourceValue = getRankValue(sourceCard.rank)
+          const destValue = getRankValue(topCard.rank)
 
           if (sourceColor !== destColor && destValue - sourceValue === 1) {
-            return { destPileType: 'tableauPiles', destPileIndex: i };
+            return { destPileType: 'tableauPiles', destPileIndex: i }
           }
         }
       }
@@ -701,21 +762,21 @@ export default {
     },
 
     async preloadImages() {
-      const imagePaths = getAllCardImagePaths();
-      const promises = imagePaths.map(imagePath => {
+      const imagePaths = getAllCardImagePaths()
+      const promises = imagePaths.map((imagePath) => {
         return new Promise((resolve, reject) => {
-          const img = new Image();
-          img.src = imagePath;
-          img.onload = () => resolve();
+          const img = new Image()
+          img.src = imagePath
+          img.onload = () => resolve()
           img.onerror = () => {
-            console.warn('Failed to load image:', imagePath);
-            resolve();
-          };
+            console.warn('Failed to load image:', imagePath)
+            resolve()
+          }
         })
-      });
-      await Promise.all(promises);
-      console.log('All cards preloaded');
-    }
+      })
+      await Promise.all(promises)
+      console.log('All cards preloaded')
+    },
   },
 }
 </script>
