@@ -240,7 +240,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card" variant="tonal">
+          <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>
               Blackjack
               <v-chip size="small" style="float: right">Multi</v-chip>
