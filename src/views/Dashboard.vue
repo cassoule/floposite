@@ -764,6 +764,15 @@
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
 
+  <div v-else class="user-tab">
+    <v-skeleton-loader class="mt-2 mb-2" type="avatar" color="transparent" style="min-width: 800px"></v-skeleton-loader>
+    <v-skeleton-loader class="mb-6" type="heading" color="transparent" style="max-width: 300px"></v-skeleton-loader>
+    <v-skeleton-loader class="" type="text@3" color="transparent" style="max-width: 300px"></v-skeleton-loader>
+    <v-skeleton-loader class="mb-10" type="text" color="transparent" style="max-width: 300px"></v-skeleton-loader>
+    <v-skeleton-loader class="px-0" type="heading" color="transparent" style="max-width: 800px"></v-skeleton-loader>
+    <v-skeleton-loader type="image@3" color="transparent" style="border-radius: 20px; overflow: hidden"></v-skeleton-loader>
+  </div>
+
   <div v-if="users" class="leaderboard-container">
     <h2 style="display: flex; place-content: space-between">
       Classement
@@ -891,6 +900,20 @@
           </v-menu>
         </div>
       </div>
+    </div>
+  </div>
+  <div v-else class="leaderboard-container">
+    <h2 style="display: flex; place-content: space-between">
+      Classement
+      <span
+        class="text-capitalize text-secondary cursor-pointer rounded-lg"
+        style="user-select: none"
+      >
+        {{ leaderboardType }}
+      </span>
+    </h2>
+    <div class="leaderboard">
+      <v-skeleton-loader v-for="n in 19" type="text" color="transparent" style="min-width: 300px"></v-skeleton-loader>
     </div>
   </div>
 
