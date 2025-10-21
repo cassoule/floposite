@@ -155,7 +155,7 @@
         <div
           class="actions-container"
         >
-          <v-card class="action-card bg-black" variant="tonal">
+          <v-card class="game-action-card ttt-action-card bg-black" variant="tonal">
             <v-card-title>
               Tic Tac Toe
               <v-chip size="small" style="float: right">1v1</v-chip>
@@ -175,7 +175,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card bg-black" variant="tonal">
+          <v-card class="game-action-card poker-action-card bg-black" variant="tonal">
             <v-card-title>
               Flopoker
               <v-chip size="small" style="float: right">Multi</v-chip>
@@ -196,7 +196,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card bg-black" variant="tonal">
+          <v-card class="game-action-card c4-action-card bg-black" variant="tonal">
             <v-card-title>
               Puissance 4
               <v-chip size="small" style="float: right">1v1</v-chip>
@@ -218,7 +218,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card bg-black" variant="tonal">
+          <v-card class="game-action-card sol-action-card bg-black" variant="tonal">
             <v-card-title>
               Solitaire
               <v-chip size="small" style="float: right">Solo</v-chip>
@@ -240,7 +240,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="action-card bg-black" variant="tonal">
+          <v-card class="game-action-card bj-action-card bg-black" variant="tonal">
             <v-card-title>
               Blackjack
               <v-chip size="small" style="float: right">Multi</v-chip>
@@ -649,7 +649,7 @@
         >
           <v-card class="action-card bg-black" variant="tonal">
             <v-card-title>Tic Tac Toe</v-card-title>
-            <v-card-subtitle>
+            <v-card-subtitle style="text-wrap: wrap">
               <p>Joue au morpion contre un autre joueur.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
@@ -2506,7 +2506,8 @@ button:disabled {
 }
 .leaderboard {
   float: right;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border: solid 2px rgba(255, 255, 255, 0.2);
   border-radius: 15px;
   padding: 6px 5px;
   height: 805px;
@@ -2635,6 +2636,66 @@ button:disabled {
   height: 100%;
   background: url('/erynies_card_back.png') no-repeat center center;
   background-size: 100% auto;
+}
+
+.game-action-card {
+  position: relative;
+  margin-top: 10px;
+  background: transparent !important;
+  border-radius: 0 15px 15px 0 !important;
+  border-left: 3px solid #fff !important;
+}
+.game-action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 150%;
+  height: 100%;
+  background: radial-gradient(circle at -30% 0%, #5865f2, #010217AA 70%) !important;
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+  transform: translateX(20%);
+  z-index: -1;
+  transition: 0.2s ease-in-out;
+}
+.game-action-card:hover::before {
+  transform: translateX(30%);
+}
+.game-action-card::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  z-index: -2;
+  top: 0;
+  left: 0;
+  width: 104%;
+  height: 100%;
+}
+.ttt-action-card::after {
+  background: url('/game_illu_ttt.png') no-repeat center center;
+  background-size: 20% auto;
+  transform: rotate(5deg);
+}
+.poker-action-card::after {
+  background: url('/game_illu_poker.png') no-repeat center center;
+  background-size: 80% auto;
+  transform: rotate(-5deg);
+}
+.c4-action-card::after {
+  background: url('/game_illu_c4.png') no-repeat center center;
+  background-size: 20% auto;
+  transform: rotate(5deg);
+}
+.sol-action-card::after {
+  background: url('/game_illu_sol.png') no-repeat center center;
+  background-size: 70% auto;
+  transform: rotate(-5deg);
+}
+.bj-action-card::after {
+  background: url('/game_illu_bj.png') no-repeat center center;
+  background-size: 20% auto;
+  transform: rotate(5deg);
 }
 
 
