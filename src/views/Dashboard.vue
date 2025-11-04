@@ -33,7 +33,7 @@
         @click="$router.push('/akhy/' + discordId)"
       />
       <h1 class="cursor-pointer" @click="$router.push('/akhy/' + discordId)">
-        Salut <span style="color: #5865f2">@{{ user?.globalName }}</span>
+        Salut <span style="color: #5865f2">@{{ user?.globalName || anonUsername }}</span>
       </h1>
       <span
         v-if="
@@ -145,9 +145,9 @@
       class="tabs w-100 mt-5"
     >
       <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
-      <v-tab value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
-      <v-tab value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
-      <v-tab value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
+      <v-tab v-if="user?.isAkhy" value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
+      <v-tab v-if="user?.isAkhy" value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
+      <v-tab v-if="user?.isAkhy" value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab" class="w-100">
@@ -302,7 +302,7 @@
         </div>
       </v-tabs-window-item>
 
-      <v-tabs-window-item value="commandes">
+      <v-tabs-window-item v-if="user?.isAkhy" value="commandes">
         <div
           class="actions-container"
         >
@@ -388,7 +388,7 @@
         </div>
       </v-tabs-window-item>
 
-      <v-tabs-window-item value="predictions">
+      <v-tabs-window-item v-if="user?.isAkhy" value="predictions">
         <div class="actions-container">
           <div
 
@@ -555,7 +555,7 @@
         </div>
       </v-tabs-window-item>
 
-      <v-tabs-window-item value="skins">
+      <v-tabs-window-item v-if="user?.isAkhy" value="skins">
         <div class="inventory actions-container">
           <div
             v-for="skin in user_inventory"
@@ -609,157 +609,6 @@
       {{ formatAmount(user?.coins) }} Flopos
       <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
     </p>
-
-    <button class="discord-logout" @click="logout">Déconnexion</button>
-  </div>
-
-  <!--  Not akhy UI -->
-  <div v-else-if="users" class="user-tab">
-    <div class="pt-12 pb-16">
-      <v-img
-        v-if="avatar"
-        :src="avatar"
-        lazy-src="anon.webp"
-        width="70"
-        style="border-radius: 50%"
-      />
-      <h1 class="mb-3">
-        Salut <span style="color: #5865f2">{{ anonUsername ?? discordId }}</span> (⊙_⊙)？
-      </h1>
-      <p>Je crois qu'on ne se connait pas...</p>
-      <p class="mt-3">Mais tu peux quand même jouer à certains jeux ! ^^</p>
-    </div>
-
-    <v-tabs
-      v-model="tab"
-      variant="tonal"
-      color="white"
-      align-tabs="center"
-      grow
-      density="compact"
-      class="tabs w-100 mt-16"
-    >
-      <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
-    </v-tabs>
-
-    <v-tabs-window v-model="tab" class="w-100">
-      <v-tabs-window-item value="games">
-        <div
-          class="actions-container"
-        >
-          <v-card class="action-card bg-black" variant="tonal">
-            <v-card-title>Tic Tac Toe</v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue au morpion contre un autre joueur.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none game-btn"
-                color="primary"
-                append-icon="mdi mdi-pound"
-                style="z-index: 0"
-                @click="$router.push('/tic-tac-toe')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card bg-black" variant="tonal">
-            <v-card-title>Flopoker</v-card-title>
-            <v-card-subtitle>
-              <p>Joue au poker avec de 2 à 8 joueurs par table.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none game-btn"
-                color="primary"
-                append-icon="mdi mdi-cards-playing-spade-multiple"
-                style="z-index: 0"
-                @click="$router.push('/poker')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card bg-black" variant="tonal">
-            <v-card-title>Puissance 4</v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-numeric-4-circle"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/connect-4')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card bg-black" variant="tonal">
-            <v-card-title>Solitaire</v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-cards-spade"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/solitaire')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="red-action-card bg-black disabled-card" variant="flat">
-            <v-card-title>Erynies</v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de ce loup-garou un peu particulier, à partir de 4 joueurs.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-fire-circle"
-                color="#520701"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/erynies')"
-              />
-            </v-card-text>
-          </v-card>
-
-<!--
-
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title>&lt;!&ndash;Chess&ndash;&gt;
-            <v-card-subtitle>
-              &lt;!&ndash;              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>&ndash;&gt;
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-chess-king"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>-->
-        </div>
-      </v-tabs-window-item>
-    </v-tabs-window>
 
     <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
@@ -922,6 +771,54 @@
 
 <!--  DIALOGS -->
   <v-dialog
+    v-model="isRegistered"
+    class="modals"
+    :max-width="550"
+    scroll-strategy="block"
+    scrollable
+    persistent
+  >
+    <v-card class="modal-card px-6 py-4" variant="tonal">
+      <v-card-title class="pb-0 pt-9">
+        <h1 style="letter-spacing: .03em">Salut @{{anonUsername}} 👋</h1>
+        <v-img src="public/flopobot.webp" style="position: absolute; right: 0; top: 1em" width="150"></v-img>
+      </v-card-title>
+      <v-card-subtitle class="pb-6">
+        <h2>Bienvenue sur Floposite !</h2>
+      </v-card-subtitle>
+      <v-card-text class="px-4" style="font-size: 1.1em">
+        <p>Il semblerait que ce soit ta première visite ici.</p>
+        <p>Donc <strong>5000</strong> FlopoCoins de bienvenue pour toi ! 🎉</p>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn
+          class="text-none mt-4 px-4"
+          density="default"
+          color="error"
+          variant="flat"
+          rounded="lg"
+          @click="logout"
+          :disabled="loading"
+        >
+          Quitter
+        </v-btn>
+        <v-btn
+          class="text-none mt-4 px-4"
+          density="default"
+          color="primary"
+          variant="flat"
+          rounded="lg"
+          @click="handleRegister"
+          @click.stop="isRegistered = false"
+          :disabled="loading"
+        >
+          +5000 FlopoCoins
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog
     v-model="coinsModal"
     class="modals"
     :max-width="coinsModalMaxWidth"
@@ -1083,7 +980,7 @@
           v-model="nicknameForm.id"
           placeholder="Akhy"
           clearable
-          :items="users"
+          :items="users.filter(u => u.isAkhy)"
           item-value="id"
           item-title="globalName"
           variant="outlined"
@@ -1147,7 +1044,7 @@
           v-model="spamPingForm.id"
           placeholder="Akhy"
           clearable
-          :items="users"
+          :items="users.filter(u => u.isAkhy)"
           item-value="id"
           item-title="globalName"
           variant="outlined"
@@ -1198,7 +1095,7 @@
           v-model="slowmodeForm.id"
           placeholder="Akhy"
           clearable
-          :items="users"
+          :items="users.filter(u => u.isAkhy)"
           item-value="id"
           item-title="globalName"
           variant="outlined"
@@ -1251,7 +1148,7 @@
           v-model="timeoutForm.id"
           placeholder="Akhy"
           clearable
-          :items="users"
+          :items="users.filter(u => u.isAkhy)"
           item-value="id"
           item-title="globalName"
           variant="outlined"
@@ -1785,6 +1682,7 @@ export default {
 
       anonUsername: null,
 
+      isRegistered: false,
       tab: null,
       message: null,
       discordId: null,
@@ -1872,6 +1770,8 @@ export default {
     await this.getActivePredis()
     await this.isTimedOut()
 
+    this.isRegistered = !this.users?.find(u => u.id === this.discordId)
+
     this.initSocket()
     window.addEventListener('resize', this.updateWindowWidth)
   },
@@ -1946,6 +1846,30 @@ export default {
         if (data.userId === this.discordId) this.showSuccessOrWarningToast('+200 FlopoCoins, récompense journalière récupérée', false)
         await this.getUsers()
       })
+    },
+
+    async handleRegister() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/register-user'
+      try {
+        const response = await axios.post(fetchUrl, {
+          discordUserId: this.discordId,
+        })
+        this.showSuccessOrWarningToast(response.data.message, false)
+        await this.getUsers()
+        this.avatar = await this.getAvatar(this.discordId)
+        this.anonUsername = await this.fetchUsername(this.discordId)
+        this.fetchAvatars()
+        this.fetchSparklines()
+        this.fetchElos()
+        this.fetchEloGraphs()
+        await this.getInventory()
+        await this.getActivePolls()
+        await this.getActiveSlowmodes()
+        await this.getActivePredis()
+        await this.isTimedOut()
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
     },
 
     async fetchUsername(id) {
@@ -2742,6 +2666,11 @@ button:disabled {
 .modals {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
+}
+
+.modals-blurry {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .modal-card {

@@ -1081,6 +1081,7 @@ export default {
         </v-list>
 
         <v-list
+          v-if="user?.isAkhy"
           width="100%"
           class="mt-10 py-0 position-relative"
           rounded="xl"
