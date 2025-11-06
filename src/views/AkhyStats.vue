@@ -374,7 +374,7 @@ export default {
         return ''
       }
       if (elo < 900) {
-        return '#ddddddaa'
+        return '#dddddd'
       } else if (elo < 1100) {
         return '#C58A48'
       } else if (elo < 1300) {
@@ -466,7 +466,7 @@ export default {
 </script>
 
 <template>
-  <v-layout class="w-100" :key="Date.now()">
+  <v-layout class="w-100">
     <v-main class="d-flex pt-16" style="place-items: start; place-content: start; gap: 2em">
       <div v-if="user && !loading" class="w-100">
         <v-list
@@ -488,7 +488,10 @@ export default {
                 rounded="circle"
               ></v-img>
               <div>
-                <h1 class="font-weight-bold">@{{ user.username }}</h1>
+                <h1 class="font-weight-bold">
+                  @{{ user.username }}&nbsp;
+                  <i v-if="user?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
+                </h1>
                 <h3 class="d-flex mt-2" style="place-items: baseline">
                   {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
                   <span class="ml-1" style="color: rgba(255, 255, 255, 0.3)">Flopos</span>
@@ -641,7 +644,7 @@ export default {
                       left: 0;
                       top: 7em;
                       z-index: -1;
-                      width: 1271px;
+                      width: 1350px;
                       height: 5px;
                       background: linear-gradient(
                         90deg,
@@ -656,7 +659,7 @@ export default {
                   ></div>
                   <div
                     v-for="akhy in users"
-                    class="cursor-pointer"
+                    class="cursor-pointer user-rank-point"
                     :style="`position: absolute;
                       left: ${playerPositoin(akhy?.elo)}px;
                       bottom: 10em;
@@ -673,7 +676,11 @@ export default {
                       :width="akhy.id === user.id ? 40 : 30"
                       :height="akhy.id === user.id ? 40 : 30"
                       rounded="circle"
-                      :style="`border: ${akhy.id === user.id ? 4 : 2}px solid ${rankColor(akhy?.elo)}`"
+                      :style="`
+                        border: ${akhy.id === user.id ? 4 : 2}px solid ${rankColor(akhy?.elo)};
+                        background: #333;
+                        box-shadow: 0 0 8px #181818;
+                      `"
                     ></v-img>
                     <v-icon
                       class="mdi mdi-chevron-down"
@@ -1323,6 +1330,14 @@ export default {
   height: 100%;
   background: radial-gradient(circle at 23% 23%, #3eaa3e, #00000000 23%) !important;
   z-index: -1;
+}
+
+.user-rank-point {
+  transition: .2s ease-in-out;
+}
+.user-rank-point:hover {
+  z-index: 1000000 !important;
+  transform: scale(1.1) translateX(-45%) !important;
 }
 
 .lose-card {

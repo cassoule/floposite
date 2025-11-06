@@ -661,7 +661,8 @@
               color="transparent"
               style="border-radius: 50%; width: 20px; height: 20px"
             />
-            @{{ akhy?.globalName }}
+            @{{ akhy?.globalName }}&nbsp;
+            <i v-if="akhy?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
           </span>
           <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center;">
             {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
@@ -1843,7 +1844,7 @@ export default {
       })
 
       this.socket.on('daily-queried', async (data) => {
-        if (data.userId === this.discordId) this.showSuccessOrWarningToast('+200 FlopoCoins, récompense journalière récupérée', false)
+        if (data.userId === this.discordId) this.showSuccessOrWarningToast('+500 FlopoCoins, récompense journalière récupérée', false)
         await this.getUsers()
       })
     },

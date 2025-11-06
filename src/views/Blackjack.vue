@@ -10,7 +10,6 @@
         >
           <div class="d-flex align-center" style="gap: 0.5rem">
             <h2 class="text-h5 text-white">Blackjack</h2>
-            <v-chip class="ml-2" size="small" color="white" variant="flat">β Bêta</v-chip>
           </div>
 
           <div class="d-flex align-center" style="gap: 1rem">

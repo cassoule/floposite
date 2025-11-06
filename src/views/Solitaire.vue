@@ -196,10 +196,11 @@
                   "
                 >
                   <v-col
-                    cols="3"
+                    cols="12"
+                    sm="3"
+                    class=""
                     style="
                       display: flex;
-                      width: 25%;
                       overflow: hidden;
                       text-wrap: nowrap;
                       text-overflow: ellipsis;
@@ -215,7 +216,15 @@
                     />
                     <p>@{{ stats.globalName }}</p>
                   </v-col>
-                  <v-col cols="3" class="d-flex align-center justify-end">
+                  <v-col
+                    cols="12"
+                    sm="0"
+                    order-sm="12"
+                    class="py-0 d-sm-none"
+                  >
+                    <v-divider color="#ddd" opacity=".3" class="mx-1" thickness="2" style="border-radius: 50px"></v-divider>
+                  </v-col>
+                  <v-col cols="3" offset="3" offset-sm="0" class="d-flex align-center justify-end">
                     {{ stats.score }}
                   </v-col>
                   <v-col cols="3" class="d-flex align-center justify-end">
@@ -457,7 +466,7 @@ export default {
       const paddedSeconds = String(seconds).padStart(2, '0')
       const paddedMilliseconds = String(milliseconds).padStart(3, '0')
 
-      return `${hours > 0 ? paddedHours + ':' : ''}${paddedMinutes}:${paddedSeconds}.${paddedMilliseconds}`
+      return `${hours > 0 ? paddedHours + ':' : ''}${paddedMinutes}:${paddedSeconds}.${paddedMilliseconds[0]}`
     },
     timeLeft() {
       const endOfDay = new Date(this.now)
@@ -880,7 +889,7 @@ export default {
   z-index: -1;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 730px) {
   .menu {
     flex-direction: column;
   }
