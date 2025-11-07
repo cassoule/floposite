@@ -11,26 +11,22 @@ export default {
     return {
       users: null,
       user: null,
-      sparkline: null,
-      elo: null,
-      elo_graph: null,
-      user_inventory: null,
       skinsVideoUrls: {},
       skinsData: {},
-      active_slowmodes: null,
-      user_isTimedOut: false,
-      games: null,
       loading: true,
       loadingInventory: true,
 
       skinVideoDialog: false,
       selectedSkin: null,
 
-      flopoRankDialog: false,
+      marketOffers: {},
     }
   },
 
   async mounted() {
+    this.loading = true
+    await this.fetchMarketOffers()
+    this.loading = false
   },
 
   computed: {
@@ -38,6 +34,15 @@ export default {
   },
 
   methods: {
+    async fetchMarketOffers() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/market-place/offers'
+      try {
+        const response = await axios.get(fetchUrl)
+        this.marketOffers = response.data.offers
+      } catch (error) {
+        console.error('Error fetching market offers:', error)
+      }
+    },
   },
 }
 </script>
@@ -47,8 +52,98 @@ export default {
     <v-main class="d-flex pt-16" style="place-items: start; place-content: start; gap: 2em">
       <div class="w-100">
         <h1>FlopoMarket</h1>
-        <div class="d-flex" style="height: 400px; place-items: center; justify-content: center">
-          <p>Prochainement...&nbsp;&nbsp;:)</p>
+        <div v-if="marketOffers" class="d-flex flex-column pt-8" style="min-height: 400px; place-items: start; justify-content: center; gap: 1em">
+          <v-card v-for="offer in marketOffers" class="w-100 text-white" color="transparent" :style="`border: 2px solid #${offer.skin.tierColor}; background: radial-gradient(circle at -100% 0%, #${offer.skin.tierColor}, transparent)`" variant="flat" rounded="xl">
+            <v-card-title>
+              {{offer.skin.displayName}}
+              <div class="d-flex align-center">
+                <v-img
+                  :src="offer.seller.avatarUrl"
+                  :alt="offer.seller.username"
+                  min-width="18"
+                  max-width="18"
+                  max-height="18"
+                  class="mt-1 mr-1 rounded-circle"
+                />
+                <p style="font-size: .8em; color: #ffffffaa">{{offer.seller.username}}</p>
+              </div>
+            </v-card-title>
+            <v-card-item>
+              <div class="d-flex flex-row" style="gap: 1em; justify-content: space-between">
+                <v-img
+                  :src="offer.skin.displayIcon"
+                  :alt="offer.skin.displayName"
+                  max-width="300"
+                  max-height="150"
+                  min-height="100"
+                  contain
+                ></v-img>
+                <div class="position-absolute d-flex flex-column" style="align-items: end; right: 2em">
+                  <h2 class="mb-2 font-weight-bold" style="text-shadow: 0 0 10px #000">{{offer.starting_price}} <span style="font-size: .9em">Flopocoins</span></h2>
+                  <v-chip v-bind="props" :color="offer.starting_price / offer.skin.currentPrice > 1.1
+                            ? 'red'
+                            : offer.starting_price / offer.skin.currentPrice < 0.9
+                              ? 'green'
+                              : ''"
+                          style="backdrop-filter: blur(10px); border: 1px solid"
+                  >
+                    <span class="font-weight-bold">{{offer.starting_price / offer.skin.currentPrice > 1 ? '+' : ''}}{{((offer.starting_price / offer.skin.currentPrice * 100) - 100).toFixed(1)}}%</span>
+                    <v-menu activator="parent" location="end" open-on-hover open-on-click transition="scale-transition">
+                      <v-list
+                        width="250"
+                        class="mr-2 py-0"
+                        elevation="20"
+                        rounded="xl"
+                        bg-color="#181818"
+                        base-color="white"
+                        variant="tonal"
+                        style="border: 2px solid #ffffff55"
+                      >
+                        <v-list-item class="px-4 pt-3">
+                          <v-list-item-title
+                            class="pb-2"
+                            style="display: flex; place-content: start; place-items: center; gap: 0.7rem"
+                          >{{offer.skin.displayName}}</v-list-item-title>
+                          <h4>Skin</h4>
+                          <p class="d-flex text-grey">
+                            Base <v-spacer/> {{offer.skin.basePrice}}
+                          </p>
+                          <p class="d-flex text-grey align-center">
+                            Actuel <v-spacer/> {{offer.skin.currentPrice}}
+                          </p>
+                          <p class="d-flex text-grey">
+                            Maximum <v-spacer/> {{offer.skin.maxPrice}}
+                          </p>
+                          <p class="d-flex text-grey">
+                            Dernière vente <v-spacer/> -
+                          </p>
+                        </v-list-item>
+                        <v-list-item class="pb-3">
+                          <h4>Enchère</h4>
+                          <p class="d-flex text-grey">
+                            Prix de départ <v-spacer/> {{offer.starting_price}}
+                          </p>
+                          <p class="d-flex text-grey">
+                            Achat immédiat <v-spacer/> {{offer.buyout_price ?? '-'}}
+                          </p>
+
+                          <p class="d-flex text-grey">
+                            Dernière offre <v-spacer/> -
+                          </p>
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
+                  </v-chip>
+                </div>
+              </div>
+            </v-card-item>
+            <v-card-actions class="d-flex justify-end">
+              <v-btn-group density="compact" rounded="xl">
+                <v-btn class="text-none px-4" color="primary" variant="flat" text="Enchérir"></v-btn>
+                <v-btn class="text-none text-white px-4" :color="'#'+offer.skin.tierColor" variant="flat" text="Acheter" :disabled="offer.buyout_price === null"></v-btn>
+              </v-btn-group>
+            </v-card-actions>
+          </v-card>
         </div>
       </div>
     </v-main>
@@ -94,7 +189,10 @@ export default {
         ></v-video>
       </v-card-item>
       <div style="position: absolute; top: 10px; right: 10px; cursor: pointer">
-        <v-icon class="mdi mdi-close video-close-icon text-white" @click="skinVideoDialog = false" />
+        <v-icon
+          class="mdi mdi-close video-close-icon text-white"
+          @click="skinVideoDialog = false"
+        />
       </div>
     </v-card>
   </v-dialog>
@@ -190,7 +288,7 @@ export default {
   display: grid;
   grid-auto-flow: column;
   grid-template-rows: repeat(2, auto);
-  gap: .2em;
+  gap: 0.2em;
 }
 
 .inventory-item {
