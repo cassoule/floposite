@@ -1184,7 +1184,7 @@ export default {
                           <span v-if="!chroma.swatch" class="font-weight-bold">{{
                               getChromaName(skin, skinsData[skin.uuid])
                             }}
-                      </span>
+                          </span>
                         </div>
                       </div>
                     </div>
