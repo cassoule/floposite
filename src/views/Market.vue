@@ -20,6 +20,7 @@ export default {
       selectedSkin: null,
 
       marketOffers: {},
+      filteredMarketOffers: {},
       selectedOffer: null,
       seeOffer: false,
       collapseToolbar: true,
@@ -55,6 +56,7 @@ export default {
       try {
         const response = await axios.get(fetchUrl)
         this.marketOffers = response.data.offers
+        this.filteredMarketOffers = this.marketOffers
       } catch (error) {
         console.error('Error fetching market offers:', error)
       }
@@ -123,6 +125,17 @@ export default {
       }
       return offer.starting_price
     },
+    filterOffers() {
+      if (this.searchQuery.trim() === '') {
+        this.filteredMarketOffers = this.marketOffers
+      } else {
+        const query = this.searchQuery.toLowerCase()
+        this.filteredMarketOffers = this.marketOffers.filter((offer) =>
+          offer.skin.displayName.toLowerCase().includes(query) ||
+          offer.seller.username.toLowerCase().includes(query)
+        )
+      }
+    },
   },
 }
 </script>
@@ -132,46 +145,50 @@ export default {
     <v-main class="d-flex pt-16" style="place-items: start; place-content: start; gap: 2em">
       <div class="w-100">
         <h1 class="text-white">FlopoMarket</h1>
-        <v-toolbar
-          class="w-100 w-md-50 mr-2 mt-4 pr-0"
-          density="compact"
-          elevation="2"
-          rounded="xl"
-          color="#343434"
-          :collapse="collapseToolbar"
-          style="border: 2px solid #ffffff55; position: sticky; top: 1em; z-index: 1000; min-width: 250px"
-        >
-          <template #default>
-            <div class="d-flex align-center">
-              <v-text-field
-                v-model="searchQuery"
-                placeholder="Rechercher..."
-                variant="plain"
-                rounded="xl"
-                density="compact"
-                hide-details
-                prepend-icon="mdi mdi-magnify"
-                class="ml-3 pb-2"
-                style="width: 130px"
-              ></v-text-field>
-              <div class="ml-3" :class="collapseToolbar ? 'd-none' : ''">
-                <v-btn class="text-none" density="comfortable" prepend-icon="mdi mdi-filter" text="Filtrer" color="#ffffff99"></v-btn>
+        <div class="w-100 d-flex align-center flex-wrap">
+          <v-toolbar
+            class="w-100 w-md-50 mr-2 mt-4 pr-0"
+            density="compact"
+            elevation="2"
+            rounded="xl"
+            color="#343434"
+            :collapse="collapseToolbar"
+            style="border: 2px solid #ffffff55; position: sticky; top: 1em; z-index: 1000; min-width: 250px"
+          >
+            <template #default>
+              <div class="d-flex align-center">
+                <v-text-field
+                  v-model="searchQuery"
+                  placeholder="Rechercher..."
+                  variant="plain"
+                  rounded="xl"
+                  density="compact"
+                  hide-details
+                  prepend-icon="mdi mdi-magnify"
+                  class="ml-3 pb-2"
+                  style="width: 130px"
+                  @update:model-value="filterOffers()"
+                ></v-text-field>
+                <div class="ml-3" :class="collapseToolbar ? 'd-none' : ''">
+                  <v-btn class="text-none" density="comfortable" prepend-icon="mdi mdi-filter" text="Filtrer" color="#ffffff99"></v-btn>
+                </div>
               </div>
-            </div>
 
-          </template>
-          <template #append>
-            <v-btn
-              :icon="!collapseToolbar ? 'mdi mdi-chevron-left' : 'mdi mdi-chevron-right'"
-              color="#ffffff99"
-              style="transform: translateX(5px)"
-              @click="collapseToolbar = !collapseToolbar"
-            />
-          </template>
-        </v-toolbar>
+            </template>
+            <template #append>
+              <v-btn
+                :icon="!collapseToolbar ? 'mdi mdi-chevron-left' : 'mdi mdi-chevron-right'"
+                color="#ffffff99"
+                style="transform: translateX(5px)"
+                @click="collapseToolbar = !collapseToolbar"
+              />
+            </template>
+          </v-toolbar>
+          <p class="pt-4 ml-6">{{filteredMarketOffers?.length}} items</p>
+        </div>
 
-        <div v-if="!loading" class="d-flex flex-column flex-md-row flex-md-wrap pt-8" style="min-height: 400px; place-items: start; justify-content: start">
-          <div v-for="offer in marketOffers" class="w-100 w-md-50 pa-1 offer-card">
+        <div v-if="!loading" class="d-flex flex-column flex-md-row flex-md-wrap pt-8" style="min-height: 416px; place-items: start; justify-content: start">
+          <div v-for="offer in filteredMarketOffers" class="w-100 w-md-50 pa-1 offer-card">
             <v-card class="text-white offer-card-card mb-2" color="transparent" :style="`border: 0px solid #${offer.skin.tierColor}; background: radial-gradient(circle at -100% -50%, #${offer.skin.tierColor}, #18181855)`" variant="flat" rounded="xl">
               <v-card-title>
                 <span>{{offer.skin.displayName}}</span>
@@ -270,7 +287,15 @@ export default {
               <v-card-actions class="d-flex justify-space-between">
                 <span class="px-2 rounded-xl d-flex align-baseline" style="background: #343434; font-size: 1em">
                   {{ prettyTimeLeft(offer.closing_at) }}&nbsp;
-                  <v-icon :class="timeLeft(offer.closing_at)%2===0 ? 'mdi mdi-timer-sand' : 'mdi mdi-timer-sand-complete'" size="15"></v-icon>
+                  <v-icon
+                    class="timer-icon"
+                    :class="
+                      timeLeft(offer.closing_at)%2===0
+                        ? 'mdi mdi-timer-sand'
+                        : 'mdi mdi-timer-sand-complete'
+                    "
+                    size="15"
+                  ></v-icon>
                 </span>
                 <v-btn
                   class="w-50 text-white"
@@ -462,6 +487,7 @@ export default {
   background: radial-gradient(circle at -100% -200%, #5865f2, #181818 100%) !important;
   z-index: -1;
 }
+
 
 @media (max-width: 800px) {
 }
