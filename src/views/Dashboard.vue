@@ -98,9 +98,10 @@
           color="primary"
           variant="flat"
           rounded="lg"
+          disabled
           @click="$router.push('/market')"
         />
-        <v-btn
+<!--        <v-btn
           text="Acheter"
           append-icon=""
           class="text-none buy-btn"
@@ -112,7 +113,7 @@
           <template #append>
             <v-img src="star.svg" width="12px" height="12px" />
           </template>
-        </v-btn>
+        </v-btn>-->
         <v-btn
           v-if="!user.dailyQueried"
           color="primary"

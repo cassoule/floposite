@@ -23,6 +23,9 @@ export default {
       filteredMarketOffers: {},
       selectedOffer: null,
       seeOffer: false,
+      buyoutModal: false,
+      placeBidModal: false,
+      bidAmount: null,
       collapseToolbar: true,
       searchQuery: '',
 
@@ -121,7 +124,7 @@ export default {
     },
     getOfferLastPrice(offer) {
       if (offer.bids.length > 0) {
-        return offer.bids[offer.bids.length - 1].offer_amount
+        return offer.bids[0].offer_amount
       }
       return offer.starting_price
     },
@@ -136,6 +139,9 @@ export default {
         )
       }
     },
+    async goToUser(id) {
+      await this.$router.push('/akhy/' + id)
+    }
   },
 }
 </script>
@@ -192,7 +198,7 @@ export default {
             <v-card class="text-white offer-card-card mb-2" color="transparent" :style="`border: 0px solid #${offer.skin.tierColor}; background: radial-gradient(circle at -100% -50%, #${offer.skin.tierColor}, #18181855)`" variant="flat" rounded="xl">
               <v-card-title>
                 <span>{{offer.skin.displayName}}</span>
-                <div class="d-flex align-center">
+                <div class="d-flex align-center cursor-pointer" @click="goToUser(offer.seller.id)">
                   <v-img
                     :src="offer.seller.avatarUrl"
                     :alt="offer.seller.username"
@@ -234,7 +240,7 @@ export default {
                             density="compact"
                             class="px-2"
                     >
-                      <span class="font-weight-bold">{{offer.starting_price / offer.skin.currentPrice > 1 ? '+' : ''}}{{((offer.starting_price / offer.skin.currentPrice * 100) - 100).toFixed(1)}}%</span>
+                      <span class="font-weight-bold">{{getOfferLastPrice(offer) / offer.skin.currentPrice > 1 ? '+' : ''}}{{((getOfferLastPrice(offer) / offer.skin.currentPrice * 100) - 100).toFixed(1)}}%</span>
                       <v-menu activator="parent" location="end" open-on-hover open-on-click transition="scale-transition">
                         <v-list
                           width="250"
@@ -275,7 +281,7 @@ export default {
                             </p>
 
                             <p class="d-flex text-grey">
-                              Dernière offre <v-spacer/> -
+                              Dernière offre <v-spacer/> {{offer.bids.length > 0 ? getOfferLastPrice(offer) : '-'}}
                             </p>
                           </v-list-item>
                         </v-list>
@@ -285,7 +291,7 @@ export default {
                 </div>
               </v-card-item>
               <v-card-actions class="d-flex justify-space-between">
-                <span class="px-2 rounded-xl d-flex align-baseline" style="background: #343434; font-size: 1em">
+                <span class="px-2 rounded-xl d-flex align-baseline mt-1 ml-1" style="background: #343434; font-size: 1em">
                   {{ prettyTimeLeft(offer.closing_at) }}&nbsp;
                   <v-icon
                     class="timer-icon"
@@ -319,7 +325,7 @@ export default {
         <v-card-title>
           <span style="text-wrap: wrap">{{selectedOffer.skin.displayName}}</span>
           <span class="position-absolute right-0 top-0 mt-2 mr-2 px-2 rounded-xl" style="background: #343434; font-size: .7em">{{ prettyTimeLeft(selectedOffer.closing_at) }}</span>
-          <div class="d-flex align-center">
+          <div class="d-flex align-center cursor-pointer" @click="goToUser(selectedOffer.seller.id)">
             <v-img
               :src="selectedOffer.seller.avatarUrl"
               :alt="selectedOffer.seller.username"
@@ -416,7 +422,7 @@ export default {
             rounded="lg"
             color="primary"
             variant="flat"
-            @click="seeOffer = false"
+            @click="placeBidModal = true"
           >
             Enchérir
           </v-btn>
@@ -426,10 +432,49 @@ export default {
             color="primary"
             variant="flat"
             :disabled="selectedOffer.buyout_price === null"
-            @click="seeOffer = false"
+            @click="buyoutModal = true"
           >
             Acheter pour {{selectedOffer.buyout_price ?? '-'}}
           </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="buyoutModal" class="modals" max-width="400" persistent>
+      <v-card class="modal-card" color="primary" variant="flat">
+        <v-card-title>Confirmer l'achat</v-card-title>
+        <v-card-text>
+          Êtes-vous sûr de vouloir acheter ce skin pour {{selectedOffer.buyout_price}} Coins ?
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text="Annuler" rounded="lg" @click="buyoutModal = false">Annuler</v-btn>
+          <v-btn text="Confirmer" variant="flat" rounded="lg" color="primary" @click="confirmPurchase">Confirmer</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="placeBidModal" class="modals" max-width="400" persistent>
+      <v-card class="modal-card" color="primary" variant="flat">
+        <v-card-title>Placer une offre</v-card-title>
+        <v-card-text>
+          <v-number-input
+            v-model="bidAmount"
+            color="primary"
+            variant="outlined"
+            rounded="xl"
+            control-variant="hidden"
+            :min="getOfferLastPrice(selectedOffer) + 10"
+            :hint="'Minimum : ' + (getOfferLastPrice(selectedOffer) + 10) + ' Coins'">
+            <template #append-inner>
+              <p>Coins</p>
+            </template>
+          </v-number-input>
+          <p>Dernière offre pour ce skin : {{getOfferLastPrice(selectedOffer)}} Coins</p>
+          <p v-if="bidAmount">Placer une offre de {{bidAmount}} Coins ?</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text="Annuler" rounded="lg" @click="placeBidModal = false">Annuler</v-btn>
+          <v-btn text="Confirmer" variant="flat" rounded="lg" color="primary" :disabled="!bidAmount" @click="confirmBid">Confirmer</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

@@ -24,6 +24,7 @@ export default {
       loadingInventory: true,
 
       skinVideoDialog: false,
+      skinHistoryDialog: false,
       selectedSkin: null,
 
       flopoRankDialog: false,
@@ -1146,12 +1147,12 @@ export default {
 
                     <div
                       style="
-                    display: flex;
-                    place-content: space-between;
-                    place-items: center;
-                    width: 100%;
-                    gap: 1em;
-                  "
+                        display: flex;
+                        place-content: space-between;
+                        place-items: center;
+                        width: 100%;
+                        gap: 1em;
+                      "
                     >
                       <v-img
                         :src="getImageUrl(skin, skinsData[skin.uuid])"
@@ -1160,12 +1161,20 @@ export default {
                         min-width="70"
                         max-width="70"
                       />
-                      <v-icon
-                        v-if="skinsVideoUrls[skin.uuid] !== null"
-                        class="mdi mdi-television"
-                        @click="skinVideoDialog = true"
-                        @click.stop="selectedSkin = skin"
-                      ></v-icon>
+                      <div class="d-flex ga-2">
+                        <v-icon
+                          v-if="skin.offers.length > 0"
+                          class="mdi mdi-history"
+                          @click="skinHistoryDialog = true"
+                          @click.stop="selectedSkin = skin"
+                        ></v-icon>
+                        <v-icon
+                          v-if="skinsVideoUrls[skin.uuid] !== null"
+                          class="mdi mdi-television"
+                          @click="skinVideoDialog = true"
+                          @click.stop="selectedSkin = skin"
+                        ></v-icon>
+                      </div>
                     </div>
 
                     <div
@@ -1278,6 +1287,50 @@ export default {
       <div style="position: absolute; top: 10px; right: 10px; cursor: pointer">
         <v-icon class="mdi mdi-close video-close-icon text-white" @click="skinVideoDialog = false" />
       </div>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog
+    v-model="skinHistoryDialog"
+    class="modals"
+    max-width="800"
+    scroll-strategy="reposition"
+    scrollable
+  >
+    <v-card class="modal-card text-white" variant="flat">
+      <v-card-title>
+        <h3>Offres pour {{selectedSkin.displayName}}</h3>
+      </v-card-title>
+      <v-card-text variant="text">
+        <v-list bg-color="transparent" class="text-white px-0">
+          <v-list-item v-for="offer in selectedSkin.offers" variant="tonal" rounded="xl" class="mb-2">
+            <v-list-item-title class="d-flex align-baseline ga-3">
+              <h3>{{selectedSkin.displayName}}</h3>
+              <p>{{offer.posted_at}}</p>
+            </v-list-item-title>
+            <v-list-item-subtitle class="d-flex align-center ga-1 pt-1">
+              <v-img
+                :src="offer.seller.avatarUrl"
+                rounded="circle"
+                max-width="20"
+              ></v-img>
+              <h3 class="mb-1">{{offer.seller.username}}</h3>
+            </v-list-item-subtitle>
+            <v-list bg-color="transparent" rounded="lg">
+              <v-list-item v-for="bid in offer.bids" class="mb-1 w-100" rounded="lg" style="background: #343434">
+                <div class="d-flex ga-2 align-center">
+                  <p style="white-space: nowrap; font-size: .8em">{{bid.offered_at}}</p>
+                  <v-divider vertical/>
+                  <v-img :src="bid.bidder.avatarUrl" max-width="20" min-width="20" height="20" rounded="circle"></v-img>
+                  <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8em">{{bid.bidder.username}}</p>
+                  <v-spacer></v-spacer>
+                  <p>{{bid.offer_amount}}</p>
+                </div>
+              </v-list-item>
+            </v-list>
+          </v-list-item>
+        </v-list>
+      </v-card-text>
     </v-card>
   </v-dialog>
 </template>
