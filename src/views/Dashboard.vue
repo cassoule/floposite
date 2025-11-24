@@ -62,11 +62,7 @@
         {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
         <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
       </p>
-      <p>
-        {{ user_inventory?.length }} skins
-        <span style="color: rgba(255, 255, 255, 0.3)">{{ formatAmount(inventoryValue?.toFixed(0)) }} Flopos</span>
-      </p>
-      <p>
+      <p v-if="user?.isAkhy">
         {{ user?.warns }} warns
         <span style="color: rgba(255, 255, 255, 0.3)">{{ user?.allTimeWarns }} all time</span>
       </p>
@@ -102,9 +98,10 @@
           color="primary"
           variant="flat"
           rounded="lg"
+          disabled
           @click="$router.push('/market')"
         />
-        <v-btn
+<!--        <v-btn
           text="Acheter"
           append-icon=""
           class="text-none buy-btn"
@@ -116,7 +113,7 @@
           <template #append>
             <v-img src="star.svg" width="12px" height="12px" />
           </template>
-        </v-btn>
+        </v-btn>-->
         <v-btn
           v-if="!user.dailyQueried"
           color="primary"
@@ -147,7 +144,6 @@
       <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
       <v-tab v-if="user?.isAkhy" value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
       <v-tab v-if="user?.isAkhy" value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
-      <v-tab v-if="user?.isAkhy" value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab" class="w-100">
@@ -554,54 +550,6 @@
           </div>
         </div>
       </v-tabs-window-item>
-
-      <v-tabs-window-item v-if="user?.isAkhy" value="skins">
-        <div class="inventory actions-container">
-          <div
-            v-for="skin in user_inventory"
-            :key="skin.id"
-            class="inventory-item"
-            :style="`border-radius: 10px;`"
-          >
-            <div
-              style="
-                display: flex;
-                place-content: space-between;
-                min-width: 300px;
-                width: 100%;
-                padding: 0.5em 1em;
-              "
-            >
-              <div style="display: flex; width: 70%; gap: 1em">
-                <v-img
-                  :src="skin.displayIcon"
-                  class="skin-img"
-                  height="25"
-                  min-width="70"
-                  max-width="70"
-                />
-                <span
-                  style="
-                    color: #ddd;
-                    overflow: hidden;
-                    white-space: nowrap;
-                    text-overflow: ellipsis;
-                  "
-                  >{{ skin.displayName }}</span
-                >
-              </div>
-              <span class="d-flex" style="font-weight: bold; place-items: center; place-content: end">
-                {{ skin.currentPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
-                <v-img src="star.svg" class="ml-2" min-width="12px" max-width="12px" height="12px" />
-              </span>
-            </div>
-            <div
-              class="skin-bg"
-              :style="`background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 80%)`"
-            ></div>
-          </div>
-        </div>
-      </v-tabs-window-item>
     </v-tabs-window>
 
     <p v-if="tab === 'skins'" class="d-flex mt-2" style="place-items: center">Valeur totale : {{ formatAmount(inventoryValue?.toFixed(0)) }} <v-img src="star.svg" class="ml-2" min-width="12px" max-width="12px" height="12px" /></p>
@@ -675,7 +623,7 @@
             </v-img>
           </div>
 
-          <v-menu activator="parent" location="end" open-on-hover transition="scale-transition">
+          <v-menu activator="parent" location="end" open-on-hover open-on-click transition="scale-transition">
             <v-list
               width="250"
               class="mr-2 py-0"
@@ -1626,7 +1574,7 @@ export default {
       return this.users?.filter((u) => u.id === this.discordId)[0]
     },
     inventoryValue() {
-      if (!this.user_inventory) return null
+      if (!this.user_inventory) return 0
       let sum = 0
       this.user_inventory.forEach((s) => {
         sum += s.currentPrice
@@ -1765,7 +1713,7 @@ export default {
     this.fetchSparklines()
     this.fetchElos()
     this.fetchEloGraphs()
-    await this.getInventory()
+    //await this.getInventory()
     await this.getActivePolls()
     await this.getActiveSlowmodes()
     await this.getActivePredis()
@@ -1863,7 +1811,7 @@ export default {
         this.fetchSparklines()
         this.fetchElos()
         this.fetchEloGraphs()
-        await this.getInventory()
+        // await this.getInventory()
         await this.getActivePolls()
         await this.getActiveSlowmodes()
         await this.getActivePredis()
