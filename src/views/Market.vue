@@ -129,18 +129,47 @@ export default {
       return offer.starting_price
     },
     filterOffers() {
+      const normalize = (str) =>
+        str
+          .normalize("NFD")                // splits letters and accents
+          .replace(/[\u0300-\u036f]/g, "") // removes accent marks
+          .toLowerCase()
+
       if (this.searchQuery.trim() === '') {
         this.filteredMarketOffers = this.marketOffers
       } else {
-        const query = this.searchQuery.toLowerCase()
-        this.filteredMarketOffers = this.marketOffers.filter((offer) =>
-          offer.skin.displayName.toLowerCase().includes(query) ||
-          offer.seller.username.toLowerCase().includes(query)
-        )
+        const query = normalize(this.searchQuery)
+
+        this.filteredMarketOffers = this.marketOffers.filter((offer) => {
+          const name = normalize(offer.skin.displayName)
+          const seller = normalize(offer.seller.username)
+
+          return name.includes(query) || seller.includes(query)
+        })
       }
     },
     async goToUser(id) {
       await this.$router.push('/akhy/' + id)
+    },
+    async confirmBid() {
+      const url = import.meta.env.VITE_FLAPI_URL + '/market-place/offers/' + this.selectedOffer.id + '/place-bid'
+      try {
+        const response = await axios.post(url, {
+          buyer_id: localStorage.getItem('discordId'),
+          bid_amount: this.bidAmount,
+          timestamp: Date.now(),
+        })
+        console.log('Bid placed successfully:', response.data)
+        this.placeBidModal = false
+        this.seeOffer = false
+        this.bidAmount = null
+        await this.fetchMarketOffers()
+      } catch (error) {
+        console.error('Error placing bid:', error)
+      }
+    },
+    async confirmPurchase() {
+
     }
   },
 }
@@ -151,35 +180,31 @@ export default {
     <v-main class="d-flex pt-16" style="place-items: start; place-content: start; gap: 2em">
       <div class="w-100">
         <h1 class="text-white">FlopoMarket</h1>
-        <div class="w-100 d-flex align-center flex-wrap">
+        <div class="w-100 d-flex align-center flex-wrap" style="position: sticky; top: 1em; z-index: 1000">
           <v-toolbar
-            class="w-100 w-md-50 mr-2 mt-4 pr-0"
+            class="w-100 w-md-33 mr-2 mt-4 pr-0"
             density="compact"
             elevation="2"
             rounded="xl"
             color="#343434"
             :collapse="collapseToolbar"
-            style="border: 2px solid #ffffff55; position: sticky; top: 1em; z-index: 1000; min-width: 250px"
+            style="border: 2px solid #ffffff55; min-width: 250px;"
           >
             <template #default>
               <div class="d-flex align-center">
                 <v-text-field
                   v-model="searchQuery"
-                  placeholder="Rechercher..."
+                  :placeholder="collapseToolbar ? 'Rechercher...' : 'Rechercher par nom, vendeur...'"
                   variant="plain"
                   rounded="xl"
                   density="compact"
                   hide-details
                   prepend-icon="mdi mdi-magnify"
                   class="ml-3 pb-2"
-                  style="width: 130px"
+                  :style="collapseToolbar ? 'width: 180px' : 'width: 305px'"
                   @update:model-value="filterOffers()"
                 ></v-text-field>
-                <div class="ml-3" :class="collapseToolbar ? 'd-none' : ''">
-                  <v-btn class="text-none" density="comfortable" prepend-icon="mdi mdi-filter" text="Filtrer" color="#ffffff99"></v-btn>
-                </div>
               </div>
-
             </template>
             <template #append>
               <v-btn
@@ -190,10 +215,9 @@ export default {
               />
             </template>
           </v-toolbar>
-          <p class="pt-4 ml-6">{{filteredMarketOffers?.length}} items</p>
         </div>
 
-        <div v-if="!loading" class="d-flex flex-column flex-md-row flex-md-wrap pt-8" style="min-height: 416px; place-items: start; justify-content: start">
+        <div v-if="!loading" class="d-flex flex-column flex-md-row flex-md-wrap pt-8" style="min-height: 575px; place-items: start; justify-content: start">
           <div v-for="offer in filteredMarketOffers" class="w-100 w-md-50 pa-1 offer-card">
             <v-card class="text-white offer-card-card mb-2" color="transparent" :style="`border: 0px solid #${offer.skin.tierColor}; background: radial-gradient(circle at -100% -50%, #${offer.skin.tierColor}, #18181855)`" variant="flat" rounded="xl">
               <v-card-title>

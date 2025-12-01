@@ -98,7 +98,6 @@
           color="primary"
           variant="flat"
           rounded="lg"
-          disabled
           @click="$router.push('/market')"
         />
 <!--        <v-btn
