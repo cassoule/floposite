@@ -60,6 +60,9 @@ export default {
       })
       return sum
     },
+    devId() {
+      return import.meta.env.VITE_DEV_ID
+    },
   },
 
   methods: {
@@ -492,6 +495,7 @@ export default {
                 <h1 class="font-weight-bold">
                   @{{ user.username }}&nbsp;
                   <i v-if="user?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
+                  <i v-if="user?.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
                 </h1>
                 <h3 class="d-flex mt-2" style="place-items: baseline">
                   {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}

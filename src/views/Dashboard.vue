@@ -610,6 +610,7 @@
             />
             @{{ akhy?.globalName }}&nbsp;
             <i v-if="akhy?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
+            <i v-if="akhy.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
           </span>
           <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center;">
             {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
