@@ -2421,8 +2421,6 @@ button:disabled {
 }
 
 .inventory-item {
-  position: relative;
-  overflow: hidden;
   min-height: 40px;
   transition: 0.3s ease-in-out;
 }

@@ -1,5 +1,6 @@
 @import './base.css';
 /*@import "tailwindcss";*/
+@import 'swiper/swiper-bundle.css';
 
 ::-webkit-scrollbar {
   width: 8px;              /* size of the scrollbar */
