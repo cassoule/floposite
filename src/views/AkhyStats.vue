@@ -1093,7 +1093,6 @@ export default {
         </v-list>
 
         <v-list
-          v-if="user?.isAkhy"
           width="100%"
           class="mt-10 py-0 position-relative"
           rounded="xl"
@@ -1146,7 +1145,7 @@ export default {
                       >
                         {{ skin.displayName }}
                       </span>
-                      <span>{{ skin.currentPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;') }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span>
+                      <span>{{ skin.currentPrice?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;') }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span>
                     </div>
 
                     <div

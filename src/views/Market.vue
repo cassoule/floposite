@@ -44,6 +44,7 @@ export default {
       bidAmount: null,
       collapseToolbar: true,
       searchQuery: '',
+      offersType: 'open',
 
       nowTick: Date.now(),
       _timer: null,
@@ -53,6 +54,7 @@ export default {
   async mounted() {
     this.loading = true
     await this.fetchMarketOffers()
+    this.filterOffers()
     await this.fetchSkinsVideosUrls()
     this.loading = false
     this.initSocket()
@@ -162,18 +164,23 @@ export default {
           .replace(/[\u0300-\u036f]/g, '') // removes accent marks
           .toLowerCase()
 
+      let searched;
       if (this.searchQuery.trim() === '') {
-        this.filteredMarketOffers = this.marketOffers
+        searched = this.marketOffers
       } else {
         const query = normalize(this.searchQuery)
 
-        this.filteredMarketOffers = this.marketOffers.filter((offer) => {
+        searched = this.marketOffers.filter((offer) => {
           const name = normalize(offer.skin.displayName)
           const seller = normalize(offer.seller.username)
 
           return name.includes(query) || seller.includes(query)
         })
       }
+
+      this.filteredMarketOffers = searched.filter((offer) => {
+        return offer.status === this.offersType
+      })
     },
     async goToUser(id) {
       await this.$router.push('/akhy/' + id)
@@ -213,7 +220,7 @@ export default {
         <h1 class="text-white">FlopoMarket</h1>
         <div
           class="w-100 d-flex align-center flex-wrap"
-          style="position: sticky; top: 1em; z-index: 1000"
+          style="position: sticky; top: 1em; z-index: 1000; gap: 1em"
         >
           <v-toolbar
             class="w-100 w-md-33 mr-2 mt-4 pr-0"
@@ -251,6 +258,22 @@ export default {
               />
             </template>
           </v-toolbar>
+          <div v-if="!collapseToolbar">
+            <v-btn-toggle
+              v-model="offersType"
+              class="mt-4"
+              mandatory
+              base-color="secondary"
+              rounded="lg"
+              variant="tonal"
+              density="compact"
+              @update:model-value="filterOffers()"
+            >
+              <v-btn value="open">En cours</v-btn>
+              <v-btn value="closed">Fermées</v-btn>
+              <v-btn value="pending">En attente</v-btn>
+            </v-btn-toggle>
+          </div>
         </div>
 
         <div
