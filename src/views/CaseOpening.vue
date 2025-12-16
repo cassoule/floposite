@@ -1,13 +1,17 @@
 <script>
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import {Pagination, Autoplay} from 'swiper/modules';
+import {InfiniteCarousel, InfiniteCarouselItem} from 'vue-infinite-carousel';
+import "vue-infinite-carousel/dist/vue-infinite-carousel.css";
 import 'swiper/css';
-import axios from 'axios'
+import axios from 'axios';
 
 export default {
   components: {
     Swiper,
     SwiperSlide,
+    InfiniteCarousel,
+    InfiniteCarouselItem,
   },
   setup() {
     const onSwiper = (swiper) => {
@@ -29,7 +33,7 @@ export default {
     return {
       skins: null,
       skinsData: {},
-      crslSpeed: 3000,
+      crslSpeed: 200,
     };
   },
   methods: {
@@ -51,9 +55,24 @@ export default {
     },
     async openingAnim() {
       // safety: ensure starting value present
+      while (this.crslSpeed < 8000) {
+        this.crslSpeed = Math.min(8000, this.crslSpeed + 200);
+        await this.sleep(10); // pause 1s between steps
+      }
+      while (this.crslSpeed > 2500) {
+        this.crslSpeed = Math.max(2500, this.crslSpeed - 100); // don't go below 100
+        await this.sleep(10); // pause 1s between steps
+      }
+      let i = 0;
       while (this.crslSpeed > 100) {
-        this.crslSpeed = Math.max(100, this.crslSpeed - 200); // don't go below 100
-        await this.sleep(500); // pause 1s between steps
+        this.crslSpeed = Math.max(100, this.crslSpeed - 10); // don't go below 100
+        await this.sleep(10 + i / 10); // pause 1s between steps
+        i++
+      }
+      while (this.crslSpeed > 0) {
+        this.crslSpeed = Math.max(0, this.crslSpeed - 2); // don't go below 100
+        await this.sleep(10 + i / 10); // pause 1s between steps
+        i++
       }
     }
   },
@@ -65,44 +84,19 @@ export default {
 <template>
   <v-layout class="w-100">
     <v-main class="d-flex pt-16" style="place-items: start; place-content: start; gap: 2em">
-      <v-card class="w-100" color="dark">
+      <v-card class="w-100" color="dark" style="position: relative">
+        <div class="w-100 h-100 z-10 d-flex align-center justify-center" style="position: absolute; z-index: 10; pointer-events: none">
+          <v-divider vertical color="white" opacity="1" length="100%" thickness="2"></v-divider>
+        </div>
         <v-card-item class="w-100 px-0">
-          <swiper
-            v-if="skins"
-            class="w-100"
-            :autoplay="{ delay: 0, disableOnInteraction: false }"
-            :allow-touch-move="false"
-            :speed="crslSpeed"
-            :loop="true"
-            :freeMode="true"
-            :freeModeMomentum="true"
-            :breakpoints="{
-              '600': {
-                slidesPerView: 2,
-                spaceBetween: 20,
-              },
-              '800': {
-                slidesPerView: 3,
-                spaceBetween: 20,
-              },
-              '1050': {
-                slidesPerView: 4,
-                spaceBetween: 20,
-              },
-            }"
-            :space-between="30"
-            style="user-select: none"
-            @swiper="onSwiper"
-            @slideChange="onSlideChange"
-          >
-            <swiper-slide
-              v-for="skin in skins"
-              :key="skin.id"
-              class="carousel-item"
-              style="border-radius: 10px"
-            >
-              <div
-                style="
+          <InfiniteCarousel v-if="skins" :gap="0" :speed="crslSpeed">
+            <template v-for="skin in skins.selectedSkins">
+              <InfiniteCarouselItem
+                class="carousel-item"
+                style="border-radius: 10px"
+              >
+                <div
+                  style="
                       display: flex;
                       flex-direction: column;
                       place-content: start;
@@ -110,31 +104,33 @@ export default {
                       padding: 1em 0;
                       gap: 1rem;
                     "
-              >
-                <div
-                  style="
+                >
+                  <div
+                    style="
                         display: flex;
                         place-content: center;
                         place-items: center;
                         width: 100%;
                         gap: 1em;
                       "
-                >
-                  <v-img
-                    :src="getImageUrl(skin)"
-                    class="skin-img"
-                    height="50"
-                    min-width="70"
-                    max-width="70"
-                  />
+                  >
+                    <v-img
+                      :src="getImageUrl(skin)"
+                      :lazy-src="getImageUrl(skin)"
+                      class="skin-img"
+                      height="50"
+                      min-width="70"
+                      max-width="70"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div
-                class="skin-bg"
-                :style="`background: radial-gradient(circle at -0% 0%, #${skin.tierColor}, transparent 80%)`"
-              ></div>
-            </swiper-slide>
-          </swiper>
+                <div
+                  class="skin-bg"
+                  :style="`background: radial-gradient(circle at 75% 50%, #${skin.tierColor}, transparent 100%)`"
+                ></div>
+              </InfiniteCarouselItem>
+            </template>
+          </InfiniteCarousel>
         </v-card-item>
         <v-card-actions>
           <v-btn @click="openingAnim">Open</v-btn>
@@ -162,7 +158,7 @@ export default {
 }
 .carousel-item {
   position: relative;
-  width: 100%;
+  width: 400px;
   overflow: hidden;
   border: 2px solid transparent;
   transition: 0.3s ease-in-out;

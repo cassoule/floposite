@@ -46,8 +46,40 @@ export default {
       searchQuery: '',
       offersType: 'open',
 
+      createOfferDialog: false,
+      userInventory: null,
+
       nowTick: Date.now(),
       _timer: null,
+
+      delaySelect: [
+        { title: "Aucun délai", value: 0 },
+        { title: "5 minutes", value: 5 * 60 * 1000 },
+        { title: "15 minutes", value: 15 * 60 * 1000 },
+        { title: "30 minutes", value: 30 * 60 * 1000 },
+        { title: "1 heure", value: 60 * 60 * 1000 },
+        { title: "2 heures", value: 2 * 60 * 60 * 1000 },
+        { title: "4 heures", value: 4 * 60 * 60 * 1000 },
+        { title: "8 heures", value: 8 * 60 * 60 * 1000 },
+        { title: "12 heures", value: 12 * 60 * 60 * 1000 },
+        { title: "24 heures", value: 24 * 60 * 60 * 1000 },
+      ],
+
+      durationSelect: [
+        { title: "1 heure", value: 60 * 60 * 1000 },
+        { title: "2 heures", value: 2 * 60 * 60 * 1000 },
+        { title: "4 heures", value: 4 * 60 * 60 * 1000 },
+        { title: "8 heures", value: 8 * 60 * 60 * 1000 },
+        { title: "12 heures", value: 12 * 60 * 60 * 1000 },
+        { title: "24 heures", value: 24 * 60 * 60 * 1000 },
+      ],
+
+      createOffer: {
+        skin_uuid: null,
+        price: null,
+        delay: null,
+        duration: null,
+      }
     }
   },
 
@@ -55,7 +87,7 @@ export default {
     this.loading = true
     await this.fetchMarketOffers()
     this.filterOffers()
-    await this.fetchSkinsVideosUrls()
+    await this.fetchSkinsVideosUrls(this.marketOffers)
     this.loading = false
     this.initSocket()
 
@@ -82,7 +114,8 @@ export default {
 
       this.socket.on('market:update', async () => {
         await this.fetchMarketOffers()
-        this.showToast("Marché mis à jour", false)
+        this.filterOffers()
+        this.showToast('Marché mis à jour', false)
       })
     },
     async fetchMarketOffers() {
@@ -93,6 +126,24 @@ export default {
         this.filteredMarketOffers = this.marketOffers
       } catch (error) {
         console.error('Error fetching market offers:', error)
+      }
+    },
+    async getUserInventory() {
+      const fetchUrl =
+        import.meta.env.VITE_FLAPI_URL +
+        '/user/' +
+        localStorage.getItem('discordId') +
+        '/inventory'
+      try {
+        const response = await axios.get(fetchUrl)
+        this.userInventory = response.data.inventory.filter((offer) => {
+          return !this.marketOffers.some(
+            (marketOffer) => marketOffer.skin.uuid === offer.uuid && marketOffer.status !== 'closed'
+          )
+        })
+        await this.fetchSkinsVideosUrls(this.userInventory)
+      } catch (e) {
+        console.error('flAPI error:', e)
       }
     },
     timeLeft(timestamp) {
@@ -112,12 +163,12 @@ export default {
       return `${hh}:${mm}`
     },
     getImageUrl(skin, skinInfo) {
-      if (skin.currentLvl === skinInfo?.levels.length) {
+      if (skin.currentLvl === skinInfo?.levels?.length) {
         const chroma = skinInfo.chromas[skin.currentChroma - 1]
         return chroma?.fullRender || chroma?.displayIcon || skinInfo.displayIcon
       }
-      const level = skinInfo.levels[skin.currentLvl - 1]
-      return level?.displayIcon || skinInfo.displayIcon || skinInfo.chromas[0].fullRender
+      const level = skinInfo?.levels[skin.currentLvl - 1]
+      return level?.displayIcon || skinInfo?.displayIcon || skinInfo?.chromas[0].fullRender
     },
     async getSkinData(skin) {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
@@ -128,9 +179,9 @@ export default {
         console.error('flAPI error:', e)
       }
     },
-    async fetchSkinsVideosUrls() {
+    async fetchSkinsVideosUrls(offers) {
       try {
-        const tasks = this.marketOffers.map((offer) => Promise.all([this.getSkinData(offer.skin)]))
+        const tasks = offers.map((offer) => Promise.all([this.getSkinData(offer.skin ?? offer)]))
 
         await Promise.all(tasks)
       } catch (e) {
@@ -164,8 +215,8 @@ export default {
           .replace(/[\u0300-\u036f]/g, '') // removes accent marks
           .toLowerCase()
 
-      let searched;
-      if (this.searchQuery.trim() === '') {
+      let searched
+      if (!this.searchQuery || this.searchQuery?.trim() === '') {
         searched = this.marketOffers
       } else {
         const query = normalize(this.searchQuery)
@@ -178,9 +229,13 @@ export default {
         })
       }
 
-      this.filteredMarketOffers = searched.filter((offer) => {
-        return offer.status === this.offersType
-      })
+      if (this.offersType !== "all") {
+        this.filteredMarketOffers = searched.filter((offer) => {
+          return offer.status === this.offersType
+        })
+      } else {
+        this.filteredMarketOffers = searched
+      }
     },
     async goToUser(id) {
       await this.$router.push('/akhy/' + id)
@@ -202,13 +257,35 @@ export default {
         this.seeOffer = false
         this.bidAmount = null
         await this.fetchMarketOffers()
-        this.showToast("Offre placée", false)
+        this.showToast('Offre placée', false)
       } catch (error) {
         this.showToast(error.response.data.error, true)
         console.error('Error placing bid:', error)
       }
     },
     async confirmPurchase() {},
+    async handleCreateOffer(skin_uuid) {
+      const url =
+        import.meta.env.VITE_FLAPI_URL + '/market-place/place-offer'
+      const payload = {
+        seller_id: localStorage.getItem('discordId'),
+        skin_uuid: skin_uuid,
+        starting_price: this.createOffer.price,
+        delay: this.createOffer.delay,
+        duration: this.createOffer.duration,
+        timestamp: Date.now(),
+      }
+      try {
+        const response = await axios.post(url, payload)
+        this.showToast(response.data.message, false)
+        this.createOfferDialog = false
+        await this.fetchMarketOffers()
+        this.filterOffers()
+      } catch (e) {
+        this.showToast(e.response.data.error, true)
+        console.error('Error creating offer:', e)
+      }
+    }
   },
 }
 </script>
@@ -245,6 +322,7 @@ export default {
                   prepend-icon="mdi mdi-magnify"
                   class="ml-3 pb-2"
                   :style="collapseToolbar ? 'width: 180px' : 'width: 305px'"
+                  clearable
                   @update:model-value="filterOffers()"
                 ></v-text-field>
               </div>
@@ -258,22 +336,27 @@ export default {
               />
             </template>
           </v-toolbar>
-          <div v-if="!collapseToolbar">
+          <div>
             <v-btn-toggle
               v-model="offersType"
               class="mt-4"
               mandatory
-              base-color="secondary"
-              rounded="lg"
-              variant="tonal"
+              base-color="#343434"
+              color="#555"
+              rounded="xl"
+              variant="flat"
               density="compact"
+              style="border: 2px solid #555555"
               @update:model-value="filterOffers()"
             >
               <v-btn value="open">En cours</v-btn>
               <v-btn value="closed">Fermées</v-btn>
               <v-btn value="pending">En attente</v-btn>
+              <v-btn value="all">Toutes</v-btn>
             </v-btn-toggle>
           </div>
+          <v-spacer></v-spacer>
+          <v-btn class="mt-4" color="primary" rounded="lg" @click="createOfferDialog = true" @click.stop="getUserInventory">Créer une offre</v-btn>
         </div>
 
         <div
@@ -281,6 +364,9 @@ export default {
           class="d-flex flex-column flex-md-row flex-md-wrap pt-8"
           style="min-height: 575px; place-items: start; justify-content: start"
         >
+          <div v-if="filteredMarketOffers && filteredMarketOffers.length === 0" class="w-100 d-flex justify-center pt-16">
+            Aucune offre trouvée.
+          </div>
           <div v-for="offer in filteredMarketOffers" class="w-100 w-md-50 pa-1 offer-card">
             <v-card
               class="text-white offer-card-card mb-2"
@@ -411,6 +497,7 @@ export default {
               </v-card-item>
               <v-card-actions class="d-flex justify-space-between">
                 <span
+                  v-if="timeLeft(offer.closing_at) > 0 && offer.status !== 'pending'"
                   class="px-2 rounded-xl d-flex align-baseline mt-1 ml-1"
                   style="background: #343434; font-size: 1em"
                 >
@@ -425,6 +512,32 @@ export default {
                     size="15"
                   ></v-icon>
                 </span>
+                <span
+                  v-else-if="offer.status === 'open'"
+                  class="px-2 rounded-xl d-flex align-baseline mt-1 ml-1 cursor-help"
+                  style="background: #343434; font-size: 1em"
+                  title="Offre close, distribution en cours (15 minutes maximum)"
+                >
+                  En cours&nbsp;
+                  <v-icon class="timer-icon mdi mdi-lock-outline" size="15"></v-icon>
+                </span>
+                <span
+                  v-else-if="offer.status === 'closed'"
+                  class="px-2 rounded-xl d-flex align-baseline mt-1 ml-1"
+                  style="background: #843434; font-size: 1em"
+                >
+                  Terminée&nbsp;
+                  <v-icon class="timer-icon mdi mdi-receipt-text-check-outline" size="15"></v-icon>
+                </span>
+                <span
+                  v-else-if="offer.status === 'pending'"
+                  class="px-2 rounded-xl d-flex align-baseline mt-1 ml-1 cursor-help"
+                  style="background: #343434; font-size: 1em"
+                  title="Les enchères commenceront à la fin du compte à rebours"
+                >
+                  {{ prettyTimeLeft(offer.opening_at) }}&nbsp;
+                  <v-icon class="timer-icon mdi mdi-lock-outline" size="15"></v-icon>
+                </span>
                 <v-btn
                   class="w-50 text-white"
                   rounded="xl"
@@ -433,11 +546,18 @@ export default {
                   @click="selectedOffer = offer"
                   @click.stop="seeOffer = true"
                 >
-                  Enchérir
+                  {{ timeLeft(offer.closing_at) > 0 && offer.status === 'open' ? 'Enchérir' : 'Voir' }}
                 </v-btn>
               </v-card-actions>
             </v-card>
           </div>
+        </div>
+        <div
+          v-else
+          class="d-flex flex-column flex-md-row flex-md-wrap pt-8"
+          style="min-height: 575px; place-items: start; justify-content: start"
+        >
+          <v-progress-circular indeterminate></v-progress-circular>
         </div>
       </div>
     </v-main>
@@ -453,9 +573,10 @@ export default {
         <v-card-title>
           <span style="text-wrap: wrap">{{ selectedOffer.skin.displayName }}</span>
           <span
+            v-if="selectedOffer.status !== 'closed'"
             class="position-absolute right-0 top-0 mt-2 mr-2 px-2 rounded-xl"
             style="background: #343434; font-size: 0.7em"
-            >{{ prettyTimeLeft(selectedOffer.closing_at) }}</span
+            >{{ prettyTimeLeft(selectedOffer.status === 'pending' ? selectedOffer.opening_at : selectedOffer.closing_at) }}</span
           >
           <div
             class="d-flex align-center cursor-pointer"
@@ -591,15 +712,15 @@ export default {
               </v-list>
               <v-list v-else rounded="lg" bg-color="#343434">
                 <v-list-item>
-                  <v-list-item-title class="text-center"
-                    >Aucune offre pour le moment.</v-list-item-title
-                  >
+                  <v-list-item-title class="text-center">
+                    Aucune offre pour le moment.
+                  </v-list-item-title>
                 </v-list-item>
               </v-list>
             </v-card-text>
           </v-card>
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions v-if="selectedOffer.status === 'open'">
           <v-btn
             class="text-white px-3 text-none"
             rounded="lg"
@@ -609,7 +730,7 @@ export default {
           >
             Enchérir
           </v-btn>
-          <v-btn
+<!--          <v-btn
             class="text-white px-3 text-none"
             rounded="lg"
             color="primary"
@@ -618,7 +739,7 @@ export default {
             @click="buyoutModal = true"
           >
             Acheter pour {{ selectedOffer.buyout_price ?? '-' }}
-          </v-btn>
+          </v-btn>-->
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -678,6 +799,85 @@ export default {
       </v-card>
     </v-dialog>
 
+    <v-dialog
+      v-model="createOfferDialog"
+      class="modals"
+      max-width="800"
+      scrollable
+      scroll-strategy="reposition"
+    >
+      <v-card v-if="userInventory" class="modal-card" color="primary" variant="flat">
+        <v-card-title class="px-6"><h2>Inventaire</h2></v-card-title>
+        <v-card-item>
+          <div v-if="userInventory?.length > 0">
+            <p>Aucun skin dans l'inventaire.</p>
+            <a href="/cases" class="text-white"><span class="text-decoration-underline">Ouvrir une caisse</span><span class="text-decoration-none">&nbsp;🗝️</span></a>
+          </div>
+          <v-expansion-panels v-if="userInventory?.length === 0" color="dark" bg-color="#282828" rounded="xl" variant="default" elevation="0">
+            <v-expansion-panel v-for="skin in userInventory" :key="'inv-'+skin.uuid">
+              <v-expansion-panel-title class="d-flex ga-3" @click="createOffer.price = skin.currentPrice / 2">
+                <v-img :src="getImageUrl(skin, skinsData[skin.uuid])" height="30" min-width="50" max-width="50"></v-img>
+                <p style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{skin.displayName}}</p>
+                <v-spacer></v-spacer>
+                <p>{{skin.currentPrice}}&nbsp;Flopos</p>
+              </v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <h3 class="mt-3">Infos</h3>
+                <v-divider class="mt-1 mb-5"></v-divider>
+                <v-row>
+                  <v-col cols="3">
+                    Base&nbsp;:
+                  </v-col>
+                  <v-col cols="5">
+                    <strong>{{skin.basePrice}} Flopos</strong>
+                  </v-col>
+                  <v-col>
+                    Niveau&nbsp;:
+                  </v-col>
+                  <v-col>
+                    <strong>{{skin.currentLvl}}/{{skinsData[skin.uuid]?.levels.length}}</strong>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="3">
+                    Actuel&nbsp;:
+                  </v-col>
+                  <v-col cols="5">
+                    <strong>{{skin.currentPrice}} Flopos</strong>
+                  </v-col>
+                  <v-col>
+                    Chroma&nbsp;:
+                  </v-col>
+                  <v-col>
+                    <strong>{{skin.currentChroma}}/{{skinsData[skin.uuid]?.chromas.length}}</strong>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="3">
+                    Max&nbsp;:
+                  </v-col>
+                  <v-col cols="9">
+                    <strong>{{skin.maxPrice}} Flopos</strong>
+                  </v-col>
+                </v-row>
+
+                <h3 class="mt-6">Enchères</h3>
+                <v-divider class="mt-1 mb-5"></v-divider>
+                <div class="w-100 d-flex flex-wrap">
+                  <v-number-input v-model="createOffer.price" :key="'COP-'+skin.uuid" variant="outlined" rounded="lg" density="comfortable" :min="skin.currentPrice / 2" :placeholder="'Min : '+ (skin.currentPrice / 2).toFixed() + ' (50%)'" label="Prix de départ"></v-number-input>
+                </div>
+                <div class="w-100 d-sm-flex ga-3">
+                  <v-select v-model="createOffer.delay" :key="'CODL-'+skin.uuid" variant="outlined" rounded="lg" density="comfortable" label="Délai avant ouverture" :items="delaySelect" style="flex-grow: 1; flex-shrink: 1; flex-basis: 50%"></v-select>
+                  <v-select v-model="createOffer.duration" :key="'CODU-'+skin.uuid" variant="outlined" rounded="lg" density="comfortable" label="Durée" :items="durationSelect" style="flex-grow: 1; flex-shrink: 1; flex-basis: 50%"></v-select>
+                </div>
+                <v-btn color="primary" rounded="lg" text="Créer" :disabled="createOffer.price === null || createOffer.delay === null || createOffer.duration === null" @click="handleCreateOffer(skin.uuid)"></v-btn>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </v-card-item>
+      </v-card>
+    </v-dialog>
+
     <v-btn
       class="back-btn text-none"
       text="Retour"
@@ -725,11 +925,12 @@ export default {
 }
 .modal-card::before {
   content: '';
-  position: absolute;
+  position: fixed;
   top: 0;
-  left: -50%;
-  width: 150%;
+  left: 0;
+  width: 100%;
   height: 100%;
+  border-radius: 15px;
   background: radial-gradient(circle at -100% -200%, #5865f2, #181818 100%) !important;
   z-index: -1;
 }
