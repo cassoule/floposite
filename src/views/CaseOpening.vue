@@ -27,7 +27,16 @@ export default {
     };
   },
   async mounted() {
-    await this.getSkins()
+    // Fetch user data from localStorage or an API
+    const discordId = localStorage.getItem('discordId');
+    if (!discordId) this.$router.push('/')
+    try {
+      const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + discordId);
+      this.user = response.data.user;
+    } catch (e) {
+      console.log(e)
+      this.$router.push('/')
+    }
   },
   data() {
     return {
@@ -43,6 +52,12 @@ export default {
       // Configuration (Adjust these to match your CSS)
       cardWidth: 200, // Width of one item
       cardGap: 10,
+
+      caseOpeningDialog: false,
+      selectedCaseType: null,
+
+      user: null,
+      loading: false,
     };
   },
   computed: {
@@ -52,18 +67,24 @@ export default {
     doubledSkins() {
       // Safety check to ensure data exists
       if (!this.skins || !this.skins?.selectedSkins) return [];
-      return [...this.skins.selectedSkins, ...this.skins.selectedSkins];
+      return [...this.skins.selectedSkins, ...this.skins.selectedSkins, ...this.skins.selectedSkins.slice(0, 3)];
     },
   },
   methods: {
-    async getSkins() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/carousel-skins'
+    async fetchCase(caseType='standard') {
+      this.loading = true
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/open-case'
       try {
-        const response = await axios.get(fetchUrl)
+        const userId = localStorage.getItem('discordId') || ''
+        const response = await axios.post(fetchUrl, { userId, caseType })
         this.skins = response.data
+        this.caseOpeningDialog = true
+        await this.sleep(1000)
+        this.startAnimation()
       } catch (e) {
         console.error('flAPI error:', e)
       }
+      this.loading = false
     },
     getImageUrl(skin) {
       const level = skin.levels[skin.currentLvl - 1]
@@ -130,43 +151,86 @@ export default {
 
 <template>
   <v-layout class="w-100">
-    <v-main class="d-flex pt-16" style="place-items: start; place-content: start; gap: 2em">
-      <v-card color="#1A1A1A" rounded="xl" class="px-0">
-        <v-card-item class="px-0">
-          <div class="roulette-container" ref="rouletteContainer">
-            <!-- The vertical line indicating the winner -->
-            <div class="selector-line"></div>
-
-            <!-- The moving rail -->
-            <div
-              class="roulette-rail"
-              :style="{
-                transform: `translateX(${currentTranslateX}px)`,
-                transition: isSpinning ? `transform ${crslSpeed}s cubic-bezier(0.10, 0.75, 0.25, 1)` : 'none'
-              }"
-            >
-              <div
-                v-for="(skin, index) in doubledSkins"
-                :key="skin.uuid + '_pos_' + index"
-                class="skin-card"
-                ref="skinCards"
-              >
-                <!-- Your skin content here -->
-                <v-img :src="getImageUrl(skin, skinsData[skin.uuid])" :lazy-src="getImageUrl(skin, skinsData[skin.uuid])" width="100%" max-height="100px" />
-                <div
-                  class="skin-card-bg"
-                  :style="`background: radial-gradient(circle at 0% 0%, #${skin.tierColor}, transparent 80%)`"
-                ></div>
-              </div>
-            </div>
+    <v-main class="d-flex justify-center flex-wrap flex-md-nowrap pt-16" style="place-items: start; place-content: start; gap: 2em">
+      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+        <v-card-item class="px-4 py-4">
+          <v-img src="flopobot.webp" rounded="lg" width="100%" max-height="150px" :style="`background: radial-gradient(circle at 70% 170%, #5A9FE2, transparent 100%)`" />
+          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
+            <h2 class="mr-4" style="width: 145px">Standard Case</h2>
+            <p class="text-secondary" style="width: 85px">500 Flopos</p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
-          <v-btn color="primary" rounded="lg" @click="startAnimation">Ouvrir</v-btn>
+          <v-btn block :loading="loading" color="primary" rounded="lg" :disabled="user?.coins < 500 || loading" @click="fetchCase('standard')">Ouvrir</v-btn>
+        </v-card-item>
+      </v-card>
+
+      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+        <v-card-item class="px-4 py-4">
+          <v-img src="flopobot.webp" rounded="lg" width="100%" max-height="150px" :style="`background: radial-gradient(circle at 70% 170%, #D1548D, transparent 100%)`" />
+          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
+            <h2 class="mr-4" style="width: 145px">Premium Case</h2>
+            <p class="text-secondary" style="width: 85px">1000 Flopos</p>
+          </div>
+
+        </v-card-item>
+        <v-card-item class="pb-3">
+          <v-btn block :loading="loading" color="primary" rounded="lg" :disabled="user?.coins < 1000 || loading" @click="fetchCase('premium')">Ouvrir</v-btn>
+        </v-card-item>
+      </v-card>
+
+      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+        <v-card-item class="px-4 py-4">
+          <v-img src="flopobot.webp" rounded="lg" width="100%" max-height="150px" :style="`background: radial-gradient(circle at 70% 170%, #F5955B, transparent 100%)`" />
+          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
+            <h2 class="mr-4" style="width: 145px">Deluxe Case</h2>
+            <p class="text-secondary" style="width: 85px">2000 Flopos</p>
+          </div>
+        </v-card-item>
+        <v-card-item class="pb-3">
+          <v-btn block :loading="loading" color="primary" rounded="lg" :disabled="user?.coins < 2000 || loading" @click="fetchCase('ultra')">Ouvrir</v-btn>
         </v-card-item>
       </v-card>
     </v-main>
+
+    <v-btn
+      class="back-btn text-none"
+      text="Retour"
+      variant="tonal"
+      color="#ddd"
+      @click="$router.push('/dashboard')"
+    ></v-btn>
   </v-layout>
+
+  <v-dialog v-model="caseOpeningDialog" width="1500">
+    <v-card color="#1A1A1A" rounded="xl" class="w-100 px-0" style="box-shadow: 0 0 100px 10px #444;">
+      <v-card-item class="px-0">
+        <div class="roulette-container" ref="rouletteContainer">
+          <div class="selector-line"></div>
+          <div
+            class="roulette-rail"
+            :style="{
+                transform: `translateX(${currentTranslateX}px)`,
+                transition: isSpinning ? `transform ${crslSpeed}s cubic-bezier(0.10, 0.75, 0.25, 1)` : 'none'
+              }"
+          >
+            <div
+              v-for="(skin, index) in doubledSkins"
+              :key="skin.uuid + '_pos_' + index"
+              class="skin-card"
+              ref="skinCards"
+            >
+              <v-img :src="getImageUrl(skin, skinsData[skin.uuid])" :lazy-src="getImageUrl(skin, skinsData[skin.uuid])" width="100%" max-height="100px" />
+              <div
+                class="skin-card-bg"
+                :style="`background: radial-gradient(circle at 0% 0%, #${skin.tierColor}, transparent 80%)`"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </v-card-item>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>
