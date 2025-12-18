@@ -30,7 +30,7 @@ export default {
       skinsVideoUrls: {},
       skinsData: {},
       loading: true,
-      loadingInventory: true,
+      loadingInventory: false,
 
       skinVideoDialog: false,
       selectedSkin: null,
@@ -129,6 +129,7 @@ export default {
       }
     },
     async getUserInventory() {
+      this.loadingInventory = true
       const fetchUrl =
         import.meta.env.VITE_FLAPI_URL +
         '/user/' +
@@ -145,6 +146,7 @@ export default {
       } catch (e) {
         console.error('flAPI error:', e)
       }
+      this.loadingInventory = false
     },
     timeLeft(timestamp) {
       const left = Math.max(0, timestamp - this.nowTick) // Ensure it doesn't go negative
@@ -806,14 +808,14 @@ export default {
       scrollable
       scroll-strategy="reposition"
     >
-      <v-card v-if="userInventory" class="modal-card" color="primary" variant="flat">
+      <v-card class="modal-card" color="primary" variant="flat">
         <v-card-title class="px-6"><h2>Inventaire</h2></v-card-title>
-        <v-card-item>
-          <div v-if="userInventory?.length > 0">
+        <v-card-item v-if="!loadingInventory">
+          <div v-if="userInventory?.length === 0">
             <p>Aucun skin dans l'inventaire.</p>
             <a href="/cases" class="text-white"><span class="text-decoration-underline">Ouvrir une caisse</span><span class="text-decoration-none">&nbsp;🗝️</span></a>
           </div>
-          <v-expansion-panels v-if="userInventory?.length === 0" color="dark" bg-color="#282828" rounded="xl" variant="default" elevation="0">
+          <v-expansion-panels v-if="userInventory?.length > 0" color="dark" bg-color="#282828" rounded="xl" variant="default" elevation="0">
             <v-expansion-panel v-for="skin in userInventory" :key="'inv-'+skin.uuid">
               <v-expansion-panel-title class="d-flex ga-3" @click="createOffer.price = skin.currentPrice / 2">
                 <v-img :src="getImageUrl(skin, skinsData[skin.uuid])" height="30" min-width="50" max-width="50"></v-img>
@@ -874,6 +876,9 @@ export default {
               </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
+        </v-card-item>
+        <v-card-item v-else class="d-flex justify-center">
+          <v-progress-circular indeterminate></v-progress-circular>
         </v-card-item>
       </v-card>
     </v-dialog>

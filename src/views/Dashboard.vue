@@ -100,6 +100,18 @@
           rounded="lg"
           @click="$router.push('/market')"
         />
+        <v-btn
+          class="text-capitalize"
+          text="Caisses"
+          color="primary"
+          variant="flat"
+          rounded="lg"
+          @click="$router.push('/cases')"
+        >
+          <template #append>
+            <v-icon class="mdi mdi-treasure-chest-outline mt-1"></v-icon>
+          </template>
+        </v-btn>
 <!--        <v-btn
           text="Acheter"
           append-icon=""
