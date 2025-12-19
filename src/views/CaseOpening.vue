@@ -235,8 +235,8 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #5A9FE2, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 145px">Standard Case</h2>
-            <p class="text-secondary" style="width: 85px">500 Flopos</p>
+            <h2 class="mr-4" style="width: 157px">Standard&nbsp;Case</h2>
+            <p class="text-secondary" style="width: 85px">500&nbsp;Flopos</p>
           </div>
         </v-card-item>
         <v-card-subtitle>
@@ -279,8 +279,8 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #D1548D, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 145px">Premium Case</h2>
-            <p class="text-secondary" style="width: 85px">1000 Flopos</p>
+            <h2 class="mr-4" style="width: 157px">Premium&nbsp;Case</h2>
+            <p class="text-secondary" style="width: 85px">1000&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-subtitle>
@@ -323,8 +323,8 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #F5955B, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 145px">Ultra Case</h2>
-            <p class="text-secondary" style="width: 85px">2000 Flopos</p>
+            <h2 class="mr-4" style="width: 157px">Ultra Case</h2>
+            <p class="text-secondary" style="width: 85px">2000&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-subtitle>

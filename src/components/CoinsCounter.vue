@@ -25,7 +25,7 @@ export default {
         const url = import.meta.env.VITE_FLAPI_URL + '/user/' + discordId + '/coins'
         const response = await axios.get(url)
         const initialCoins = this.displayCoins
-        this.animateNumber("displayCoins", initialCoins, response.data.coins, 1500)
+        this.animateNumber("displayCoins", initialCoins, response.data.coins, 800)
       } catch (error) {
         console.error('Error fetching user coins:', error)
       }
