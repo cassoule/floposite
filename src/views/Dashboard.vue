@@ -1,4 +1,6 @@
 <template>
+<!--  <CoinsCounter/>-->
+
   <div v-if="user" class="user-tab">
     <div style="position: relative; margin-top: 1rem">
       <v-sparkline
@@ -33,7 +35,7 @@
         @click="$router.push('/akhy/' + discordId)"
       />
       <h1 class="cursor-pointer" @click="$router.push('/akhy/' + discordId)">
-        Salut <span style="color: #5865f2">@{{ user?.globalName || anonUsername }}</span>
+        Salut <span style="color: #5865f2">@{{ user?.username || anonUsername }}</span>
       </h1>
       <span
         v-if="
@@ -452,7 +454,7 @@
                 </v-card-text>
                 <v-card-subtitle class="pb-3">
                   {{ predi.options[0].votes.length + predi.options[1].votes.length }}
-                  vote(s) - Prédi de {{ users.find((u) => u.id === predi.creatorId).globalName }}
+                  vote(s) - Prédi de {{ users.find((u) => u.id === predi.creatorId).username }}
                 </v-card-subtitle>
                 <v-card-subtitle class="d-flex pb-2" style="place-content: space-between">
                   <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
@@ -620,7 +622,7 @@
               color="transparent"
               style="border-radius: 50%; width: 20px; height: 20px"
             />
-            @{{ akhy?.globalName }}&nbsp;
+            @{{ akhy?.username }}&nbsp;
             <i v-if="akhy?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
             <i v-if="akhy.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
           </span>
@@ -658,7 +660,7 @@
                     max-width="30"
                     style="border-radius: 50%; width: 20px; height: 30px"
                   />
-                  {{ akhy?.globalName }}
+                  {{ akhy?.username }}
                 </v-list-item-title>
               </v-list-item>
               <v-list-item>
@@ -943,7 +945,7 @@
           clearable
           :items="users.filter(u => u.isAkhy)"
           item-value="id"
-          item-title="globalName"
+          item-title="username"
           variant="outlined"
           class="text-white w-100"
           rounded="lg"
@@ -958,7 +960,7 @@
                     color="transparent"
                     style="border-radius: 50%; max-width: 40px; height: 40px"
                   />
-                  <p>{{ item.raw.globalName }}</p>
+                  <p>{{ item.raw.username }}</p>
                 </div>
               </template>
             </v-list-item>
@@ -1007,7 +1009,7 @@
           clearable
           :items="users.filter(u => u.isAkhy)"
           item-value="id"
-          item-title="globalName"
+          item-title="username"
           variant="outlined"
           class="text-white w-50"
           rounded="lg"
@@ -1022,7 +1024,7 @@
                     color="transparent"
                     style="border-radius: 50%; max-width: 40px; height: 40px"
                   />
-                  <p>{{ item.raw.globalName }}</p>
+                  <p>{{ item.raw.username }}</p>
                 </div>
               </template>
             </v-list-item>
@@ -1058,7 +1060,7 @@
           clearable
           :items="users.filter(u => u.isAkhy)"
           item-value="id"
-          item-title="globalName"
+          item-title="username"
           variant="outlined"
           class="text-white w-50"
           rounded="lg"
@@ -1075,7 +1077,7 @@
                     color="transparent"
                     style="border-radius: 50%; max-width: 40px; height: 40px"
                   />
-                  <p>{{ item.raw.globalName }}</p>
+                  <p>{{ item.raw.username }}</p>
                 </div>
               </template>
             </v-list-item>
@@ -1111,7 +1113,7 @@
           clearable
           :items="users.filter(u => u.isAkhy)"
           item-value="id"
-          item-title="globalName"
+          item-title="username"
           variant="outlined"
           class="text-white w-50"
           rounded="lg"
@@ -1128,7 +1130,7 @@
                     color="transparent"
                     style="border-radius: 50%; max-width: 40px; height: 40px"
                   />
-                  <p>{{ item.raw.globalName }}</p>
+                  <p>{{ item.raw.username }}</p>
                 </div>
               </template>
             </v-list-item>
@@ -1534,11 +1536,13 @@ import { computed, watch } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import StripePaymentForm from '../components/StripePaymentForm.vue'
 import 'animate.css'
+import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   components: {
     StripePaymentForm,
     Toast,
+    CoinsCounter,
   },
 
   setup() {
@@ -1843,7 +1847,7 @@ export default {
           },
           withCredentials: false,
         })
-        return response.data?.user?.globalName
+        return response.data?.user?.username
       } catch (e) {
         console.log(e)
       }
@@ -2359,7 +2363,7 @@ button:disabled {
   right: 2em;
   background: #a12829;
   color: white;
-  padding: 7px 17px;
+  padding: 5px 17px;
   border-radius: 10px;
   border: none;
   text-decoration: none;
