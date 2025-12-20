@@ -10,6 +10,7 @@ import Solitaire from '../views/Solitaire.vue'
 import Blackjack from '../views/Blackjack.vue'
 import AkhyStats from '../views/AkhyStats.vue'
 import Market from '../views/Market.vue'
+import CaseOpening from '../views/CaseOpening.vue'
 import EryniesHome from '../views/EryniesHome.vue'
 
 const routes = [
@@ -24,6 +25,7 @@ const routes = [
   { path: '/blackjack', component: Blackjack },
   { path: '/akhy/:id', component: AkhyStats },
   { path: '/market', component: Market },
+  { path: '/cases', component: CaseOpening },
   //{ path: '/erynies', component: EryniesHome },
 ]
 

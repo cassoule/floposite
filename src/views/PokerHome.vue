@@ -3,9 +3,10 @@ import { io } from 'socket.io-client'
 import axios from 'axios'
 import Toast from '@/components/Toast.vue'
 import { useToastStore } from '@/stores/toastStore.js'
+import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
-  components: { Toast },
+  components: { CoinsCounter, Toast },
 
   setup() {
     const toastStore = useToastStore()
@@ -80,12 +81,11 @@ export default {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
 
-
     await this.getRooms()
     this.initSocket()
     await this.getUsers()
 
-    this.roomFakeMoney = this.users.find(u => u.id === this.discordId)?.coins ? false : true
+    this.roomFakeMoney = this.users.find((u) => u.id === this.discordId)?.coins ? false : true
   },
 
   methods: {
@@ -105,7 +105,11 @@ export default {
     async createRoom() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/create'
       try {
-        const response = await axios.post(url, { creatorId: this.discordId, minBet: this.formattedRoomMinBet, fakeMoney: this.roomFakeMoney })
+        const response = await axios.post(url, {
+          creatorId: this.discordId,
+          minBet: this.formattedRoomMinBet,
+          fakeMoney: this.roomFakeMoney,
+        })
         this.$router.push(`/poker/${response.data.roomId}`)
       } catch (e) {
         this.showErrorToast(e.response.data.message)
@@ -186,6 +190,7 @@ export default {
 </script>
 
 <template>
+  <CoinsCounter />
   <v-layout class="w-100">
     <v-main class="d-flex w-100">
       <div class="w-100 mt-16">
@@ -239,21 +244,27 @@ export default {
 
               <v-alert class="mt-4" color="white" variant="tonal" rounded="xl">
                 <template #prepend>
-                  <v-checkbox v-model="roomFakeMoney" :disabled="!users.find(u => u.id === discordId)" color="primary" label="Fake Money" hide-details @click="roomMinBetExponent = 2"></v-checkbox>
+                  <v-checkbox
+                    v-model="roomFakeMoney"
+                    :disabled="!users.find((u) => u.id === discordId)"
+                    color="primary"
+                    label="Fake Money"
+                    hide-details
+                    @click="roomMinBetExponent = 2"
+                  ></v-checkbox>
                 </template>
                 <template #text>
                   <p v-if="roomFakeMoney" class="px-2">
                     N'importe qui peut rejoindre.
-                    <br>
+                    <br />
                     Les FlopoCoins ne seront pas affectés.
                   </p>
                   <p v-else class="px-2">
                     Il faut assez de FlopoCoins pour rejoindre.
-                    <br>
+                    <br />
                     Tu peux perdre et gagner des FlopoCoins.
                   </p>
                 </template>
-
               </v-alert>
             </v-card-text>
             <v-card-text class="d-flex justify-end">
@@ -265,7 +276,11 @@ export default {
                 @click="createRoom"
                 @click.stop="roomCreationDialog = false"
               >
-                {{roomFakeMoney ? 'Créer' : 'Créer pour ' + formatAmount(formattedRoomMinBet) + ' FC'}}
+                {{
+                  roomFakeMoney
+                    ? 'Créer'
+                    : 'Créer pour ' + formatAmount(formattedRoomMinBet) + ' FC'
+                }}
               </v-btn>
             </v-card-text>
           </v-card>
@@ -285,10 +300,11 @@ export default {
             <v-card-title class="text-white pb-0 pt-2">
               {{ room.name }}
               <p v-if="!room.fakeMoney" style="float: right">
-                <span class="text-grey" style="font-size: .75em">Prix d'entrée</span> {{ formatAmount(room.minBet) }}
+                <span class="text-grey" style="font-size: 0.75em">Prix d'entrée</span>
+                {{ formatAmount(room.minBet) }}
               </p>
               <p v-else style="float: right">
-                <span class="text-grey" style="font-size: .75em">Fake Money</span>
+                <span class="text-grey" style="font-size: 0.75em">Fake Money</span>
               </p>
             </v-card-title>
             <v-card-text class="d-flex justify-space-between pt-1 pb-1">

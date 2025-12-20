@@ -60,6 +60,9 @@ export default {
       })
       return sum
     },
+    devId() {
+      return import.meta.env.VITE_DEV_ID
+    },
   },
 
   methods: {
@@ -492,6 +495,7 @@ export default {
                 <h1 class="font-weight-bold">
                   @{{ user.username }}&nbsp;
                   <i v-if="user?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
+                  <i v-if="user?.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
                 </h1>
                 <h3 class="d-flex mt-2" style="place-items: baseline">
                   {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
@@ -1089,7 +1093,6 @@ export default {
         </v-list>
 
         <v-list
-          v-if="user?.isAkhy"
           width="100%"
           class="mt-10 py-0 position-relative"
           rounded="xl"
@@ -1142,7 +1145,7 @@ export default {
                       >
                         {{ skin.displayName }}
                       </span>
-                      <span>{{ skin.currentPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;') }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span>
+                      <span>{{ skin.currentPrice?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;') }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span>
                     </div>
 
                     <div
@@ -1304,19 +1307,29 @@ export default {
       <v-card-text variant="text">
         <v-list bg-color="transparent" class="text-white px-0">
           <v-list-item v-for="offer in selectedSkin.offers" variant="tonal" rounded="xl" class="mb-2">
-            <v-list-item-title class="d-flex align-baseline ga-3">
-              <h3>{{selectedSkin.displayName}}</h3>
-              <p>{{offer.posted_at}}</p>
-            </v-list-item-title>
-            <v-list-item-subtitle class="d-flex align-center ga-1 pt-1">
+            <v-list-item-title class="d-flex align-center ga-3 pt-1">
               <v-img
                 :src="offer.seller.avatarUrl"
                 rounded="circle"
                 max-width="20"
               ></v-img>
               <h3 class="mb-1">{{offer.seller.username}}</h3>
+              <v-spacer></v-spacer>
+              <p>{{offer.posted_at}}</p>
+            </v-list-item-title>
+            <v-list-item-subtitle class="d-flex align-center ga-1 pt-1">
+              <h3 class="mb-1">Prix de départ : {{offer.starting_price}}</h3>
+              <v-spacer></v-spacer>
+              <v-chip :color="offer.status === 'open' ? 'primary' : offer.status === 'closed' ? 'error' : 'warning'" variant="flat">
+                {{offer.status === 'open' ? 'En cours' : offer.status === 'closed' ? 'Terminée' : 'En attente'}}
+              </v-chip>
             </v-list-item-subtitle>
             <v-list bg-color="transparent" rounded="lg">
+              <v-list-item v-if="offer.bids.length === 0" class="mb-1 w-100" rounded="lg" style="background: #343434">
+                <div class="d-flex ga-2 align-center">
+                  <p style="font-size: .8em">Aucune enchère</p>
+                </div>
+              </v-list-item>
               <v-list-item v-for="bid in offer.bids" class="mb-1 w-100" rounded="lg" style="background: #343434">
                 <div class="d-flex ga-2 align-center">
                   <p style="white-space: nowrap; font-size: .8em">{{bid.offered_at}}</p>
