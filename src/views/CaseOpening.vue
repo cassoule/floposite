@@ -280,7 +280,7 @@ export default {
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
             <h2 class="mr-4" style="width: 157px">Premium&nbsp;Case</h2>
-            <p class="text-secondary" style="width: 85px">1000&nbsp;Coins</p>
+            <p class="text-secondary" style="width: 85px">750&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-subtitle>
@@ -306,7 +306,7 @@ export default {
             :loading="loading"
             color="primary"
             rounded="lg"
-            :disabled="user?.coins < 1000 || loading"
+            :disabled="user?.coins < 750 || loading"
             @click="fetchCase('premium')"
             >Ouvrir</v-btn
           >
@@ -324,7 +324,7 @@ export default {
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
             <h2 class="mr-4" style="width: 157px">Ultra Case</h2>
-            <p class="text-secondary" style="width: 85px">2000&nbsp;Coins</p>
+            <p class="text-secondary" style="width: 85px">1000&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-subtitle>
@@ -350,7 +350,7 @@ export default {
             :loading="loading"
             color="primary"
             rounded="lg"
-            :disabled="user?.coins < 2000 || loading"
+            :disabled="user?.coins < 1000 || loading"
             @click="fetchCase('ultra')"
             >Ouvrir</v-btn
           >
