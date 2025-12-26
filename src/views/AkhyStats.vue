@@ -125,7 +125,7 @@ export default {
     },
 
     formattedDisplayPrice() {
-      return this.displayPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;')
+      return this.displayPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, `&nbsp;`)
     },
   },
 
