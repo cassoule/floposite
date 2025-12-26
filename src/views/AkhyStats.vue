@@ -530,6 +530,10 @@ export default {
       window.location.reload()
     },
     async handleSkinDetailsOpen(skin) {
+      const discordId = localStorage.getItem('discordId')
+      if (!discordId || !this.user || discordId !== this.user.id) {
+        return
+      }
       this.selectedSkin = skin
       this.displayPrice = skin.currentPrice
       this.skinDetailsDialog = true
