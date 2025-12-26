@@ -25,9 +25,28 @@ export default {
 
       skinVideoDialog: false,
       skinHistoryDialog: false,
+      skinDetailsDialog: false,
       selectedSkin: null,
 
       flopoRankDialog: false,
+
+      isSpinning: false,
+      isDestructing: false,
+      isUpgrading: false,
+      resultLabel: null,
+      wheelRotation: 0,
+      upgradeCost: null,
+      // Configuration for the 3 parts (This should come from props or API)
+      segments: [
+        { id: 'upgrade', color: '5865f2', percent: 0.2, label: 'SUCCESS' }, // 10%
+        { id: 'destroy', color: 'f26558', percent: 0.05, label: 'DESTROY' }, // 40%
+        { id: 'nothing', color: '18181818', percent: 0.75, label: 'FAIL' }, // 50%
+      ],
+
+      // Constants
+      radius: 40,
+      fetchingSkinStats: false,
+      displayPrice: 0,
     }
   },
 
@@ -62,6 +81,51 @@ export default {
     },
     devId() {
       return import.meta.env.VITE_DEV_ID
+    },
+    circumference() {
+      return 2 * Math.PI * this.radius
+    },
+
+    // Pre-calculate SVG path data for the segments
+    computedSegments() {
+      let accumulatedPercent = 0
+
+      return this.segments.map((seg) => {
+        // Length of this segment in pixels
+        const segLength = seg.percent * this.circumference
+
+        // Offset = Where this segment starts (negative value for clockwise stacking)
+        const offset = -(accumulatedPercent * this.circumference)
+
+        accumulatedPercent += seg.percent
+
+        return {
+          ...seg,
+          // "Draw this length, then a gap equal to full circumference"
+          dashArray: `${segLength} ${this.circumference}`,
+          dashOffset: offset,
+        }
+      })
+    },
+
+    wheelStyle() {
+      return {
+        transform: `rotate(${this.wheelRotation}deg)`,
+        // High suspense easing
+        transition: this.isSpinning ? 'transform 6s cubic-bezier(0.15, 0.80, 0.15, 1)' : 'none',
+      }
+    },
+
+    canBeUpgraded() {
+      return (
+        this.selectedSkin &&
+        (this.selectedSkin.currentLvl < this.skinsData[this.selectedSkin.uuid]?.levels.length ||
+          this.selectedSkin.currentChroma < this.skinsData[this.selectedSkin.uuid]?.chromas.length)
+      )
+    },
+
+    formattedDisplayPrice() {
+      return this.displayPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;')
     },
   },
 
@@ -155,7 +219,7 @@ export default {
         }
 
         const tasks = this.user_inventory.map((s) =>
-          Promise.all([this.getSkinVideoUrl(s), this.getSkinData(s)])
+          Promise.all([this.getSkinVideoUrl(s), this.getSkinData(s)]),
         )
 
         await Promise.all(tasks)
@@ -464,7 +528,104 @@ export default {
       this.loading = true
       await this.$router.push('/akhy/' + id)
       window.location.reload()
-    }
+    },
+    async handleSkinDetailsOpen(skin) {
+      this.selectedSkin = skin
+      this.displayPrice = skin.currentPrice
+      this.skinDetailsDialog = true
+      this.fetchingSkinStats = true
+      try {
+        const url = import.meta.env.VITE_FLAPI_URL + '/skin-upgrade/' + skin.uuid + '/fetch'
+        const response = await axios.get(url)
+        this.segments = response.data.segments
+        this.upgradeCost = response.data.upgradePrice
+        console.log(response.data)
+      } catch (e) {
+        this.skinDetailsDialog = false
+      }
+      this.fetchingSkinStats = false
+    },
+    async startUpgrade() {
+      if (this.isSpinning) return
+
+      this.isSpinning = true
+      this.resultLabel = null
+
+      try {
+        const url = import.meta.env.VITE_FLAPI_URL + '/skin-upgrade/' + this.selectedSkin.uuid
+        const response = await axios.post(url, { userId: this.user.id })
+        const winningSegmentId = response.data.wonId
+        const winIndex = this.segments.findIndex((s) => s.id === winningSegmentId)
+        if (winIndex === -1) throw new Error('Invalid segment ID from backend')
+        let startDeg = 0
+        for (let i = 0; i < winIndex; i++) {
+          startDeg += this.segments[i].percent * 360
+        }
+        const endDeg = startDeg + this.segments[winIndex].percent * 360
+        const padding = 5
+        const randomAngleInSegment =
+          Math.random() * (endDeg - startDeg - padding * 2) + startDeg + padding
+        const fullSpins = 5 // Spin 5 times for effect
+        const spinDeg = fullSpins * 360
+        const currentBase = Math.floor(this.wheelRotation / 360) * 360
+        const finalRotation = currentBase - spinDeg - randomAngleInSegment
+        this.wheelRotation = finalRotation
+
+        setTimeout(async () => {
+          this.resultLabel = this.segments[winIndex].label
+
+          if (winningSegmentId === 'DESTRUCTED') {
+            this.isDestructing = true
+
+            setTimeout(async () => {
+              this.isSpinning = false
+              this.skinDetailsDialog = false // Close Modal
+              this.isDestructing = false
+              await this.getInventory() // Update background list
+            }, 1000)
+          } else if (winningSegmentId === 'SUCCEEDED') {
+            this.isUpgrading = true
+            const oldPrice = this.selectedSkin.currentPrice
+            await this.getInventory()
+            const updatedSkin = this.user_inventory.find((s) => s.uuid === this.selectedSkin.uuid)
+            if (updatedSkin) {
+              this.selectedSkin = updatedSkin
+              this.tweenPrice(oldPrice, updatedSkin.currentPrice, 2000)
+              await this.getSkinVideoUrl(this.selectedSkin)
+              await this.handleSkinDetailsOpen(this.selectedSkin)
+              this.isSpinning = false
+            }
+            setTimeout(() => {
+              this.isUpgrading = false
+            }, 1500)
+          }
+          this.isSpinning = false
+        }, 6000) // Must match transition duration
+      } catch (e) {
+        console.error('Wheel error', e)
+        this.isSpinning = false
+      }
+    },
+    tweenPrice(startValue, endValue, duration = 1500) {
+      let startTime = null
+
+      const step = (timestamp) => {
+        if (!startTime) startTime = timestamp
+        const progress = Math.min((timestamp - startTime) / duration, 1)
+        const ease = 1 - Math.pow(1 - progress, 4)
+        const current = startValue + (endValue - startValue) * ease
+
+        this.displayPrice = current
+
+        if (progress < 1) {
+          window.requestAnimationFrame(step)
+        } else {
+          this.displayPrice = endValue
+        }
+      }
+
+      window.requestAnimationFrame(step)
+    },
   },
 }
 </script>
@@ -494,7 +655,11 @@ export default {
               <div>
                 <h1 class="font-weight-bold">
                   @{{ user.username }}&nbsp;
-                  <i v-if="user?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
+                  <i
+                    v-if="user?.isAkhy"
+                    class="mdi mdi-check-decagram-outline"
+                    title="Akhy certifié"
+                  ></i>
                   <i v-if="user?.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
                 </h1>
                 <h3 class="d-flex mt-2" style="place-items: baseline">
@@ -504,7 +669,10 @@ export default {
                 <h3 v-if="!loadingInventory">
                   {{ user_inventory?.length }} skins
                   <span style="color: rgba(255, 255, 255, 0.3)"
-                    >{{ inventoryValue?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} Flopos</span
+                    >{{
+                      inventoryValue?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+                    }}
+                    Flopos</span
                   >
                 </h3>
                 <h3>
@@ -530,8 +698,10 @@ export default {
                   <h3 v-else>-</h3>
                 </div>
                 <v-img class="mt-3" :src="rankIcon(user?.elo)" max-width="96" height="96">
-                  <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: 2.5em; color: #222`">
-                        <p style="font-weight: 500">{{rankDiv(user?.elo)}}</p>
+                  <div
+                    :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: 2.5em; color: #222`"
+                  >
+                    <p style="font-weight: 500">{{ rankDiv(user?.elo) }}</p>
                   </div>
                 </v-img>
               </div>
@@ -710,7 +880,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="950 elo"
-                    >II</p>
+                    >
+                      II
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -726,7 +898,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1000 elo"
-                    >III</p>
+                    >
+                      III
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -742,7 +916,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1050 elo"
-                    >IV</p>
+                    >
+                      IV
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -758,7 +934,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1150 elo"
-                    >II</p>
+                    >
+                      II
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -774,7 +952,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1200 elo"
-                    >III</p>
+                    >
+                      III
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -790,7 +970,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1250 elo"
-                    >IV</p>
+                    >
+                      IV
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -806,7 +988,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1375 elo"
-                    >II</p>
+                    >
+                      II
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -822,7 +1006,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1450 elo"
-                    >III</p>
+                    >
+                      III
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -838,7 +1024,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1525 elo"
-                    >IV</p>
+                    >
+                      IV
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -854,7 +1042,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1700 elo"
-                    >II</p>
+                    >
+                      II
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -870,7 +1060,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1800 elo"
-                    >III</p>
+                    >
+                      III
+                    </p>
                     <p
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
@@ -886,7 +1078,9 @@ export default {
                       border-radius: 5em;
                       z-index: 10;`"
                       title="1900 elo"
-                    >IV</p>
+                    >
+                      IV
+                    </p>
                   </div>
                 </div>
               </v-card-item>
@@ -950,10 +1144,28 @@ export default {
                         }}
                       </h3>
                     </div>
-                    <h4 class="d-flex" style="gap: .5em">
-                      <v-img class="" :src="game.p1 === $route.params.id ? rankIcon(game.p1_elo) : rankIcon(game.p2_elo)" min-width="20" max-width="20" height="20">
-                        <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
-                          <p style="font-weight: 300">{{game.p1 === $route.params.id ? rankDiv(game.p1_elo) : rankDiv(game.p2_elo)}}</p>
+                    <h4 class="d-flex" style="gap: 0.5em">
+                      <v-img
+                        class=""
+                        :src="
+                          game.p1 === $route.params.id
+                            ? rankIcon(game.p1_elo)
+                            : rankIcon(game.p2_elo)
+                        "
+                        min-width="20"
+                        max-width="20"
+                        height="20"
+                      >
+                        <div
+                          :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+                        >
+                          <p style="font-weight: 300">
+                            {{
+                              game.p1 === $route.params.id
+                                ? rankDiv(game.p1_elo)
+                                : rankDiv(game.p2_elo)
+                            }}
+                          </p>
                         </div>
                       </v-img>
                       {{ game.p1 === $route.params.id ? game.p1_elo : game.p2_elo }}
@@ -968,7 +1180,8 @@ export default {
 
                           return diff > 0 ? `+${diff}` : diff
                         })()
-                      }} Elo
+                      }}
+                      Elo
                     </h4>
                   </div>
                   <div
@@ -995,9 +1208,15 @@ export default {
                     class="d-flex flex-column"
                     style="place-items: end; justify-content: start; width: 33%; gap: 1em"
                   >
-                    <div class="d-flex cursor-pointer" style="place-items: center; place-content: start" @click="game.p1 === $route.params.id
-                            ? goToUser(users.find((u) => u.id === game.p2)?.id)
-                            : goToUser(users.find((u) => u.id === game.p1)?.id)">
+                    <div
+                      class="d-flex cursor-pointer"
+                      style="place-items: center; place-content: start"
+                      @click="
+                        game.p1 === $route.params.id
+                          ? goToUser(users.find((u) => u.id === game.p2)?.id)
+                          : goToUser(users.find((u) => u.id === game.p1)?.id)
+                      "
+                    >
                       <h3
                         class="username"
                         :title="
@@ -1024,11 +1243,29 @@ export default {
                         rounded="circle"
                       ></v-img>
                     </div>
-                    <h4 class="d-flex" style="gap: .5em">
+                    <h4 class="d-flex" style="gap: 0.5em">
                       {{ game.p1 === $route.params.id ? game.p2_elo : game.p1_elo }}
-                      <v-img class="" :src="game.p1 === $route.params.id ? rankIcon(game.p2_elo) : rankIcon(game.p1_elo)" min-width="20" max-width="20" height="20">
-                        <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
-                          <p style="font-weight: 300">{{game.p1 === $route.params.id ? rankDiv(game.p2_elo) : rankDiv(game.p1_elo)}}</p>
+                      <v-img
+                        class=""
+                        :src="
+                          game.p1 === $route.params.id
+                            ? rankIcon(game.p2_elo)
+                            : rankIcon(game.p1_elo)
+                        "
+                        min-width="20"
+                        max-width="20"
+                        height="20"
+                      >
+                        <div
+                          :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+                        >
+                          <p style="font-weight: 300">
+                            {{
+                              game.p1 === $route.params.id
+                                ? rankDiv(game.p2_elo)
+                                : rankDiv(game.p1_elo)
+                            }}
+                          </p>
                         </div>
                       </v-img>
                     </h4>
@@ -1105,10 +1342,26 @@ export default {
             rounded="0"
             style="backdrop-filter: blur(5px); z-index: 2"
           >
-            <h2>Inventaire <span class="ml-4" style="font-size: .8em">{{user_inventory?.length}} skins</span></h2>
+            <div class="d-flex w-100 justify-space-between flex-wrap ga-3">
+              <h2 style="width: fit-content; white-space: nowrap">
+                Inventaire
+                <span class="ml-4" style="font-size: 0.8em"
+                  >{{ user_inventory?.length }} skins</span
+                >
+              </h2>
+              <v-btn color="primary" rounded="lg" class="text-none" @click="$router.push('/cases')"
+                >Obtenir des skins</v-btn
+              >
+            </div>
           </v-list-item>
           <v-list-item v-if="loadingInventory" class="d-flex" style="justify-content: center">
-            <v-progress-circular class="pt-12 pb-16" :size="50" width="10" color="primary" indeterminate></v-progress-circular>
+            <v-progress-circular
+              class="pt-12 pb-16"
+              :size="50"
+              width="10"
+              color="primary"
+              indeterminate
+            ></v-progress-circular>
           </v-list-item>
           <v-list-item
             v-else-if="user_inventory?.length > 0"
@@ -1120,8 +1373,9 @@ export default {
                 <div
                   v-for="skin in user_inventory"
                   :key="skin.id"
-                  class="inventory-item"
+                  class="inventory-item cursor-pointer"
                   :style="`border-radius: 10px`"
+                  @click="handleSkinDetailsOpen(skin)"
                 >
                   <div
                     style="
@@ -1141,11 +1395,28 @@ export default {
                           overflow: hidden;
                           white-space: nowrap;
                           text-overflow: ellipsis;
+                          display: flex;
+                          place-items: baseline;
                         "
                       >
+                        <v-icon
+                          v-if="
+                            skin.currentLvl === skinsData[skin.uuid].levels.length &&
+                            skin.currentChroma === skinsData[skin.uuid].chromas.length
+                          "
+                          class="mdi mdi-star-outline mr-1"
+                          color="white"
+                          style="text-shadow: 0 0 3px #181818"
+                          size="15"
+                          title="Max"
+                        ></v-icon>
                         {{ skin.displayName }}
                       </span>
-                      <span>{{ skin.currentPrice?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;') }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span>
+                      <span
+                        >{{
+                          skin.currentPrice?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;')
+                        }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span
+                      >
                     </div>
 
                     <div
@@ -1182,32 +1453,38 @@ export default {
 
                     <div
                       style="
-                    display: flex;
-                    place-content: space-between;
-                    place-items: center;
-                    width: 100%;
-                    gap: 1em;
-                  "
+                        display: flex;
+                        place-content: space-between;
+                        place-items: center;
+                        width: 100%;
+                        gap: 1em;
+                      "
                     >
                       <v-spacer></v-spacer>
                       <div class="d-flex" style="gap: 1em">
                         <div v-for="(chroma, index) in skinsData[skin.uuid].chromas">
-                          <v-img v-if="chroma.swatch" :src="chroma.swatch" class="rounded-lg" width="30px" height="30px" :style="`${index + 1 === skin.currentChroma ? 'border: 2px solid #' + skin.tierColor : ''}`" />
-                          <span v-if="!chroma.swatch" class="font-weight-bold">{{
-                              getChromaName(skin, skinsData[skin.uuid])
-                            }}
+                          <v-img
+                            v-if="chroma.swatch"
+                            :src="chroma.swatch"
+                            class="rounded-lg"
+                            width="30px"
+                            height="30px"
+                            :style="`${index + 1 === skin.currentChroma ? 'border: 2px solid #' + skin.tierColor : ''}`"
+                          />
+                          <span v-if="!chroma.swatch" class="font-weight-bold"
+                            >{{ getChromaName(skin, skinsData[skin.uuid]) }}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div
                       style="
-                    display: flex;
-                    place-content: space-between;
-                    place-items: center;
-                    width: 100%;
-                    gap: 1em;
-                  "
+                        display: flex;
+                        place-content: space-between;
+                        place-items: center;
+                        width: 100%;
+                        gap: 1em;
+                      "
                     >
                       <v-progress-linear
                         :model-value="(skin.currentLvl / skinsData[skin.uuid].levels.length) * 100"
@@ -1215,7 +1492,7 @@ export default {
                       ></v-progress-linear>
                       <p>
                         Lvl&nbsp;<span class="font-weight-bold">{{ skin.currentLvl }}</span
-                      >/{{ skinsData[skin.uuid].levels.length }}
+                        >/{{ skinsData[skin.uuid].levels.length }}
                       </p>
                     </div>
                   </div>
@@ -1230,7 +1507,6 @@ export default {
           <v-list-item v-else>
             <p class="text-center pt-12 pb-16">Aucun skin dans l'inventaire</p>
           </v-list-item>
-
         </v-list>
       </div>
 
@@ -1288,7 +1564,10 @@ export default {
         ></v-video>
       </v-card-item>
       <div style="position: absolute; top: 10px; right: 10px; cursor: pointer">
-        <v-icon class="mdi mdi-close video-close-icon text-white" @click="skinVideoDialog = false" />
+        <v-icon
+          class="mdi mdi-close video-close-icon text-white"
+          @click="skinVideoDialog = false"
+        />
       </div>
     </v-card>
   </v-dialog>
@@ -1302,42 +1581,83 @@ export default {
   >
     <v-card class="modal-card text-white" variant="flat">
       <v-card-title>
-        <h3>Offres pour {{selectedSkin.displayName}}</h3>
+        <h3>Offres pour {{ selectedSkin.displayName }}</h3>
       </v-card-title>
       <v-card-text variant="text">
         <v-list bg-color="transparent" class="text-white px-0">
-          <v-list-item v-for="offer in selectedSkin.offers" variant="tonal" rounded="xl" class="mb-2">
+          <v-list-item
+            v-for="offer in selectedSkin.offers"
+            variant="tonal"
+            rounded="xl"
+            class="mb-2"
+          >
             <v-list-item-title class="d-flex align-center ga-3 pt-1">
-              <v-img
-                :src="offer.seller.avatarUrl"
-                rounded="circle"
-                max-width="20"
-              ></v-img>
-              <h3 class="mb-1">{{offer.seller.username}}</h3>
+              <v-img :src="offer.seller.avatarUrl" rounded="circle" max-width="20"></v-img>
+              <h3 class="mb-1">{{ offer.seller.username }}</h3>
               <v-spacer></v-spacer>
-              <p>{{offer.posted_at}}</p>
+              <p>{{ offer.posted_at }}</p>
             </v-list-item-title>
             <v-list-item-subtitle class="d-flex align-center ga-1 pt-1">
-              <h3 class="mb-1">Prix de départ : {{offer.starting_price}}</h3>
+              <h3 class="mb-1">Prix de départ : {{ offer.starting_price }}</h3>
               <v-spacer></v-spacer>
-              <v-chip :color="offer.status === 'open' ? 'primary' : offer.status === 'closed' ? 'error' : 'warning'" variant="flat">
-                {{offer.status === 'open' ? 'En cours' : offer.status === 'closed' ? 'Terminée' : 'En attente'}}
+              <v-chip
+                :color="
+                  offer.status === 'open'
+                    ? 'primary'
+                    : offer.status === 'closed'
+                      ? 'error'
+                      : 'warning'
+                "
+                variant="flat"
+              >
+                {{
+                  offer.status === 'open'
+                    ? 'En cours'
+                    : offer.status === 'closed'
+                      ? 'Terminée'
+                      : 'En attente'
+                }}
               </v-chip>
             </v-list-item-subtitle>
             <v-list bg-color="transparent" rounded="lg">
-              <v-list-item v-if="offer.bids.length === 0" class="mb-1 w-100" rounded="lg" style="background: #343434">
+              <v-list-item
+                v-if="offer.bids.length === 0"
+                class="mb-1 w-100"
+                rounded="lg"
+                style="background: #343434"
+              >
                 <div class="d-flex ga-2 align-center">
-                  <p style="font-size: .8em">Aucune enchère</p>
+                  <p style="font-size: 0.8em">Aucune enchère</p>
                 </div>
               </v-list-item>
-              <v-list-item v-for="bid in offer.bids" class="mb-1 w-100" rounded="lg" style="background: #343434">
+              <v-list-item
+                v-for="bid in offer.bids"
+                class="mb-1 w-100"
+                rounded="lg"
+                style="background: #343434"
+              >
                 <div class="d-flex ga-2 align-center">
-                  <p style="white-space: nowrap; font-size: .8em">{{bid.offered_at}}</p>
-                  <v-divider vertical/>
-                  <v-img :src="bid.bidder.avatarUrl" max-width="20" min-width="20" height="20" rounded="circle"></v-img>
-                  <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8em">{{bid.bidder.username}}</p>
+                  <p style="white-space: nowrap; font-size: 0.8em">{{ bid.offered_at }}</p>
+                  <v-divider vertical />
+                  <v-img
+                    :src="bid.bidder.avatarUrl"
+                    max-width="20"
+                    min-width="20"
+                    height="20"
+                    rounded="circle"
+                  ></v-img>
+                  <p
+                    style="
+                      overflow: hidden;
+                      text-overflow: ellipsis;
+                      white-space: nowrap;
+                      font-size: 0.8em;
+                    "
+                  >
+                    {{ bid.bidder.username }}
+                  </p>
                   <v-spacer></v-spacer>
-                  <p>{{bid.offer_amount}}</p>
+                  <p>{{ bid.offer_amount }}</p>
                 </div>
               </v-list-item>
             </v-list>
@@ -1346,14 +1666,366 @@ export default {
       </v-card-text>
     </v-card>
   </v-dialog>
+
+  <v-dialog
+    v-model="skinDetailsDialog"
+    :persistent="isDestructing || isUpgrading || isSpinning"
+    class="modals"
+    max-width="450"
+    scroll-strategy="reposition"
+    scrollable
+  >
+    <v-card class="text-white" variant="text" elevation="0">
+      <v-card-text
+        style="
+          display: flex;
+          flex-direction: row;
+          align-items: start;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        "
+      >
+        <div
+          style="
+            min-width: 250px;
+            max-width: 400px;
+            border: 2px solid #77777777;
+            flex-grow: 1;
+            border-radius: 20px;
+            background: #181818;
+            position: relative;
+            overflow: hidden;
+          "
+        >
+          <div
+            class="details-item"
+            :class="{ 'shake-anim': isDestructing, 'success-anim': isUpgrading }"
+            :style="`border-radius: 10px`"
+          >
+            <div
+              class="w-100"
+              style="
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                place-content: space-between;
+                padding: 0.5em 1em;
+                gap: 1rem;
+              "
+            >
+              <div
+                class="w-100"
+                style="
+                  display: flex;
+                  place-content: space-between;
+                  gap: 1em;
+                  overflow: clip;
+                  max-width: 100%;
+                "
+              >
+                <span
+                  style="
+                    font-weight: bold;
+                    color: #ddd;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    flex-grow: 0;
+                    flex-shrink: 1;
+                  "
+                >
+                  {{ selectedSkin.displayName }}
+                </span>
+                <span class="price-text" style="flex-shrink: 0; flex-grow: 3; text-align: right">
+                  {{ formattedDisplayPrice }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)"
+                    >Flopos</span
+                  >
+                </span>
+              </div>
+
+              <div
+                style="
+                  display: flex;
+                  place-content: space-between;
+                  place-items: center;
+                  width: 100%;
+                  gap: 1em;
+                "
+              >
+                <v-img
+                  :key="selectedSkin.currentLvl + '-' + selectedSkin.currentChroma"
+                  :src="getImageUrl(selectedSkin, skinsData[selectedSkin.uuid])"
+                  class="skin-img pop-in-img"
+                  height="25"
+                  min-width="70"
+                  max-width="70"
+                />
+                <div class="d-flex ga-2">
+                  <v-icon
+                    v-if="selectedSkin.offers.length > 0"
+                    class="mdi mdi-history"
+                    @click="skinHistoryDialog = true"
+                  ></v-icon>
+                  <v-icon
+                    v-if="skinsVideoUrls[selectedSkin.uuid] !== null"
+                    class="mdi mdi-television"
+                    @click="skinVideoDialog = true"
+                  ></v-icon>
+                </div>
+              </div>
+
+              <div
+                style="
+                  display: flex;
+                  place-content: space-between;
+                  place-items: center;
+                  width: 100%;
+                  gap: 1em;
+                "
+              >
+                <v-spacer></v-spacer>
+                <div class="d-flex" style="gap: 1em">
+                  <div v-for="(chroma, index) in skinsData[selectedSkin.uuid].chromas">
+                    <v-img
+                      v-if="chroma.swatch"
+                      :src="chroma.swatch"
+                      class="rounded-lg"
+                      width="30px"
+                      height="30px"
+                      :style="`${index + 1 === selectedSkin.currentChroma ? 'border: 2px solid #' + selectedSkin.tierColor : ''}`"
+                    />
+                    <span v-if="!chroma.swatch" class="font-weight-bold"
+                      >{{ getChromaName(selectedSkin, skinsData[selectedSkin.uuid]) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  place-content: space-between;
+                  place-items: center;
+                  width: 100%;
+                  gap: 1em;
+                "
+              >
+                <v-progress-linear
+                  :model-value="
+                    (selectedSkin.currentLvl / skinsData[selectedSkin.uuid].levels.length) * 100
+                  "
+                  :color="'#' + selectedSkin.tierColor"
+                ></v-progress-linear>
+                <p>
+                  Lvl&nbsp;<span class="font-weight-bold">{{ selectedSkin.currentLvl }}</span
+                  >/{{ skinsData[selectedSkin.uuid].levels.length }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <v-divider class="mx-2"></v-divider>
+          <div
+            style="
+              padding: 0.5em 1em 1em 1em;
+              opacity: 1;
+              display: flex;
+              flex-direction: column;
+              height: 100%;
+              transition: all 0.3s ease;
+            "
+            :style="
+              canBeUpgraded
+                ? ''
+                : 'opacity: 0.5 !important; pointer-events: none; transform: scale(0); height: 0; padding: 0'
+            "
+          >
+            <div class="d-flex justify-space-between align-baseline mt-auto">
+              <!-- Assuming you have an upgradeCost variable -->
+              <p style="color: #ccccccaa">
+                Coût de l'amélioration : <span class="font-weight-bold">{{ upgradeCost }}</span
+                >&nbsp;Flopos
+              </p>
+            </div>
+            <!-- START UPGRADE WHEEL -->
+            <div
+              v-if="!fetchingSkinStats"
+              class="d-flex justify-center align-center my-6"
+              style="position: relative; height: 160px"
+            >
+              <!-- Marker -->
+              <div
+                style="
+                  position: absolute;
+                  top: 0;
+                  left: 50%;
+                  transform: translateX(-50%) translateY(5px);
+                  z-index: 10;
+                "
+              >
+                <v-icon
+                  color="white"
+                  icon="mdi-menu-up"
+                  size="25"
+                  style="filter: drop-shadow(0 0 5px black)"
+                ></v-icon>
+              </div>
+
+              <!-- Background Ambient Glow (Optional: Adds depth behind the wheel) -->
+              <div
+                style="
+                  position: absolute;
+                  width: 120px;
+                  height: 120px;
+                  border-radius: 50%;
+                  background: radial-gradient(
+                    circle,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    rgba(0, 0, 0, 0) 70%
+                  );
+                  pointer-events: none;
+                "
+              ></div>
+
+              <!-- Rotating Container -->
+              <div style="width: 170px; height: 170px; will-change: transform" :style="wheelStyle">
+                <svg
+                  viewBox="0 0 100 100"
+                  style="transform: rotate(-90deg); width: 100%; height: 100%; overflow: visible"
+                >
+                  <!-- Base Circle (Dark track) -->
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    stroke="#111"
+                    stroke-width="10"
+                  />
+
+                  <!-- Glowing Segments -->
+                  <circle
+                    v-for="(segment, index) in computedSegments"
+                    :key="segment.id"
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    :stroke="'#' + segment.color"
+                    stroke-width="4"
+                    :stroke-dasharray="segment.dashArray"
+                    :stroke-dashoffset="segment.dashOffset"
+                    :style="{
+                      filter: `drop-shadow(0 0 2px #${segment.color}) drop-shadow(0 0 8px #${segment.color})`,
+                    }"
+                  />
+                </svg>
+              </div>
+
+              <div
+                style="
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translateX(-50%) translateY(-50%);
+                "
+              >
+                <v-btn
+                  class="text-none spin-btn"
+                  color="primary"
+                  :disabled="isSpinning"
+                  @click="startUpgrade"
+                >
+                  GO
+                </v-btn>
+              </div>
+            </div>
+            <!-- END UPGRADE WHEEL -->
+            <div
+              v-else
+              class="d-flex justify-center align-center my-6"
+              style="position: relative; height: 160px"
+            >
+              <v-progress-circular
+                :size="120"
+                width="10"
+                color="primary"
+                indeterminate
+              ></v-progress-circular>
+            </div>
+
+            <div class="d-flex ga-2 flex-wrap">
+              <p class="text-capitalize" style="font-size: 0.7em">
+                <v-icon
+                  color="#00000077"
+                  class="mdi mdi-square"
+                  :style="{filter: `drop-shadow(0 0 2px #00000077)`}"
+                ></v-icon>&nbsp;échec
+              </p>
+              <p style="font-size: 0.7em">
+                <v-icon
+                  color="#f26558"
+                  class="mdi mdi-square"
+                  :style="{filter: `drop-shadow(0 0 2px #f26558)`}"
+                ></v-icon>&nbsp;Destruction
+              </p>
+              <p style="font-size: 0.7em" >
+                <v-icon
+                  color="#5865f2"
+                  class="mdi mdi-square"
+                  :style="{filter: `drop-shadow(0 0 2px #5865f2)`}"
+                ></v-icon>&nbsp;Amélioration
+              </p>
+            </div>
+          </div>
+          <v-divider class="mx-2"></v-divider>
+          <div style="padding: 1em">
+            <v-btn
+              color="secondary"
+              variant="tonal"
+              elevation="0"
+              rounded="lg"
+              class="text-none"
+              @click="$router.push('/market')"
+              >Vendre sur FlopoMarket</v-btn
+            >
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>
+.pulse-glow {
+  animation: breathe 3s infinite ease-in-out;
+}
+
+@keyframes breathe {
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
 .back-btn {
   position: absolute;
   top: 1rem;
   left: 1rem;
   border-radius: 12px;
+}
+.spin-btn {
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  box-shadow: 0 0 10px #ffffff55;
+}
+.spin-btn:active {
+  transform: scale(0.9);
 }
 
 .rank-ctn {
@@ -1399,7 +2071,7 @@ export default {
 }
 
 .user-rank-point {
-  transition: .2s ease-in-out;
+  transition: 0.2s ease-in-out;
 }
 .user-rank-point:hover {
   z-index: 1000000 !important;
@@ -1446,7 +2118,7 @@ export default {
   display: grid;
   grid-auto-flow: column;
   grid-template-rows: repeat(2, auto);
-  gap: .2em;
+  gap: 0.2em;
 }
 
 .inventory-item {
@@ -1456,6 +2128,26 @@ export default {
   border: 2px solid transparent;
   transition: 0.3s ease-in-out;
   user-select: none;
+}
+
+.details-item {
+  position: relative;
+  display: flex;
+  max-width: 400px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: 0.3s ease-in-out;
+  user-select: none;
+}
+
+.details-item::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #181818;
+  z-index: -1;
+  transition: 0.3s ease-in-out;
 }
 
 .skin-img {
@@ -1483,5 +2175,74 @@ export default {
   .rank-ctn {
     width: 100%;
   }
+}
+
+.shake-anim {
+  animation: shakeAndBurn 1.2s forwards ease-in-out;
+  border-color: #f26558 !important; /* Red border */
+}
+
+@keyframes shakeAndBurn {
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+    filter: grayscale(0) brightness(1);
+  }
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+    filter: grayscale(1) brightness(0.5) blur(1px);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+    filter: grayscale(1) brightness(0);
+  }
+}
+
+/* --- SUCCESS ANIMATION --- */
+.success-anim {
+  animation: successPulse 1s ease-out;
+}
+
+/*@keyframes successPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 transparent; }
+  50% { transform: scale(1.02); box-shadow: 0 0 20px #aaa; border-color: #aaa; }
+  100% { transform: scale(1); box-shadow: 0 0 0 transparent; }
+}*/
+
+/* --- IMAGE POP EFFECT (Triggers on key change) --- */
+.pop-in-img {
+  animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Price Highlight transition */
+.price-text {
+  transition: color 0.3s ease;
 }
 </style>

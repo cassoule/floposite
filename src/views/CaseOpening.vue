@@ -236,33 +236,16 @@ export default {
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
             <h2 class="mr-4" style="width: 157px">Standard&nbsp;Case</h2>
-            <p class="text-secondary" style="width: 85px">500&nbsp;Flopos</p>
+            <p class="text-secondary" style="width: 85px">1000&nbsp;Flopos</p>
           </div>
         </v-card-item>
-        <v-card-subtitle>
-          <p style="display: flex; align-items: center; gap: 1em">
-            Contenu de la caisse
-            <v-icon class="mdi mdi-briefcase-search-outline"> </v-icon>
-            <v-menu activator="parent" open-on-hover>
-              <v-list rounded="xl" class="px-0" bg-color="#333">
-                <v-list-item>
-                  <p>Standard :&nbsp;&nbsp;<span style="float: right">~50%</span></p>
-                  <p>Deluxe :&nbsp;&nbsp;<span style="float: right">~30%</span></p>
-                  <p>Premium :&nbsp;&nbsp;<span style="float: right">~15%</span></p>
-                  <p>Exclusive :&nbsp;&nbsp;<span style="float: right">~4%</span></p>
-                  <p>Ultra :&nbsp;&nbsp;<span style="float: right">~1%</span></p>
-                </v-list-item>
-              </v-list>
-            </v-menu>
-          </p>
-        </v-card-subtitle>
         <v-card-item class="pb-3">
           <v-btn
             block
             :loading="loading"
             color="primary"
             rounded="lg"
-            :disabled="user?.coins < 500 || loading"
+            :disabled="user?.coins < 1000 || loading"
             @click="fetchCase('standard')"
             >Ouvrir</v-btn
           >
@@ -280,33 +263,16 @@ export default {
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
             <h2 class="mr-4" style="width: 157px">Premium&nbsp;Case</h2>
-            <p class="text-secondary" style="width: 85px">750&nbsp;Coins</p>
+            <p class="text-secondary" style="width: 85px">2000&nbsp;Coins</p>
           </div>
         </v-card-item>
-        <v-card-subtitle>
-          <p style="display: flex; align-items: center; gap: 1em">
-            Contenu de la caisse
-            <v-icon class="mdi mdi-briefcase-search-outline"> </v-icon>
-            <v-menu activator="parent" open-on-hover>
-              <v-list rounded="xl" class="px-0" bg-color="#333">
-                <v-list-item>
-                  <p>Standard :&nbsp;&nbsp;<span style="float: right">~35%</span></p>
-                  <p>Deluxe :&nbsp;&nbsp;<span style="float: right">~30%</span></p>
-                  <p>Premium :&nbsp;&nbsp;<span style="float: right">~30%</span></p>
-                  <p>Exclusive :&nbsp;&nbsp;<span style="float: right">~4%</span></p>
-                  <p>Ultra :&nbsp;&nbsp;<span style="float: right">~1%</span></p>
-                </v-list-item>
-              </v-list>
-            </v-menu>
-          </p>
-        </v-card-subtitle>
         <v-card-item class="pb-3">
           <v-btn
             block
             :loading="loading"
             color="primary"
             rounded="lg"
-            :disabled="user?.coins < 750 || loading"
+            :disabled="user?.coins < 2000 || loading"
             @click="fetchCase('premium')"
             >Ouvrir</v-btn
           >
@@ -324,33 +290,16 @@ export default {
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
             <h2 class="mr-4" style="width: 157px">Ultra Case</h2>
-            <p class="text-secondary" style="width: 85px">1000&nbsp;Coins</p>
+            <p class="text-secondary" style="width: 85px">4000&nbsp;Coins</p>
           </div>
         </v-card-item>
-        <v-card-subtitle>
-          <p style="display: flex; align-items: center; gap: 1em">
-            Contenu de la caisse
-            <v-icon class="mdi mdi-briefcase-search-outline"></v-icon>
-            <v-menu activator="parent" open-on-hover>
-              <v-list rounded="xl" class="px-0" bg-color="#333">
-                <v-list-item>
-                  <p>Standard :&nbsp;&nbsp;<span style="float: right">~33%</span></p>
-                  <p>Deluxe :&nbsp;&nbsp;<span style="float: right">~28%</span></p>
-                  <p>Premium :&nbsp;&nbsp;<span style="float: right">~28%</span></p>
-                  <p>Exclusive :&nbsp;&nbsp;<span style="float: right">~8%</span></p>
-                  <p>Ultra :&nbsp;&nbsp;<span style="float: right">~3%</span></p>
-                </v-list-item>
-              </v-list>
-            </v-menu>
-          </p>
-        </v-card-subtitle>
         <v-card-item class="pb-3">
           <v-btn
             block
             :loading="loading"
             color="primary"
             rounded="lg"
-            :disabled="user?.coins < 1000 || loading"
+            :disabled="user?.coins < 4000 || loading"
             @click="fetchCase('ultra')"
             >Ouvrir</v-btn
           >
@@ -369,6 +318,7 @@ export default {
 
   <v-dialog
     v-model="caseOpeningDialog"
+    persistent
     class="modals"
     width="1500"
     transition="dialog-bottom-transition"
@@ -543,6 +493,16 @@ export default {
       <v-divider></v-divider>
 
       <v-card-actions class="pa-4">
+        <v-btn
+          variant="tonal"
+          color="secondary"
+          rounded="lg"
+          class="px-4"
+          @click="$router.push('/akhy/'+discordId)"
+        >
+          Voir l'inventaire
+        </v-btn>
+        <v-spacer></v-spacer>
         <v-btn
           variant="tonal"
           color="secondary"
