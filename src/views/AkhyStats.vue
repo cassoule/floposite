@@ -125,7 +125,7 @@ export default {
     },
 
     formattedDisplayPrice() {
-      return this.displayPrice.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, `&nbsp;`)
+      return this.displayPrice.toFixed(0)
     },
   },
 
@@ -1738,7 +1738,7 @@ export default {
                   {{ selectedSkin.displayName }}
                 </span>
                 <span class="price-text" style="flex-shrink: 0; flex-grow: 3; text-align: right">
-                  {{ formattedDisplayPrice }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)"
+                  {{ formattedDisplayPrice.replace(/\B(?=(\d{3})+(?!\d))/g, `&nbsp;`) }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)"
                     >Flopos</span
                   >
                 </span>
