@@ -2450,6 +2450,16 @@ button:disabled {
   border-radius: 10px;
   transition: 0.2s ease-in-out;
 }
+.skin-bg-no-hover {
+  position: absolute;
+  width: 150%;
+  height: 100%;
+  top: 0;
+  left: -50%;
+  z-index: -1;
+  border-radius: 10px;
+  transform: translateX(30%);
+}
 .skin-img {
   transition: 0.3s ease-in-out;
 }
