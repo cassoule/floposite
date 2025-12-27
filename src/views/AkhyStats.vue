@@ -28,6 +28,8 @@ export default {
       skinDetailsDialog: false,
       selectedSkin: null,
 
+      instantSellProcessing: false,
+
       flopoRankDialog: false,
 
       isSpinning: false,
@@ -528,6 +530,27 @@ export default {
       this.loading = true
       await this.$router.push('/akhy/' + id)
       window.location.reload()
+    },
+    async handleInstantSell() {
+      this.instantSellProcessing = true
+      const discordId = localStorage.getItem('discordId')
+      if (!discordId || !this.user || discordId !== this.user.id) {
+        return
+      }
+      const url = import.meta.env.VITE_FLAPI_URL + '/skin/' + this.selectedSkin.uuid + "/instant-sell"
+      try {
+        const response = await axios.post(url, { userId: discordId })
+        await this.getInventory()
+        setTimeout(() => {
+          this.skinDetailsDialog = false
+          this.instantSellProcessing = false
+        }, 500);
+      } catch (e) {
+        console.log(e)
+        setTimeout(() => {
+          this.instantSellProcessing = false
+        }, 500);
+      }
     },
     async handleSkinDetailsOpen(skin) {
       const discordId = localStorage.getItem('discordId')
@@ -1739,7 +1762,7 @@ export default {
                     flex-shrink: 1;
                   "
                 >
-                  {{ selectedSkin.displayName }}
+                  {{ selectedSkin?.displayName }}
                 </span>
                 <span class="price-text" style="flex-shrink: 0; flex-grow: 3; text-align: right">
                   {{ formattedDisplayPrice.replace(/\B(?=(\d{3})+(?!\d))/g, `&nbsp;`) }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)"
@@ -1827,7 +1850,7 @@ export default {
               </div>
             </div>
           </div>
-          <v-divider class="mx-2"></v-divider>
+          <v-divider class="mx-2 my-0"></v-divider>
           <div
             style="
               padding: 0.5em 1em 1em 1em;
@@ -1843,8 +1866,11 @@ export default {
                 : 'opacity: 0.5 !important; pointer-events: none; transform: scale(0); height: 0; padding: 0'
             "
           >
-            <div class="d-flex justify-space-between align-baseline mt-auto">
+            <div class=" align-baseline mt-auto">
               <!-- Assuming you have an upgradeCost variable -->
+              <p style="font-size: 1.05em" class="mb-0">
+                Améliorer
+              </p>
               <p style="color: #ccccccaa">
                 Coût de l'amélioration : <span class="font-weight-bold">{{ upgradeCost }}</span
                 >&nbsp;Flopos
@@ -1853,7 +1879,7 @@ export default {
             <!-- START UPGRADE WHEEL -->
             <div
               v-if="!fetchingSkinStats"
-              class="d-flex justify-center align-center my-6"
+              class="d-flex justify-center align-center my-2"
               style="position: relative; height: 160px"
             >
               <!-- Marker -->
@@ -1981,17 +2007,35 @@ export default {
               </p>
             </div>
           </div>
-          <v-divider class="mx-2"></v-divider>
-          <div style="padding: 1em">
-            <v-btn
-              color="secondary"
-              variant="tonal"
-              elevation="0"
-              rounded="lg"
-              class="text-none"
-              @click="$router.push('/market')"
-              >Vendre sur FlopoMarket</v-btn
-            >
+          <v-divider class="mx-2 my-0"></v-divider>
+          <div style="padding: 0.5em 1em 1em 1em">
+            <p style="font-size: 1.05em" class="mb-0">
+              Revendre
+            </p>
+            <p style="color: #ccccccaa; font-size: 0.9em" class="mb-3">Tu peux créer une enchère sur FlopoMarket, ou le vendre instantanément pour 75% de sa valeur.</p>
+            <div class="d-flex flex-wrap ga-2">
+              <v-btn
+                color="#222"
+                variant="flat"
+                elevation="0"
+                rounded="lg"
+                class="text-none"
+                style="flex-grow: 1"
+                @click="$router.push('/market')"
+              >Sur FlopoMarket</v-btn
+              >
+              <v-btn
+                color="white"
+                variant="tonal"
+                elevation="0"
+                rounded="lg"
+                class="text-none"
+                style="flex-grow: 1"
+                :loading="instantSellProcessing"
+                @click="handleInstantSell"
+              >Vente pour {{Math.floor(selectedSkin.currentPrice * 0.75)}} Flopos</v-btn
+              >
+            </div>
           </div>
         </div>
       </v-card-text>
