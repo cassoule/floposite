@@ -75,6 +75,8 @@ export default {
           return '#D1548D'
         case 'ultra':
           return '#F5955B'
+        case 'esport':
+          return '#D5FF1D'
         default:
           return '#5A9FE2'
       }
@@ -302,6 +304,33 @@ export default {
             :disabled="user?.coins < 1500 || loading"
             @click="fetchCase('ultra')"
             >Ouvrir</v-btn
+          >
+        </v-card-item>
+      </v-card>
+
+      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+        <v-card-item class="px-4 py-4">
+          <v-img
+            src="cases/esport-case.png"
+            rounded="lg"
+            width="100%"
+            max-height="150px"
+            :style="`background: radial-gradient(circle at 70% 170%, #D5FF1D, transparent 100%)`"
+          />
+          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
+            <h2 class="mr-4" style="width: 157px">Esport Case</h2>
+            <p class="text-secondary" style="width: 85px">50&nbsp;Coins</p>
+          </div>
+        </v-card-item>
+        <v-card-item class="pb-3">
+          <v-btn
+            block
+            :loading="loading"
+            color="primary"
+            rounded="lg"
+            :disabled="user?.coins < 50 || loading"
+            @click="fetchCase('esport')"
+          >Ouvrir</v-btn
           >
         </v-card-item>
       </v-card>

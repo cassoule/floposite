@@ -228,7 +228,7 @@ export default {
         })
       }
 
-      if (this.offersType !== 'all') {
+      if (this.offersType) {
         this.filteredMarketOffers = searched.filter((offer) => {
           return offer.status === this.offersType
         })
@@ -295,50 +295,52 @@ export default {
         <h1 class="text-white">FlopoMarket</h1>
         <div
           class="w-100 d-flex align-center flex-wrap"
-          style="position: sticky; top: 1em; z-index: 1000; gap: 1em"
+          style="position: sticky; top: 1em; z-index: 1000; gap: 0 1em"
         >
           <v-toolbar
-            class="w-100 w-md-33 mr-2 mt-4 pr-0"
+            class="w-sm-66 mr-2 mt-4 pr-0"
             density="compact"
             elevation="2"
             rounded="xl"
             color="#343434"
-            :collapse="collapseToolbar"
             style="border: 2px solid #ffffff55; min-width: 250px"
           >
             <template #default>
-              <div class="d-flex align-center">
+              <div class="d-flex w-100 align-center">
                 <v-text-field
                   v-model="searchQuery"
-                  :placeholder="
-                    collapseToolbar ? 'Rechercher...' : 'Rechercher par nom, vendeur...'
-                  "
+                  placeholder="Rechercher par nom, vendeur..."
                   variant="plain"
                   rounded="xl"
                   density="compact"
                   hide-details
                   prepend-icon="mdi mdi-magnify"
-                  class="ml-3 pb-2"
-                  :style="collapseToolbar ? 'width: 180px' : 'width: 305px'"
+                  class="ml-3 pb-2 w-100"
                   clearable
+                  style="flex-grow: 1"
                   @update:model-value="filterOffers()"
                 ></v-text-field>
               </div>
             </template>
             <template #append>
               <v-btn
-                :icon="!collapseToolbar ? 'mdi mdi-chevron-left' : 'mdi mdi-chevron-right'"
-                color="#ffffff99"
-                style="transform: translateX(5px)"
-                @click="collapseToolbar = !collapseToolbar"
-              />
+                class="text-none"
+                color="primary"
+                variant="flat"
+                rounded="xl"
+                style="margin-right: 2px"
+                elevation="0"
+                @click="createOfferDialog = true"
+                @click.stop="getUserInventory"
+              >
+                Créer
+              </v-btn>
             </template>
           </v-toolbar>
           <div>
             <v-btn-toggle
               v-model="offersType"
               class="mt-4"
-              mandatory
               base-color="#343434"
               color="#555"
               rounded="xl"
@@ -347,21 +349,11 @@ export default {
               style="border: 2px solid #555555"
               @update:model-value="filterOffers()"
             >
-              <v-btn value="open">En cours</v-btn>
-              <v-btn value="closed">Fermées</v-btn>
-              <v-btn value="pending">En attente</v-btn>
-              <v-btn value="all">Toutes</v-btn>
+              <v-btn class="text-none" value="open">Ouvertes</v-btn>
+              <v-btn class="text-none" value="closed">Fermées</v-btn>
+              <v-btn class="text-none" value="pending">En attente</v-btn>
             </v-btn-toggle>
           </div>
-          <v-spacer></v-spacer>
-          <v-btn
-            class="mt-4"
-            color="primary"
-            rounded="lg"
-            @click="createOfferDialog = true"
-            @click.stop="getUserInventory"
-            >Créer une offre</v-btn
-          >
         </div>
 
         <div
