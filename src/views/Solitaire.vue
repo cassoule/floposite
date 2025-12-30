@@ -174,7 +174,7 @@
                 Classement SOTD {{ new Date().toLocaleDateString() }}
               </v-card-title>
               <v-card-subtitle>
-                Le premier du classement recevra 1000 FlopoCoins à la fin de chaque journée (en plus
+                Le premier du classement recevra 2500 Flopos à la fin de chaque journée (en plus
                 des 1000 gagnés lors de la première complétion).
               </v-card-subtitle>
               <v-card-text>
@@ -434,6 +434,7 @@ export default {
 
       this.socket.on('solitaire:update', (payload) => {
         if (payload?.userId === this.userId) {
+          if (!payload.moves || payload.moves.length === 0) window.location.reload()
           let i = 0;
           const interval = setInterval(() => {
             const move = payload.moves[i];

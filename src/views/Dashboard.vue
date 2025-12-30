@@ -637,7 +637,7 @@
             </v-img>
           </div>
 
-          <v-menu activator="parent" location="end" open-on-hover open-on-click transition="scale-transition">
+          <v-menu activator="parent" location="end" open-on-click transition="scale-transition">
             <v-list
               width="250"
               class="mr-2 py-0"
