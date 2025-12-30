@@ -537,19 +537,20 @@ export default {
       if (!discordId || !this.user || discordId !== this.user.id) {
         return
       }
-      const url = import.meta.env.VITE_FLAPI_URL + '/skin/' + this.selectedSkin.uuid + "/instant-sell"
+      const url =
+        import.meta.env.VITE_FLAPI_URL + '/skin/' + this.selectedSkin.uuid + '/instant-sell'
       try {
         const response = await axios.post(url, { userId: discordId })
         await this.getInventory()
         setTimeout(() => {
           this.skinDetailsDialog = false
           this.instantSellProcessing = false
-        }, 500);
+        }, 500)
       } catch (e) {
         console.log(e)
         setTimeout(() => {
           this.instantSellProcessing = false
-        }, 500);
+        }, 500)
       }
     },
     async handleSkinDetailsOpen(skin) {
@@ -652,6 +653,20 @@ export default {
       }
 
       window.requestAnimationFrame(step)
+    },
+    getRegionColor(region) {
+      switch (region) {
+        case 'vct-am':
+          return '#FF570C'
+        case 'vct-emea':
+          return '#D5FF1D' // Lime Green
+        case 'vct-pcf':
+          return '#01D2D7' // Orange Red
+        case 'vct-cn':
+          return '#E73056' // Gold
+        default:
+          return '#FFFFFF' // White as fallback
+      }
     },
   },
 }
@@ -1133,8 +1148,8 @@ export default {
             <h2>Historique des parties</h2>
           </v-list-item>
           <v-list-item
-            v-if="games.filter((g) => g.type !== 'POKER_ROUND').length > 0"
-            v-for="game in games.filter((g) => g.type !== 'POKER_ROUND').reverse()"
+            v-if="games.filter((g) => g.type !== 'POKER_ROUND' && g.type !== 'SOTD').length > 0"
+            v-for="game in games.filter((g) => g.type !== 'POKER_ROUND' && g.type !== 'SOTD').reverse()"
             class="pb-3 px-2"
           >
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">
@@ -1300,7 +1315,7 @@ export default {
                   </div>
                 </div>
               </v-card-text>
-              <v-card-text v-else class="pb-0">
+<!--              <v-card-text v-else class="pb-0">
                 <div class="d-flex justify-space-between" style="place-items: start">
                   <div
                     class="d-flex flex-column"
@@ -1344,7 +1359,7 @@ export default {
                     </h2>
                   </div>
                 </div>
-              </v-card-text>
+              </v-card-text>-->
               <v-card-subtitle class="text-right pb-2"
                 >{{ game.type }} -
                 {{ new Date(game.timestamp - 60000).toLocaleDateString() }}</v-card-subtitle
@@ -1376,9 +1391,9 @@ export default {
                   >{{ user_inventory?.length }} skins</span
                 >
               </h2>
-              <v-btn color="primary" rounded="lg" class="text-none" @click="$router.push('/cases')"
-                >Obtenir des skins</v-btn
-              >
+              <v-btn color="primary" rounded="lg" class="text-none" @click="$router.push('/cases')">
+                Caisses
+              </v-btn>
             </div>
           </v-list-item>
           <v-list-item v-if="loadingInventory" class="d-flex" style="justify-content: center">
@@ -1401,7 +1416,19 @@ export default {
                   v-for="skin in user_inventory"
                   :key="skin.id"
                   class="inventory-item cursor-pointer"
-                  :style="`border-radius: 10px`"
+                  :class="{
+                    'melee-skin-card': skin.isMelee,
+                    'vct-skin-card': skin.isVCT,
+                    'champions-skin-card': skin.isChampions,
+                  }"
+                  style="border-radius: 10px"
+                  :style="
+                    skin.isVCT
+                      ? `
+                    box-shadow: inset 0 0 50px 5px ${getRegionColor(skin.vctRegion)}55;
+                  `
+                      : ``
+                  "
                   @click="handleSkinDetailsOpen(skin)"
                 >
                   <div
@@ -1461,6 +1488,7 @@ export default {
                         height="25"
                         min-width="70"
                         max-width="70"
+                        style="filter: drop-shadow(0 0 5px #333)"
                       />
                       <div class="d-flex ga-2">
                         <v-icon
@@ -1515,7 +1543,8 @@ export default {
                     >
                       <v-progress-linear
                         :model-value="(skin.currentLvl / skinsData[skin.uuid].levels.length) * 100"
-                        :color="'#' + skin.tierColor"
+                        :color="skin.isVCT ? getRegionColor(skin.vctRegion) : ('#' + skin.tierColor)"
+                        style="box-shadow: 0 0 20px 1px #181818"
                       ></v-progress-linear>
                       <p>
                         Lvl&nbsp;<span class="font-weight-bold">{{ skin.currentLvl }}</span
@@ -1524,9 +1553,16 @@ export default {
                     </div>
                   </div>
                   <div
+                    v-if="!skin.isVCT"
                     class="skin-bg"
                     :style="`background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 80%)`"
                   ></div>
+                  <div v-else>
+                    <v-img
+                      :src="'/vct_logos/' + skin.vctRegion + '.png'"
+                      style="position: absolute; width: 30px; top: 35px; right: 10px"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1724,10 +1760,13 @@ export default {
             position: relative;
             overflow: hidden;
           "
+          :style="selectedSkin.isChampions ? 'border: 2px solid #ffd700cc' : ''"
         >
           <div
             class="details-item"
-            :class="{ 'shake-anim': isDestructing, 'success-anim': isUpgrading }"
+            :class="{ 'shake-anim': isDestructing, 'success-anim': isUpgrading, 'melee-skin-card': selectedSkin.isMelee,
+                    'vct-skin-card': selectedSkin.isVCT,
+                    'champions-skin-card': selectedSkin.isChampions, }"
             :style="`border-radius: 10px`"
           >
             <div
@@ -1765,7 +1804,8 @@ export default {
                   {{ selectedSkin?.displayName }}
                 </span>
                 <span class="price-text" style="flex-shrink: 0; flex-grow: 3; text-align: right">
-                  {{ formattedDisplayPrice.replace(/\B(?=(\d{3})+(?!\d))/g, `&nbsp;`) }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)"
+                  {{ formattedDisplayPrice.replace(/\B(?=(\d{3})+(?!\d))/g, `&nbsp;`) }}&nbsp;<span
+                    style="color: rgba(255, 255, 255, 0.3)"
                     >Flopos</span
                   >
                 </span>
@@ -1841,16 +1881,23 @@ export default {
                   :model-value="
                     (selectedSkin.currentLvl / skinsData[selectedSkin.uuid].levels.length) * 100
                   "
-                  :color="'#' + selectedSkin.tierColor"
+                  :color="selectedSkin.isVCT ? getRegionColor(selectedSkin.vctRegion) : ('#' + selectedSkin.tierColor)"
+                  style="box-shadow: 0 0 20px 1px #181818"
                 ></v-progress-linear>
                 <p>
                   Lvl&nbsp;<span class="font-weight-bold">{{ selectedSkin.currentLvl }}</span
                   >/{{ skinsData[selectedSkin.uuid].levels.length }}
                 </p>
               </div>
+              <div>
+                <v-img
+                  :src="'/vct_logos/' + selectedSkin.vctRegion + '.png'"
+                  style="position: absolute; width: 30px; top: 38px; right: 15px"
+                />
+              </div>
             </div>
           </div>
-          <v-divider class="mx-2 my-0"></v-divider>
+          <v-divider v-if="!selectedSkin.isMelee && !selectedSkin.isChampions" class="mx-2 my-0"></v-divider>
           <div
             style="
               padding: 0.5em 1em 1em 1em;
@@ -1866,11 +1913,9 @@ export default {
                 : 'opacity: 0.5 !important; pointer-events: none; transform: scale(0); height: 0; padding: 0'
             "
           >
-            <div class=" align-baseline mt-auto">
+            <div class="align-baseline mt-auto">
               <!-- Assuming you have an upgradeCost variable -->
-              <p style="font-size: 1.05em" class="mb-0">
-                Améliorer
-              </p>
+              <p style="font-size: 1.05em" class="mb-0">Améliorer</p>
               <p style="color: #ccccccaa">
                 Coût de l'amélioration : <span class="font-weight-bold">{{ upgradeCost }}</span
                 >&nbsp;Flopos
@@ -1988,31 +2033,35 @@ export default {
                 <v-icon
                   color="#00000077"
                   class="mdi mdi-square"
-                  :style="{filter: `drop-shadow(0 0 2px #00000077)`}"
-                ></v-icon>&nbsp;échec
+                  :style="{ filter: `drop-shadow(0 0 2px #00000077)` }"
+                ></v-icon
+                >&nbsp;échec
               </p>
               <p style="font-size: 0.7em">
                 <v-icon
                   color="#f26558"
                   class="mdi mdi-square"
-                  :style="{filter: `drop-shadow(0 0 2px #f26558)`}"
-                ></v-icon>&nbsp;Destruction
+                  :style="{ filter: `drop-shadow(0 0 2px #f26558)` }"
+                ></v-icon
+                >&nbsp;Destruction
               </p>
-              <p style="font-size: 0.7em" >
+              <p style="font-size: 0.7em">
                 <v-icon
                   color="#5865f2"
                   class="mdi mdi-square"
-                  :style="{filter: `drop-shadow(0 0 2px #5865f2)`}"
-                ></v-icon>&nbsp;Amélioration
+                  :style="{ filter: `drop-shadow(0 0 2px #5865f2)` }"
+                ></v-icon
+                >&nbsp;Amélioration
               </p>
             </div>
           </div>
           <v-divider class="mx-2 my-0"></v-divider>
           <div style="padding: 0.5em 1em 1em 1em">
-            <p style="font-size: 1.05em" class="mb-0">
-              Revendre
+            <p style="font-size: 1.05em" class="mb-0">Revendre</p>
+            <p style="color: #ccccccaa; font-size: 0.9em" class="mb-3">
+              Tu peux créer une enchère sur FlopoMarket, ou le vendre instantanément pour 75% de sa
+              valeur.
             </p>
-            <p style="color: #ccccccaa; font-size: 0.9em" class="mb-3">Tu peux créer une enchère sur FlopoMarket, ou le vendre instantanément pour 75% de sa valeur.</p>
             <div class="d-flex flex-wrap ga-2">
               <v-btn
                 color="#222"
@@ -2022,7 +2071,7 @@ export default {
                 class="text-none"
                 style="flex-grow: 1"
                 @click="$router.push('/market')"
-              >Sur FlopoMarket</v-btn
+                >Sur FlopoMarket</v-btn
               >
               <v-btn
                 color="white"
@@ -2033,7 +2082,7 @@ export default {
                 style="flex-grow: 1"
                 :loading="instantSellProcessing"
                 @click="handleInstantSell"
-              >Vente pour {{Math.floor(selectedSkin.currentPrice * 0.75)}} Flopos</v-btn
+                >Pour {{ Math.floor(selectedSkin.currentPrice * 0.75) }} Flopos</v-btn
               >
             </div>
           </div>
@@ -2183,7 +2232,8 @@ export default {
   display: flex;
   max-width: 400px;
   overflow: hidden;
-  border: 2px solid transparent;
+  border: none !important;
+  border-radius: 0 !important;
   transition: 0.3s ease-in-out;
   user-select: none;
 }
@@ -2203,6 +2253,94 @@ export default {
   min-width: 200px !important;
   user-select: none;
 }
+
+.melee-skin-card {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
+}
+
+/* Hide the default color blob for melee to make it look 'stealthy/premium' */
+.melee-skin-card .skin-card-bg {
+  opacity: 0.2;
+  mix-blend-mode: color-dodge;
+}
+
+/* The sweeping shine animation */
+.melee-skin-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    transparent,
+    transparent,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent,
+    transparent,
+    transparent
+  );
+  transform: rotate(45deg) translateY(-100%);
+  animation: shine-sweep 10s infinite cubic-bezier(0.2, 0, 0, 1);
+  pointer-events: none;
+  z-index: 3;
+}
+
+@keyframes shine-sweep {
+  0% {
+    transform: rotate(45deg) translateY(-450px);
+  }
+  20% {
+    transform: rotate(45deg) translateY(250px);
+  } /* Fast sweep */
+  100% {
+    transform: rotate(45deg) translateY(450px);
+  } /* Wait */
+}
+
+.vct-skin-card .skin-card-bg {
+  display: none; /* Hide default tier color, use image instead */
+}
+
+/* --- 3. CHAMPIONS EFFECTS (Golden Flow) --- */
+.champions-skin-card {
+  border: 2px solid #ffd700cc;
+  box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.4);
+  /* The animated gradient background */
+  background: linear-gradient(
+    120deg,
+    #2b2005 0%,
+    #634f11 25%,
+    #ffd700cc 50%,
+    #634f11 75%,
+    #2b2005 100%
+  );
+  background-size: 200% 200%;
+  animation: gold-flow 15s ease infinite;
+}
+
+.champions-skin-card .skin-bg {
+  display: none; /* Hide default tier color */
+}
+
+@keyframes gold-flow {
+  0% {
+    background-position: 0 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* Add some sparkles/dust to champions */
+
 
 @media (max-width: 800px) {
   .graphs-list {

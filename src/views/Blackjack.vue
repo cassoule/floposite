@@ -80,7 +80,11 @@
             </div>
 
             <!-- Hand Selection (if multiple hands) -->
-            <div v-if="me.hands && me.hands.length > 1" class="d-flex mt-2 mb-3" style="gap: 0.5rem">
+            <div
+              v-if="me.hands && me.hands.length > 1"
+              class="d-flex mt-2 mb-3"
+              style="gap: 0.5rem"
+            >
               <v-chip
                 v-for="(hand, index) in me.hands"
                 :key="'hand-select-' + index"
@@ -88,7 +92,7 @@
                 variant="flat"
                 size="small"
               >
-                <span>{{formatAmount(hand.bet)}} Flopos</span>
+                <span>{{ formatAmount(hand.bet) }} Flopos</span>
               </v-chip>
             </div>
 
@@ -193,7 +197,8 @@
                   :disabled="!canDouble(hand)"
                   >Double</v-btn
                 >
-                <v-btn
+                <!--Disabled for now-->
+                <!--                <v-btn
                   class="text-none"
                   color="secondary"
                   variant="outlined"
@@ -202,7 +207,7 @@
                   @click="doAction('split', index)"
                   :disabled="!canSplit(hand)"
                   >Split</v-btn
-                >
+                >-->
               </div>
             </div>
           </v-card>
@@ -328,10 +333,15 @@ export default {
     document.addEventListener('visibilitychange', this._onVis)
   },
 
-  beforeUnmount() {
+  async beforeUnmount() {
     if (this.socket) this.socket.disconnect()
     if (this._timer) clearInterval(this._timer)
     if (this._onVis) document.removeEventListener('visibilitychange', this._onVis)
+    if (this.isInRoom) {
+      await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave', {
+        userId: this.discordId,
+      })
+    }
   },
 
   computed: {
@@ -422,7 +432,37 @@ export default {
     },
   },
 
+  created() {
+    const userId = localStorage.getItem("discordId");
+    this._boundHandleUnload = (e) => this.handleUnload(e, userId);
+
+    window.addEventListener('beforeunload', this._boundHandleUnload);
+    window.addEventListener('pagehide', this._boundHandleUnload);
+  },
+
   methods: {
+    handleUnload(event, userId) {
+      // Use the userId passed from created() or fallback to local data
+      const targetId = userId || this.discordId;
+
+      // Safety check
+      if (!targetId || !this.isInRoom) return;
+
+      const url = (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave';
+
+      // Use fetch with keepalive instead of sendBeacon
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: targetId }),
+        keepalive: true, // <--- Keeps request alive after tab close
+      }).catch(err => {
+        // Optional: log error (though you won't see it if the tab is closed)
+        console.error('Leave room failed:', err);
+      });
+    },
     toast(msg) {
       this.snackbar = { show: true, msg }
     },

@@ -76,7 +76,7 @@ export default {
         case 'ultra':
           return '#F5955B'
         case 'esport':
-          return '#D5FF1D'
+          return '#FF5862'
         default:
           return '#5A9FE2'
       }
@@ -216,6 +216,20 @@ export default {
       }
       window.requestAnimationFrame(step)
     },
+    getRegionColor(region) {
+      switch (region) {
+        case 'vct-am':
+          return '#FF570C'
+        case 'vct-emea':
+          return '#D5FF1D' // Lime Green
+        case 'vct-pcf':
+          return '#01D2D7' // Orange Red
+        case 'vct-cn':
+          return '#E73056' // Gold
+        default:
+          return '#FFFFFF' // White as fallback
+      }
+    },
   },
 }
 </script>
@@ -233,7 +247,7 @@ export default {
             src="cases/standard-png.png"
             rounded="lg"
             width="100%"
-            max-height="150px"
+            height="150px"
             :style="`background: radial-gradient(circle at 70% 170%, #5A9FE2, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
@@ -260,7 +274,7 @@ export default {
             src="cases/premium-png.png"
             rounded="lg"
             width="100%"
-            max-height="150px"
+            height="150px"
             :style="`background: radial-gradient(circle at 70% 170%, #D1548D, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
@@ -287,7 +301,7 @@ export default {
             src="cases/ultra-png.png"
             rounded="lg"
             width="100%"
-            max-height="150px"
+            height="150px"
             :style="`background: radial-gradient(circle at 70% 170%, #F5955B, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
@@ -310,13 +324,34 @@ export default {
 
       <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
-          <v-img
-            src="cases/esport-case.png"
-            rounded="lg"
-            width="100%"
-            max-height="150px"
-            :style="`background: radial-gradient(circle at 70% 170%, #D5FF1D, transparent 100%)`"
-          />
+          <div
+            style="max-height: 150px; width: 100%; border-radius: 12px; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); overflow: hidden"
+          >
+            <v-img
+              src="vct_logos/vct-emea.png"
+              width="100%"
+              max-height="75px"
+              :style="`background: radial-gradient(circle at -200% -200%, ${getRegionColor('vct-emea')}, transparent 100%);`"
+            />
+            <v-img
+              src="vct_logos/vct-am.png"
+              width="100%"
+              max-height="75px"
+              :style="`background: radial-gradient(circle at 300% -200%, ${getRegionColor('vct-am')}, transparent 100%)`"
+            />
+            <v-img
+              src="vct_logos/vct-pcf.png"
+              width="100%"
+              max-height="75px"
+              :style="`background: radial-gradient(circle at -200% 300%, ${getRegionColor('vct-pcf')}, transparent 100%)`"
+            />
+            <v-img
+              src="vct_logos/vct-cn.png"
+              width="100%"
+              max-height="75px"
+              :style="`background: radial-gradient(circle at 300% 300%, ${getRegionColor('vct-cn')}, transparent 100%)`"
+            />
+          </div>
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
             <h2 class="mr-4" style="width: 157px">Esport Case</h2>
             <p class="text-secondary" style="width: 85px">50&nbsp;Coins</p>
@@ -377,6 +412,12 @@ export default {
               v-for="(skin, index) in doubledSkins"
               :key="skin.uuid + '_pos_' + index"
               class="skin-card"
+              :class="{'melee-skin-card': skin.isMelee, 'vct-skin-card': skin.isVCT, 'champions-skin-card': skin.isChampions}"
+              :style="skin.isVCT ? `
+                background-image: url('vct_logos/${skin.vctRegion}.png');
+                border: 0px solid ${getRegionColor(skin.vctRegion)};
+                box-shadow: inset 0 0 20px 10px ${getRegionColor(skin.vctRegion)}55;
+              ` : ``"
               ref="skinCards"
             >
               <v-img
@@ -606,6 +647,8 @@ export default {
   color: white;
   user-select: none;
   pointer-events: none;
+  background-color: #181818; /* Default fallback */
+  transition: all 0.3s ease;
 }
 
 .skin-card-bg {
@@ -614,10 +657,117 @@ export default {
   height: 100%;
   top: 0;
   left: 0;
-  z-index: -1;
+  z-index: 0;
   border-radius: 10px;
   transition: 0.2s ease-in-out;
+  opacity: 0.6;
 }
+
+.skin-card .v-img {
+  z-index: 2;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+}
+
+.melee-skin-card {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
+}
+
+/* Hide the default color blob for melee to make it look 'stealthy/premium' */
+.melee-skin-card .skin-card-bg {
+  opacity: 0.2;
+  mix-blend-mode: color-dodge;
+}
+
+/* The sweeping shine animation */
+.melee-skin-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    transparent,
+    transparent,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent,
+    transparent,
+    transparent
+  );
+  transform: rotate(45deg) translateY(-100%);
+  animation: shine-sweep 10s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
+  pointer-events: none;
+  z-index: 3;
+}
+
+@keyframes shine-sweep {
+  0% { transform: rotate(70deg) translateY(-450px); }
+  20% { transform: rotate(70deg) translateY(250px); } /* Fast sweep */
+  100% { transform: rotate(70deg) translateY(450px); } /* Wait */
+}
+
+/* --- 2. VCT EFFECTS (Custom Image) --- */
+.vct-skin-card {
+  /* Replace with your actual VCT background image path */
+  background-size: 80%;
+  background-position: center;
+}
+
+/* Darken the image so the gun pops */
+.vct-skin-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 25, 35, 0.1); /* VCT Dark Blue overlay */
+  z-index: 1;
+}
+
+.vct-skin-card .skin-card-bg {
+  display: none; /* Hide default tier color, use image instead */
+}
+
+/* --- 3. CHAMPIONS EFFECTS (Golden Flow) --- */
+.champions-skin-card {
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  /* The animated gradient background */
+  background: linear-gradient(
+    120deg,
+    #2b2005 0%,
+    #634f11 25%,
+    #ffd700 50%,
+    #634f11 75%,
+    #2b2005 100%
+  );
+  background-size: 200% 200%;
+  animation: gold-flow 4s ease infinite;
+}
+
+.champions-skin-card .skin-card-bg {
+  display: none; /* Hide default tier color */
+}
+
+@keyframes gold-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Add some sparkles/dust to champions */
+.champions-skin-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(white 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.2;
+  z-index: 1;
+}
+
 
 .glow-bg {
   position: absolute;

@@ -147,8 +147,8 @@ export default {
         100,
       )
       if (tl === 100) {
-        let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1 : this.foundLobby.p2
-        let loser = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2.name : this.foundLobby.p1.name
+        let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2 : this.foundLobby.p1
+        let loser = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1.name : this.foundLobby.p2.name
 
         this.title = winner.id === this.discordId ? 'Victoire' : 'Défaite'
         this.message = `Temps écoulé pour ${loser}`
