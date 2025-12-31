@@ -844,7 +844,7 @@ export default {
           <v-expansion-panel v-for="skin in userInventory" :key="'inv-' + skin.uuid">
             <v-expansion-panel-title
               class="d-flex ga-3"
-              @click="createOffer.price = skin.currentPrice / 2"
+              @click="createOffer.price = skin.currentPrice * 0.75"
             >
               <v-img
                 :src="getImageUrl(skin, skinsData[skin.uuid])"
@@ -906,8 +906,8 @@ export default {
                   variant="outlined"
                   rounded="lg"
                   density="comfortable"
-                  :min="skin.currentPrice / 2"
-                  :placeholder="'Min : ' + (skin.currentPrice / 2).toFixed() + ' (50%)'"
+                  :min="skin.currentPrice * 0.75"
+                  :placeholder="'Min : ' + (skin.currentPrice * 0.75).toFixed() + ' (75%)'"
                   label="Prix de départ"
                 ></v-number-input>
               </div>

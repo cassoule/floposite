@@ -174,7 +174,7 @@
                 Classement SOTD {{ new Date().toLocaleDateString() }}
               </v-card-title>
               <v-card-subtitle>
-                Le premier du classement recevra 2500 Flopos à la fin de chaque journée (en plus
+                Le premier du classement recevra 2500 Flopos, 1500 pour le 2e, 750 pour le 3e, à la fin de chaque journée (en plus
                 des 1000 gagnés lors de la première complétion).
               </v-card-subtitle>
               <v-card-text>
