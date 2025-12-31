@@ -2059,8 +2059,7 @@ export default {
           <div style="padding: 0.5em 1em 1em 1em">
             <p style="font-size: 1.05em" class="mb-0">Revendre</p>
             <p style="color: #ccccccaa; font-size: 0.9em" class="mb-3">
-              Tu peux créer une enchère sur FlopoMarket, ou le vendre instantanément pour 75% de sa
-              valeur.
+              Tu peux créer une enchère sur FlopoMarket, ou le vendre instantanément.
             </p>
             <div class="d-flex flex-wrap ga-2">
               <v-btn
@@ -2082,7 +2081,7 @@ export default {
                 style="flex-grow: 1"
                 :loading="instantSellProcessing"
                 @click="handleInstantSell"
-                >Pour {{ Math.floor(selectedSkin.currentPrice * 0.75) }} Flopos</v-btn
+                >Pour {{ selectedSkin.currentPrice }} Flopos</v-btn
               >
             </div>
           </div>

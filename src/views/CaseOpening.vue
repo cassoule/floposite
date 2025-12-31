@@ -53,6 +53,10 @@ export default {
       loading: false,
       displayLevel: 0,
       displayPrice: 0,
+
+      caseContentDialog: false,
+      caseContent: null,
+      selectedCase: null,
     }
   },
   computed: {
@@ -134,6 +138,18 @@ export default {
       try {
         const response = await axios.get(fetchUrl)
         this.skinsData[skin.uuid] = response.data
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+    async getCaseContent(caseType) {
+      this.selectedCase = caseType
+      this.caseContent = null
+      this.caseContentDialog = true
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/case-content/' + caseType
+      try {
+        const response = await axios.get(fetchUrl)
+        this.caseContent = response.data.skins
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -251,8 +267,8 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #5A9FE2, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 157px">Standard&nbsp;Case</h2>
-            <p class="text-secondary" style="width: 85px">500&nbsp;Flopos</p>
+            <h2 class="mr-4" style="width: 177px;">Standard&nbsp;Case&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline mb-1" size="20" @click="getCaseContent('standard')"/></h2>
+            <p class="text-secondary" style="width: 85px">500&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -278,7 +294,7 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #D1548D, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 157px">Premium&nbsp;Case</h2>
+            <h2 class="mr-4" style="width: 177px;">Premium&nbsp;Case&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline mb-1" size="20" @click="getCaseContent('premium')"/></h2>
             <p class="text-secondary" style="width: 85px">750&nbsp;Coins</p>
           </div>
         </v-card-item>
@@ -305,7 +321,7 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #F5955B, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 157px">Ultra Case</h2>
+            <h2 class="mr-4" style="width: 177px">Ultra Case&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline mb-1" size="20" @click="getCaseContent('ultra')"/></h2>
             <p class="text-secondary" style="width: 85px">1500&nbsp;Coins</p>
           </div>
         </v-card-item>
@@ -353,8 +369,8 @@ export default {
             />
           </div>
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 157px">Esport Case</h2>
-            <p class="text-secondary" style="width: 85px">50&nbsp;Coins</p>
+            <h2 class="mr-4" style="width: 177px">Esport Case&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline mb-1" size="20" @click="getCaseContent('esport')"/></h2>
+            <p class="text-secondary" style="width: 85px">100&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -363,7 +379,7 @@ export default {
             :loading="loading"
             color="primary"
             rounded="lg"
-            :disabled="user?.coins < 50 || loading"
+            :disabled="user?.coins < 100 || loading"
             @click="fetchCase('esport')"
           >Ouvrir</v-btn
           >
@@ -379,6 +395,43 @@ export default {
       @click="$router.push('/dashboard')"
     ></v-btn>
   </v-layout>
+
+  <v-dialog v-model="caseContentDialog" class="modals" width="600" scrim="#181818">
+    <v-card
+      color="#1A1A1A"
+      rounded="xl"
+      style="overflow-y: scroll;
+            scrollbar-width: auto;"
+    >
+      <v-card-title class="mx-2 pt-4">
+        Contenu de la caisse {{selectedCase.toUpperCase()}}
+      </v-card-title>
+      <v-card-subtitle class="mx-2">
+        {{caseContent ? caseContent.length + ' skins disponibles' : ''}}
+      </v-card-subtitle>
+      <v-card-item>
+        <div v-if="caseContent">
+          <div
+            v-for="skin in caseContent" :key="skin.uuid + '-case-content'"
+            class="d-flex align-center"
+            :style="`
+              background: radial-gradient(circle at -50% -50%, ${skin.isVCT ? getRegionColor(skin.vctRegion) : (skin.isChampions ? '#ffd700' : (skin.isMelee ? '#000' : '#' + skin.tierColor))}, transparent 80%);
+              border-radius: 12px; margin-bottom: .5em; padding: .2em 1em;
+              border: 2px solid ${skin.isChampions ? '#ffd700' : (skin.isMelee ? '#aaaaaaaa' : 'none')};
+            `"
+          >
+            <v-img :src="skin.displayIcon" min-width="100px" max-width="100px" height="50px" class="ma-2"/>
+            <p class="font-weight-bold text-pretty" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden">{{skin.displayName}}</p>
+            <v-spacer></v-spacer>
+            <p><span class="ml-2 font-weight-bold" style="white-space: nowrap">{{skin.basePrice}}&nbsp;-&nbsp;{{skin.maxPrice}}</span>&nbsp;Flopos</p>
+          </div>
+        </div>
+        <div v-else class="w-100 d-flex justify-center align-center pa-6">
+          <v-progress-circular indeterminate color="primary" class="ma-4" />
+        </div>
+      </v-card-item>
+    </v-card>
+  </v-dialog>
 
   <v-dialog
     v-model="caseOpeningDialog"
