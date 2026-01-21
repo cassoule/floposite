@@ -1,5 +1,5 @@
 <template>
-<!--  <CoinsCounter/>-->
+  <!--  <CoinsCounter/>-->
 
   <div v-if="user" class="user-tab">
     <div style="position: relative; margin-top: 1rem">
@@ -14,7 +14,15 @@
             ? sparklines[discordId]?.map((entry) => entry.user_new_amount)
             : [0]
         "
-        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1; height: 100%; width: 100%"
+        style="
+          position: absolute;
+          left: 0;
+          top: 0;
+          filter: blur(3px);
+          z-index: -1;
+          height: 100%;
+          width: 100%;
+        "
       />
       <v-sparkline
         v-if="elo_graphs[discordId]?.length > 0"
@@ -23,7 +31,15 @@
         color="secondary"
         line-width="0.5"
         :model-value="elo_graphs[discordId]?.length > 0 ? elo_graphs[discordId] : [0]"
-        style="position: absolute; left: 0; top: 0; filter: blur(3px); z-index: -1; height: 100%; width: 100%"
+        style="
+          position: absolute;
+          left: 0;
+          top: 0;
+          filter: blur(3px);
+          z-index: -1;
+          height: 100%;
+          width: 100%;
+        "
       />
       <v-img
         class="cursor-pointer"
@@ -114,7 +130,7 @@
             <v-icon class="mdi mdi-treasure-chest-outline mt-1"></v-icon>
           </template>
         </v-btn>
-<!--        <v-btn
+        <!--        <v-btn
           text="Acheter"
           append-icon=""
           class="text-none buy-btn"
@@ -155,15 +171,17 @@
       class="tabs w-100 mt-5"
     >
       <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
-      <v-tab v-if="user?.isAkhy" value="commandes" icon><i class="mdi mdi-slash-forward-box" /></v-tab>
-      <v-tab v-if="user?.isAkhy" value="predictions" icon><i class="mdi mdi-tooltip-question-outline" /></v-tab>
+      <v-tab v-if="user?.isAkhy" value="commandes" icon
+        ><i class="mdi mdi-slash-forward-box"
+      /></v-tab>
+      <v-tab v-if="user?.isAkhy" value="predictions" icon
+        ><i class="mdi mdi-tooltip-question-outline"
+      /></v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab" class="w-100">
       <v-tabs-window-item value="games">
-        <div
-          class="actions-container"
-        >
+        <div class="actions-container">
           <v-card class="game-action-card ttt-action-card bg-black" variant="tonal">
             <v-card-title>
               Tic Tac Toe
@@ -193,15 +211,14 @@
               <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
-                  <v-btn
-                    text="Jouer"
-                    class="text-none game-btn"
-                    color="primary"
-                    append-icon="mdi mdi-cards-playing-spade-multiple"
-                    style="z-index: 0"
-                    @click="$router.push('/poker')"
-                  />
-
+              <v-btn
+                text="Jouer"
+                class="text-none game-btn"
+                color="primary"
+                append-icon="mdi mdi-cards-playing-spade-multiple"
+                style="z-index: 0"
+                @click="$router.push('/poker')"
+              />
             </v-card-text>
           </v-card>
 
@@ -211,7 +228,10 @@
               <v-chip size="small" style="float: right">1v1</v-chip>
             </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.</p>
+              <p>
+                Joue une partie de puissance 4 contre un autre joueur, mais attention à ton
+                FlopoRank.
+              </p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -290,7 +310,7 @@
             </v-card-text>
           </v-card>
 
-<!--
+          <!--
           <v-card class="action-card disabled-card" variant="tonal" disabled>
             <v-card-title>?</v-card-title>&lt;!&ndash;Chess&ndash;&gt;
             <v-card-subtitle style="text-wrap: wrap">
@@ -312,9 +332,7 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item v-if="user?.isAkhy" value="commandes">
-        <div
-          class="actions-container"
-        >
+        <div class="actions-container">
           <v-card class="action-card" variant="tonal">
             <v-card-title>Modif Pseudo</v-card-title>
             <v-card-subtitle>
@@ -400,16 +418,15 @@
       <v-tabs-window-item v-if="user?.isAkhy" value="predictions">
         <div class="actions-container">
           <div
-
             style="
-            position: absolute;
-            z-index: 2;
-            padding: 0.7em 0.5em;
-            width: 100%;
-            display: flex;
-            place-content: space-between;
-            backdrop-filter: blur(5px);
-          "
+              position: absolute;
+              z-index: 2;
+              padding: 0.7em 0.5em;
+              width: 100%;
+              display: flex;
+              place-content: space-between;
+              backdrop-filter: blur(5px);
+            "
           >
             <h2 class="text-white">Prédictions</h2>
             <v-btn
@@ -431,23 +448,23 @@
               :key="key"
               class="votes-card"
               :variant="
-              ((predi.endTime - Date.now()) / 1000).toFixed() < 0 || predi.closed
-                ? 'plain'
-                : 'tonal'
-            "
+                ((predi.endTime - Date.now()) / 1000).toFixed() < 0 || predi.closed
+                  ? 'plain'
+                  : 'tonal'
+              "
             >
               <div>
                 <v-img
                   :src="avatars[predi.creatorId]"
                   color="transparent"
                   style="
-                  border-radius: 50%;
-                  width: 25px;
-                  height: 25px;
-                  position: absolute;
-                  right: 1em;
-                  top: 1em;
-                "
+                    border-radius: 50%;
+                    width: 25px;
+                    height: 25px;
+                    position: absolute;
+                    right: 1em;
+                    top: 1em;
+                  "
                 />
                 <v-card-text class="font-weight-bold pr-0 mr-12">
                   {{ predi.label }}
@@ -519,10 +536,10 @@
                     {{
                       ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
                         ? ((predi.closingTime - Date.now()) / 1000).toFixed() +
-                        's restantes pour voter'
+                          's restantes pour voter'
                         : ((predi.endTime - Date.now()) / 1000).toFixed() > 0
                           ? Math.max(((predi.endTime - Date.now()) / 1000).toFixed(), 0) +
-                          's avant les résultats'
+                            's avant les résultats'
                           : 'Prédi terminée, en attente de validation'
                     }}
                   </p>
@@ -532,8 +549,8 @@
                   <div v-if="!predi.options[0].votes.find((v) => v?.voter === discordId)">
                     <v-btn
                       :text="
-                      ((predi.closingTime - Date.now()) / 1000).toFixed() > 0 ? 'Voter' : 'Voir'
-                    "
+                        ((predi.closingTime - Date.now()) / 1000).toFixed() > 0 ? 'Voter' : 'Voir'
+                      "
                       color="primary"
                       variant="flat"
                       rounded="lg"
@@ -565,7 +582,10 @@
       </v-tabs-window-item>
     </v-tabs-window>
 
-    <p v-if="tab === 'skins'" class="d-flex mt-2" style="place-items: center">Valeur totale : {{ formatAmount(inventoryValue?.toFixed(0)) }} <v-img src="star.svg" class="ml-2" min-width="12px" max-width="12px" height="12px" /></p>
+    <p v-if="tab === 'skins'" class="d-flex mt-2" style="place-items: center">
+      Valeur totale : {{ formatAmount(inventoryValue?.toFixed(0)) }}
+      <v-img src="star.svg" class="ml-2" min-width="12px" max-width="12px" height="12px" />
+    </p>
     <p v-else class="d-flex mt-2" style="place-items: center">
       {{ formatAmount(user?.coins) }} Flopos
       <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
@@ -575,30 +595,69 @@
   </div>
 
   <div v-else class="user-tab">
-    <v-skeleton-loader class="mt-2 mb-2" type="avatar" color="transparent" style="min-width: 800px"></v-skeleton-loader>
-    <v-skeleton-loader class="mb-6" type="heading" color="transparent" style="max-width: 300px"></v-skeleton-loader>
-    <v-skeleton-loader class="" type="text@3" color="transparent" style="max-width: 300px"></v-skeleton-loader>
-    <v-skeleton-loader class="mb-10" type="text" color="transparent" style="max-width: 300px"></v-skeleton-loader>
-    <v-skeleton-loader class="px-0" type="heading" color="transparent" style="max-width: 800px"></v-skeleton-loader>
-    <v-skeleton-loader type="image@3" color="transparent" style="border-radius: 20px; overflow: hidden"></v-skeleton-loader>
+    <v-skeleton-loader
+      class="mt-2 mb-2"
+      type="avatar"
+      color="transparent"
+      style="min-width: 800px"
+    ></v-skeleton-loader>
+    <v-skeleton-loader
+      class="mb-6"
+      type="heading"
+      color="transparent"
+      style="max-width: 300px"
+    ></v-skeleton-loader>
+    <v-skeleton-loader
+      class=""
+      type="text@3"
+      color="transparent"
+      style="max-width: 300px"
+    ></v-skeleton-loader>
+    <v-skeleton-loader
+      class="mb-10"
+      type="text"
+      color="transparent"
+      style="max-width: 300px"
+    ></v-skeleton-loader>
+    <v-skeleton-loader
+      class="px-0"
+      type="heading"
+      color="transparent"
+      style="max-width: 800px"
+    ></v-skeleton-loader>
+    <v-skeleton-loader
+      type="image@3"
+      color="transparent"
+      style="border-radius: 20px; overflow: hidden"
+    ></v-skeleton-loader>
   </div>
 
   <div v-if="users" class="leaderboard-container">
-    <h2 style="display: flex; place-content: space-between">
+    <h2 style="display: flex; place-content: space-between; align-items: center">
       Classement
       <span
-        class="text-capitalize text-secondary cursor-pointer rounded-lg"
-        style="user-select: none"
+        class="d-flex justify-center align-center text-capitalize cursor-pointer rounded-xl text-center"
+        style="
+          user-select: none;
+          width: 60px;
+          font-size: 0.75em;
+          height: 25px;
+          border: 2px solid #5865f277;
+        "
+        :style="leaderboardType === 'coins' ? 'background: #5865f2;' : 'background: #5865f277;'"
         @click="leaderboardSwitch"
-        >
+      >
         {{ leaderboardType }}
       </span>
     </h2>
-    <div class="leaderboard">
+    <TransitionGroup name="leaderboard-list" tag="div" class="leaderboard">
       <div
         v-for="akhy in leaderboardUsers"
         :key="akhy.id"
-        class="animate__animated animate__fadeIn"
+        v-motion
+        :initial="{ opacity: 0, y: -20, scale: 0.9 }"
+        :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 300, delay: 50 } }"
+        :leave="{ opacity: 0, y: 20, scale: 0.9, transition: { duration: 200 } }"
         style="border-radius: 10px"
         :style="
           akhy.id === discordId
@@ -626,13 +685,15 @@
             <i v-if="akhy?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
             <i v-if="akhy.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
           </span>
-          <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center;">
+          <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center">
             {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
           </div>
-          <div v-else style="display: flex; place-items: center;">
+          <div v-else style="display: flex; place-items: center">
             <v-img :src="rankIcon(akhy.elo)" width="20" height="20">
-              <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
-                <p style="font-weight: 400;">{{rankDiv(akhy?.elo)}}</p>
+              <div
+                :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+              >
+                <p style="font-weight: 400">{{ rankDiv(akhy?.elo) }}</p>
               </div>
             </v-img>
           </div>
@@ -697,7 +758,7 @@
                   class="pa-0 ma-0"
                   color="secondary"
                   line-width="2"
-                  :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0,0]"
+                  :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0, 0]"
                   style="position: absolute; left: 0; top: 0"
                   title="Evolution de l'elo"
                 />
@@ -706,13 +767,21 @@
                 <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoRank </v-list-item-subtitle>
               </v-list-item>
               <v-list-item class="pb-1 px-3">
-                <v-btn class="text-none" color="primary" block rounded density="comfortable" @click="$router.push('/akhy/' + akhy.id)">Voir plus</v-btn>
+                <v-btn
+                  class="text-none"
+                  color="primary"
+                  block
+                  rounded
+                  density="comfortable"
+                  @click="$router.push('/akhy/' + akhy.id)"
+                  >Voir plus</v-btn
+                >
               </v-list-item>
             </v-list>
           </v-menu>
         </div>
       </div>
-    </div>
+    </TransitionGroup>
   </div>
   <div v-else class="leaderboard-container">
     <h2 style="display: flex; place-content: space-between">
@@ -725,14 +794,18 @@
       </span>
     </h2>
     <div class="leaderboard">
-      <v-skeleton-loader v-for="n in 19" type="text" color="transparent" style="min-width: 300px"></v-skeleton-loader>
+      <v-skeleton-loader
+        v-for="n in 19"
+        type="text"
+        color="transparent"
+        style="min-width: 300px"
+      ></v-skeleton-loader>
     </div>
   </div>
 
   <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 
-
-<!--  DIALOGS -->
+  <!--  DIALOGS -->
   <v-dialog
     v-model="isRegistered"
     class="modals"
@@ -743,8 +816,12 @@
   >
     <v-card class="modal-card px-6 py-4" variant="tonal">
       <v-card-title class="pb-0 pt-9">
-        <h1 style="letter-spacing: .03em">Salut @{{anonUsername}} 👋</h1>
-        <v-img src="public/flopobot.webp" style="position: absolute; right: 0; top: 1em" width="150"></v-img>
+        <h1 style="letter-spacing: 0.03em">Salut @{{ anonUsername }} 👋</h1>
+        <v-img
+          src="public/flopobot.webp"
+          style="position: absolute; right: 0; top: 1em"
+          width="150"
+        ></v-img>
       </v-card-title>
       <v-card-subtitle class="pb-6">
         <h2>Bienvenue sur Floposite !</h2>
@@ -943,7 +1020,7 @@
           v-model="nicknameForm.id"
           placeholder="Akhy"
           clearable
-          :items="users.filter(u => u.isAkhy)"
+          :items="users.filter((u) => u.isAkhy)"
           item-value="id"
           item-title="username"
           variant="outlined"
@@ -1007,7 +1084,7 @@
           v-model="spamPingForm.id"
           placeholder="Akhy"
           clearable
-          :items="users.filter(u => u.isAkhy)"
+          :items="users.filter((u) => u.isAkhy)"
           item-value="id"
           item-title="username"
           variant="outlined"
@@ -1058,7 +1135,7 @@
           v-model="slowmodeForm.id"
           placeholder="Akhy"
           clearable
-          :items="users.filter(u => u.isAkhy)"
+          :items="users.filter((u) => u.isAkhy)"
           item-value="id"
           item-title="username"
           variant="outlined"
@@ -1111,7 +1188,7 @@
           v-model="timeoutForm.id"
           placeholder="Akhy"
           clearable
-          :items="users.filter(u => u.isAkhy)"
+          :items="users.filter((u) => u.isAkhy)"
           item-value="id"
           item-title="username"
           variant="outlined"
@@ -1735,7 +1812,7 @@ export default {
     await this.getActivePredis()
     await this.isTimedOut()
 
-    this.isRegistered = !this.users?.find(u => u.id === this.discordId)
+    this.isRegistered = !this.users?.find((u) => u.id === this.discordId)
 
     this.initSocket()
     window.addEventListener('resize', this.updateWindowWidth)
@@ -1808,7 +1885,8 @@ export default {
       })
 
       this.socket.on('daily-queried', async (data) => {
-        if (data.userId === this.discordId) this.showSuccessOrWarningToast('+500 FlopoCoins, récompense journalière récupérée', false)
+        if (data.userId === this.discordId)
+          this.showSuccessOrWarningToast('+500 FlopoCoins, récompense journalière récupérée', false)
         await this.getUsers()
       })
     },
@@ -2232,19 +2310,19 @@ export default {
 
     rankIcon(elo) {
       if (elo < 900) {
-        return '';
+        return ''
       } else if (elo < 1100) {
-        return '/ranks_icons/bronze.svg';
+        return '/ranks_icons/bronze.svg'
       } else if (elo < 1300) {
-        return '/ranks_icons/silver.svg';
+        return '/ranks_icons/silver.svg'
       } else if (elo < 1600) {
-        return '/ranks_icons/gold.svg';
+        return '/ranks_icons/gold.svg'
       } else if (elo < 2000) {
-        return '/ranks_icons/diamond.svg';
+        return '/ranks_icons/diamond.svg'
       } else if (elo >= 2000) {
-        return '/ranks_icons/master.svg';
+        return '/ranks_icons/master.svg'
       } else {
-        return '';
+        return ''
       }
     },
 
@@ -2425,6 +2503,18 @@ button:disabled {
   height: 805px;
   overflow-y: scroll;
   transition: 2s ease;
+  position: relative;
+}
+
+/* Leaderboard transition animations */
+.leaderboard-list-move {
+  transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.leaderboard-list-leave-active {
+  position: absolute;
+  opacity: 0 !important;
+  width: 100%;
 }
 
 .inventory {
@@ -2523,7 +2613,7 @@ button:disabled {
   transform: translateX(30%);
 }
 
-.red-action-card{
+.red-action-card {
   position: relative;
   margin-top: 10px;
   background: transparent !important;
@@ -2537,7 +2627,7 @@ button:disabled {
   left: -50%;
   width: 150%;
   height: 100%;
-  background: radial-gradient(circle at 5% 50%, #170201, #9B030222 200%) !important;
+  background: radial-gradient(circle at 5% 50%, #170201, #9b030222 200%) !important;
   transform: translateX(30%);
   z-index: -1;
   transition: 0.2s ease-in-out;
@@ -2572,7 +2662,7 @@ button:disabled {
   left: -50%;
   width: 150%;
   height: 100%;
-  background: radial-gradient(circle at -30% 0%, #5865f2, #010217AA 70%) !important;
+  background: radial-gradient(circle at -30% 0%, #5865f2, #010217aa 70%) !important;
   -webkit-backdrop-filter: blur(7px);
   backdrop-filter: blur(7px);
   transform: translateX(20%);
@@ -2617,7 +2707,6 @@ button:disabled {
   background-size: 20% auto;
   transform: rotate(5deg);
 }
-
 
 .disabled-card::after {
   content: 'Prochainement';
