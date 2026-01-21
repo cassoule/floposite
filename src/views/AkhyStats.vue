@@ -57,7 +57,7 @@ export default {
     this.user = this.users.find((u) => u.id === this.$route.params.id)
     if (this.user) {
       const id = this.$route.params.id
-      this.sparkline = await this.getSparkline(id)
+      //this.sparkline = await this.getSparkline(id)
       this.elo = await this.getElo(id)
       this.elo_graph = await this.getEloGraph(id)
       await this.getActiveSlowmodes()
@@ -542,6 +542,8 @@ export default {
       try {
         const response = await axios.post(url, { userId: discordId })
         await this.getInventory()
+        this.users = await this.getUsers()
+        this.user = this.users.find((u) => u.id === this.$route.params.id)
         setTimeout(() => {
           this.skinDetailsDialog = false
           this.instantSellProcessing = false
@@ -582,6 +584,8 @@ export default {
       try {
         const url = import.meta.env.VITE_FLAPI_URL + '/skin-upgrade/' + this.selectedSkin.uuid
         const response = await axios.post(url, { userId: this.user.id })
+        this.users = await this.getUsers()
+        this.user = this.users.find((u) => u.id === this.$route.params.id)
         const winningSegmentId = response.data.wonId
         const winIndex = this.segments.findIndex((s) => s.id === winningSegmentId)
         if (winIndex === -1) throw new Error('Invalid segment ID from backend')
@@ -1149,7 +1153,9 @@ export default {
           </v-list-item>
           <v-list-item
             v-if="games.filter((g) => g.type !== 'POKER_ROUND' && g.type !== 'SOTD').length > 0"
-            v-for="game in games.filter((g) => g.type !== 'POKER_ROUND' && g.type !== 'SOTD').reverse()"
+            v-for="game in games
+              .filter((g) => g.type !== 'POKER_ROUND' && g.type !== 'SOTD')
+              .reverse()"
             class="pb-3 px-2"
           >
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">
@@ -1315,7 +1321,7 @@ export default {
                   </div>
                 </div>
               </v-card-text>
-<!--              <v-card-text v-else class="pb-0">
+              <!--              <v-card-text v-else class="pb-0">
                 <div class="d-flex justify-space-between" style="place-items: start">
                   <div
                     class="d-flex flex-column"
@@ -1543,7 +1549,7 @@ export default {
                     >
                       <v-progress-linear
                         :model-value="(skin.currentLvl / skinsData[skin.uuid].levels.length) * 100"
-                        :color="skin.isVCT ? getRegionColor(skin.vctRegion) : ('#' + skin.tierColor)"
+                        :color="skin.isVCT ? getRegionColor(skin.vctRegion) : '#' + skin.tierColor"
                         style="box-shadow: 0 0 20px 1px #181818"
                       ></v-progress-linear>
                       <p>
@@ -1764,9 +1770,13 @@ export default {
         >
           <div
             class="details-item"
-            :class="{ 'shake-anim': isDestructing, 'success-anim': isUpgrading, 'melee-skin-card': selectedSkin.isMelee,
-                    'vct-skin-card': selectedSkin.isVCT,
-                    'champions-skin-card': selectedSkin.isChampions, }"
+            :class="{
+              'shake-anim': isDestructing,
+              'success-anim': isUpgrading,
+              'melee-skin-card': selectedSkin.isMelee,
+              'vct-skin-card': selectedSkin.isVCT,
+              'champions-skin-card': selectedSkin.isChampions,
+            }"
             :style="`border-radius: 10px`"
           >
             <div
@@ -1881,7 +1891,11 @@ export default {
                   :model-value="
                     (selectedSkin.currentLvl / skinsData[selectedSkin.uuid].levels.length) * 100
                   "
-                  :color="selectedSkin.isVCT ? getRegionColor(selectedSkin.vctRegion) : ('#' + selectedSkin.tierColor)"
+                  :color="
+                    selectedSkin.isVCT
+                      ? getRegionColor(selectedSkin.vctRegion)
+                      : '#' + selectedSkin.tierColor
+                  "
                   style="box-shadow: 0 0 20px 1px #181818"
                 ></v-progress-linear>
                 <p>
@@ -1897,7 +1911,10 @@ export default {
               </div>
             </div>
           </div>
-          <v-divider v-if="!selectedSkin.isMelee && !selectedSkin.isChampions" class="mx-2 my-0"></v-divider>
+          <v-divider
+            v-if="!selectedSkin.isMelee && !selectedSkin.isChampions"
+            class="mx-2 my-0"
+          ></v-divider>
           <div
             style="
               padding: 0.5em 1em 1em 1em;
@@ -2007,7 +2024,7 @@ export default {
                 <v-btn
                   class="text-none spin-btn"
                   color="primary"
-                  :disabled="isSpinning"
+                  :disabled="isSpinning || user?.coins < upgradeCost"
                   @click="startUpgrade"
                 >
                   GO
@@ -2339,7 +2356,6 @@ export default {
 }
 
 /* Add some sparkles/dust to champions */
-
 
 @media (max-width: 800px) {
   .graphs-list {
