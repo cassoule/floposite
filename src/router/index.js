@@ -12,6 +12,7 @@ import AkhyStats from '../views/AkhyStats.vue'
 import Market from '../views/Market.vue'
 import CaseOpening from '../views/CaseOpening.vue'
 import EryniesHome from '../views/EryniesHome.vue'
+import WerewolfHome from '../views/WerewolfHome.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -26,6 +27,7 @@ const routes = [
   { path: '/akhy/:id', component: AkhyStats },
   { path: '/market', component: Market },
   { path: '/cases', component: CaseOpening },
+  { path: '/werewolf', component: WerewolfHome },
   //{ path: '/erynies', component: EryniesHome },
 ]
 

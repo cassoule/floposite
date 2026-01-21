@@ -27,20 +27,27 @@ onMounted(async () => {
     const response = await axios.get(endpoint, {
       params: { code },
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     })
 
     if (!response.data.discordId) {
       throw new Error('No Discord ID in response')
     }
 
+    console.log('Authentication successful:', response.data)
     localStorage.setItem('discordId', response.data.discordId)
-    showSuccessOrWarningToast('Coucou ^^', false)
+
+    const url = import.meta.env.VITE_FLAPI_URL + '/user/' + response.data.discordId + '/username'
+    const usernameResponse = await axios.get(url)
+    console.log('Username fetched:', usernameResponse.data)
+    localStorage.setItem('globalName', usernameResponse.data.user.globalName)
+
+    showSuccessOrWarningToast('Coucou !', false)
     await router.push('/dashboard')
   } catch (error) {
     console.error('Authentication failed:', error.response?.data || error.message)
-    showSuccessOrWarningToast('Erreur d\'authentification', true)
+    showSuccessOrWarningToast("Erreur d'authentification", true)
     await router.push('/')
   }
 })
