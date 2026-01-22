@@ -102,34 +102,27 @@
       <div
         class="d-flex py-2"
         style="
-          gap: 1rem;
+          gap: 0.5rem;
           overflow-y: scroll;
           overflow-x: visible;
           padding-top: 0.6em;
           padding-right: 1em;
         "
       >
-        <v-btn
-          class="text-capitalize"
-          text="FlopoMarket"
-          append-icon="mdi-cart"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          @click="$router.push('/market')"
-        />
-        <v-btn
-          class="text-capitalize"
-          text="Caisses"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          @click="$router.push('/cases')"
-        >
-          <template #append>
-            <v-icon class="mdi mdi-treasure-chest-outline mt-1"></v-icon>
-          </template>
-        </v-btn>
+        <v-btn-toggle rounded="lg" base-color="primary" variant="flat" density="compact">
+          <v-btn
+            class="text-capitalize"
+            text="Market"
+            append-icon="mdi-cart"
+            @click="$router.push('/market')"
+          />
+          <v-btn class="text-capitalize" text="Caisses" @click="$router.push('/cases')">
+            <template #append>
+              <v-icon class="mdi mdi-treasure-chest-outline mt-1"></v-icon>
+            </template>
+          </v-btn>
+        </v-btn-toggle>
+
         <!--        <v-btn
           text="Acheter"
           append-icon=""
@@ -182,50 +175,13 @@
     <v-tabs-window v-model="tab" class="w-100">
       <v-tabs-window-item value="games">
         <div class="actions-container">
-          <v-card class="game-action-card ttt-action-card bg-black" variant="tonal">
-            <v-card-title>
-              Tic Tac Toe
-              <v-chip size="small" style="float: right">1v1</v-chip>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none game-btn"
-                color="primary"
-                append-icon="mdi mdi-pound"
-                style="z-index: 0"
-                @click="$router.push('/tic-tac-toe')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="game-action-card poker-action-card bg-black" variant="tonal">
-            <v-card-title>
-              Flopoker
-              <v-chip size="small" style="float: right">Multi</v-chip>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none game-btn"
-                color="primary"
-                append-icon="mdi mdi-cards-playing-spade-multiple"
-                style="z-index: 0"
-                @click="$router.push('/poker')"
-              />
-            </v-card-text>
-          </v-card>
-
           <v-card class="game-action-card c4-action-card bg-black" variant="tonal">
             <v-card-title>
               Puissance 4
-              <v-chip size="small" style="float: right">1v1</v-chip>
+              <v-chip-group style="float: right">
+                <v-chip size="small">1v1</v-chip>
+                <v-chip size="small" class="mr-0">Elo</v-chip>
+              </v-chip-group>
             </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>
@@ -250,7 +206,10 @@
           <v-card class="game-action-card sol-action-card bg-black" variant="tonal">
             <v-card-title>
               Solitaire
-              <v-chip size="small" style="float: right">Solo</v-chip>
+              <v-chip-group style="float: right">
+                <v-chip size="small">Solo</v-chip>
+                <v-chip size="small" class="mr-0">Coins</v-chip>
+              </v-chip-group>
             </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Tente de gagner quelques FlopoCoins au solitaire.</p>
@@ -269,10 +228,36 @@
             </v-card-text>
           </v-card>
 
+          <v-card class="game-action-card poker-action-card bg-black" variant="tonal">
+            <v-card-title>
+              Flopoker
+              <v-chip-group style="float: right">
+                <v-chip size="small">Multi</v-chip>
+                <v-chip size="small" class="mr-0">Coins</v-chip>
+              </v-chip-group>
+            </v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none game-btn"
+                color="primary"
+                append-icon="mdi mdi-cards-playing-spade-multiple"
+                style="z-index: 0"
+                @click="$router.push('/poker')"
+              />
+            </v-card-text>
+          </v-card>
+
           <v-card class="game-action-card bj-action-card bg-black" variant="tonal">
             <v-card-title>
               Blackjack
-              <v-chip size="small" style="float: right">Multi</v-chip>
+              <v-chip-group style="float: right">
+                <v-chip size="small">Multi</v-chip>
+                <v-chip size="small" class="mr-0">Coins</v-chip>
+              </v-chip-group>
             </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Mise tes FlopoCoins au Blackjack</p>
@@ -291,6 +276,54 @@
             </v-card-text>
           </v-card>
 
+          <v-card class="game-action-card ttt-action-card bg-black" variant="tonal">
+            <v-card-title>
+              Tic Tac Toe
+              <v-chip-group style="float: right">
+                <v-chip size="small">1v1</v-chip>
+                <v-chip size="small" class="mr-0">Elo</v-chip>
+              </v-chip-group>
+            </v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none game-btn"
+                color="primary"
+                append-icon="mdi mdi-pound"
+                style="z-index: 0"
+                @click="$router.push('/tic-tac-toe')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card class="game-action-card bg-black" variant="tonal">
+            <v-card-title>
+              Monke Game
+              <v-chip-group style="float: right">
+                <v-chip size="small">Solo</v-chip>
+                <v-chip size="small" class="mr-0">Coins</v-chip>
+              </v-chip-group>
+            </v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Tente de gagner des FlopoCoins mais attention aux bombes !</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-bomb"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/monke-game')"
+              />
+            </v-card-text>
+          </v-card>
+
           <v-card class="red-action-card bg-black disabled-card" variant="flat">
             <v-card-title>Erynies</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
@@ -305,29 +338,10 @@
                 variant="flat"
                 rounded="lg"
                 style="border-radius: 10px !important"
-                @click="$router.push('/erynies')"
+                @click="false ?? $router.push('/erynies')"
               />
             </v-card-text>
           </v-card>
-
-          <!--
-          <v-card class="action-card disabled-card" variant="tonal" disabled>
-            <v-card-title>?</v-card-title>&lt;!&ndash;Chess&ndash;&gt;
-            <v-card-subtitle style="text-wrap: wrap">
-&lt;!&ndash;              <p>Joue une partie d'échecs contre un autre joueur, mais attention à ton FlopoRank.</p>&ndash;&gt;
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-chess-king"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-              />
-            </v-card-text>
-          </v-card>-->
         </div>
       </v-tabs-window-item>
 
@@ -636,14 +650,8 @@
     <h2 style="display: flex; place-content: space-between; align-items: center">
       Classement
       <span
-        class="d-flex justify-center align-center text-capitalize cursor-pointer rounded-xl text-center"
-        style="
-          user-select: none;
-          width: 60px;
-          font-size: 0.75em;
-          height: 25px;
-          border: 2px solid #5865f277;
-        "
+        class="d-flex justify-center text-white align-center text-capitalize cursor-pointer rounded-xl text-center"
+        style="user-select: none; width: 60px; font-size: 0.75em; height: 25px"
         :style="leaderboardType === 'coins' ? 'background: #5865f2;' : 'background: #5865f277;'"
         @click="leaderboardSwitch"
       >
