@@ -1,11 +1,26 @@
 <script>
 import axios from 'axios'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
+import Toast from '../components/Toast.vue'
+import { useToastStore } from '../stores/toastStore.js'
 
 export default {
   name: 'AkhyStats',
 
-  components: {},
+  components: { Toast },
+
+  setup() {
+    const toastStore = useToastStore()
+
+    const showErrorToast = (message) => {
+      toastStore.showErrorToast(message)
+    }
+
+    return {
+      toastStore: toastStore.$state,
+      showErrorToast,
+    }
+  },
 
   data() {
     return {
@@ -550,6 +565,7 @@ export default {
         }, 500)
       } catch (e) {
         console.log(e)
+        this.showErrorToast(e.response?.data?.error || 'Erreur lors de la vente.')
         setTimeout(() => {
           this.instantSellProcessing = false
         }, 500)
@@ -1600,6 +1616,8 @@ export default {
       @click="$router.push('/dashboard')"
     ></v-btn>
   </v-layout>
+
+  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 
   <v-dialog
     v-model="skinVideoDialog"
