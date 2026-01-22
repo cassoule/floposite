@@ -299,7 +299,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="game-action-card bg-black" variant="tonal">
+          <v-card class="game-action-card mg-action-card bg-black" variant="tonal">
             <v-card-title>
               Monke Game
               <v-chip-group style="float: right">
@@ -2714,6 +2714,11 @@ button:disabled {
   background: url('/game_illu_bj.png') no-repeat center center;
   background-size: 20% auto;
   transform: rotate(5deg);
+}
+.mg-action-card::after {
+  background: url('/game_illu_mg.png') no-repeat center center;
+  background-size: 30% auto;
+  transform: rotate(-5deg);
 }
 
 .disabled-card::after {
