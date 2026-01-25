@@ -96,7 +96,7 @@
     </div>
 
     <div
-      class="mt-5 d-flex align-center"
+      class="mt-5 d-flex flex-column align-start justify-center"
       style="gap: 0.5rem; position: relative; place-content: space-between"
     >
       <div
@@ -152,6 +152,13 @@
           ></v-icon>
         </v-btn>
       </div>
+      <v-chip-group v-model="gameCardsFilter" class="mb-0 pb-0 text-secondary" selected-class="text-white" :disabled="tab !== 'games'">
+        <v-chip size="small" :value="'1v1'" filter>1v1</v-chip>
+        <v-chip size="small" :value="'Multi'" filter>Multi</v-chip>
+        <v-chip size="small" :value="'Solo'" filter>Solo</v-chip>
+        <v-chip size="small" :value="'Elo'" filter>Elo</v-chip>
+        <v-chip size="small" :value="'Coins'" filter class="mr-0">Coins</v-chip>
+      </v-chip-group>
     </div>
 
     <v-tabs
@@ -164,21 +171,21 @@
       class="tabs w-100 mt-5"
     >
       <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
-      <v-tab v-if="user?.isAkhy" value="commandes" icon
-        ><i class="mdi mdi-slash-forward-box"
-      /></v-tab>
-      <v-tab v-if="user?.isAkhy" value="predictions" icon
-        ><i class="mdi mdi-tooltip-question-outline"
-      /></v-tab>
+      <v-tab v-if="user?.isAkhy" value="commandes" icon>
+        <i class="mdi mdi-slash-forward-box"/>
+      </v-tab>
+      <v-tab v-if="user?.isAkhy" value="predictions" icon>
+        <i class="mdi mdi-tooltip-question-outline"/>
+      </v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab" class="w-100">
       <v-tabs-window-item value="games">
         <div class="actions-container">
-          <v-card class="game-action-card c4-action-card bg-black" variant="tonal">
+          <v-card v-if="!gameCardsFilter || gameCardsFilter === '1v1' || gameCardsFilter === 'Elo'" class="game-action-card c4-action-card bg-black" variant="tonal" @click="$router.push('/connect-4')">
             <v-card-title>
               Puissance 4
-              <v-chip-group style="float: right">
+              <v-chip-group style="float: right; pointer-events: none;">
                 <v-chip size="small">1v1</v-chip>
                 <v-chip size="small" class="mr-0">Elo</v-chip>
               </v-chip-group>
@@ -203,10 +210,10 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="game-action-card sol-action-card bg-black" variant="tonal">
+          <v-card v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'" class="game-action-card sol-action-card bg-black" variant="tonal" @click="$router.push('/solitaire')">
             <v-card-title>
               Solitaire
-              <v-chip-group style="float: right">
+              <v-chip-group style="float: right; pointer-events: none;">
                 <v-chip size="small">Solo</v-chip>
                 <v-chip size="small" class="mr-0">Coins</v-chip>
               </v-chip-group>
@@ -228,10 +235,10 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="game-action-card poker-action-card bg-black" variant="tonal">
+          <v-card v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'" class="game-action-card poker-action-card bg-black" variant="tonal" @click="$router.push('/poker')">
             <v-card-title>
               Flopoker
-              <v-chip-group style="float: right">
+              <v-chip-group style="float: right; pointer-events: none;">
                 <v-chip size="small">Multi</v-chip>
                 <v-chip size="small" class="mr-0">Coins</v-chip>
               </v-chip-group>
@@ -251,10 +258,10 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="game-action-card bj-action-card bg-black" variant="tonal">
+          <v-card v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'" class="game-action-card bj-action-card bg-black" variant="tonal" @click="$router.push('/blackjack')">
             <v-card-title>
               Blackjack
-              <v-chip-group style="float: right">
+              <v-chip-group style="float: right; pointer-events: none;">
                 <v-chip size="small">Multi</v-chip>
                 <v-chip size="small" class="mr-0">Coins</v-chip>
               </v-chip-group>
@@ -276,10 +283,10 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="game-action-card ttt-action-card bg-black" variant="tonal">
+          <v-card v-if="!gameCardsFilter || gameCardsFilter === '1v1' || gameCardsFilter === 'Elo'" class="game-action-card ttt-action-card bg-black" variant="tonal" @click="$router.push('/tic-tac-toe')">
             <v-card-title>
               Tic Tac Toe
-              <v-chip-group style="float: right">
+              <v-chip-group style="float: right; pointer-events: none;">
                 <v-chip size="small">1v1</v-chip>
                 <v-chip size="small" class="mr-0">Elo</v-chip>
               </v-chip-group>
@@ -299,10 +306,10 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="game-action-card mg-action-card bg-black" variant="tonal">
+          <v-card v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'" class="game-action-card mg-action-card bg-black" variant="tonal" @click="$router.push('/monke-game')">
             <v-card-title>
               Monke Game
-              <v-chip-group style="float: right">
+              <v-chip-group style="float: right; pointer-events: none;">
                 <v-chip size="small">Solo</v-chip>
                 <v-chip size="small" class="mr-0">Coins</v-chip>
               </v-chip-group>
@@ -324,7 +331,7 @@
             </v-card-text>
           </v-card>
 
-          <v-card class="red-action-card bg-black disabled-card" variant="flat">
+          <v-card v-if="!gameCardsFilter" class="red-action-card bg-black disabled-card" variant="flat">
             <v-card-title>Erynies</v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
               <p>Joue une partie de ce loup-garou un peu particulier, à partir de 4 joueurs.</p>
@@ -1797,6 +1804,8 @@ export default {
       loading: false,
       error: null,
       stripePromise: null,
+
+      gameCardsFilter: null,
     }
   },
 
@@ -2508,7 +2517,7 @@ button:disabled {
   border: solid 2px rgba(255, 255, 255, 0.2);
   border-radius: 15px;
   padding: 6px 5px;
-  height: 805px;
+  height: 885px;
   overflow-y: scroll;
   transition: 2s ease;
   position: relative;
@@ -2594,7 +2603,7 @@ button:disabled {
 }
 
 .actions-container {
-  height: 438px !important;
+  height: 500px !important;
   overflow-y: scroll;
   border-radius: 0 0 15px 0;
 }

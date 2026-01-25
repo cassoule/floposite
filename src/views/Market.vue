@@ -403,6 +403,7 @@ export default {
                     style="align-items: end; right: 0.5em"
                   >
                     <h3
+                      v-if="offer.status !== 'closed'"
                       class="mb-2 font-weight-bold px-3 rounded-xl"
                       :style="`
                         background: #${offer.skin.tierColor}22;
@@ -414,6 +415,7 @@ export default {
                       <span style="font-size: 0.7em">Coins</span>
                     </h3>
                     <v-chip
+                      v-if="offer.status !== 'closed'"
                       v-bind="props"
                       :color="
                         offer.starting_price / offer.skin.currentPrice > 1.1
