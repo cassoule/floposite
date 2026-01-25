@@ -651,6 +651,7 @@ export default {
         }, 6000) // Must match transition duration
       } catch (e) {
         console.error('Wheel error', e)
+        this.showErrorToast(e.response?.data?.error || 'Erreur lors de l\'amélioration.')
         this.isSpinning = false
       }
     },

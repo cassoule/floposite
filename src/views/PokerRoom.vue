@@ -58,6 +58,11 @@ export default {
 
   beforeDestroy() {
     clearInterval(this.interval)
+    if (this.socket) {
+      this.socket.off('poker-update')
+      this.socket.off('poker-toast')
+      this.socket.disconnect()
+    }
   },
 
   computed: {

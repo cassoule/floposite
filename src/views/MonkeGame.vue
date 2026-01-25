@@ -19,6 +19,8 @@ export default {
       discordId: null,
       now: Date.now(),
 
+      user: {},
+
       endGameDialog: false,
       userGamePath: null,
       betAmount: 10,
@@ -114,7 +116,7 @@ export default {
 </script>
 
 <template>
-  <CoinsCounter />
+  <CoinsCounter @update-coins="user.coins = $event" />
   <v-layout>
     <v-main
       class="d-flex"
@@ -142,14 +144,13 @@ export default {
                 label="Montant de la mise initiale"
                 type="number"
                 :min="10"
-                :max="10000"
+                :max="Math.min(10000, user?.coins || 10000)"
                 :step="10"
                 variant="outlined"
                 rounded="lg"
                 hint="Entre 10 et 10k coins"
                 density="comfortable"
               ></v-number-input>
-              {{ user?.coins }}
             </v-card-text>
             <v-card-actions class="d-flex justify-end pa-4 pt-0">
               <v-btn

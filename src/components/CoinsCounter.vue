@@ -2,6 +2,7 @@
 import axios from 'axios'
 
 export default {
+  emits: ['update-coins'],
   async mounted() {
     await this.fetchUserCoins()
     this._timer = setInterval(async () => {
@@ -25,6 +26,7 @@ export default {
         const url = import.meta.env.VITE_FLAPI_URL + '/user/' + discordId + '/coins'
         const response = await axios.get(url)
         const initialCoins = this.displayCoins
+        this.$emit('update-coins', response.data.coins)
         this.animateNumber("displayCoins", initialCoins, response.data.coins, 800)
       } catch (error) {
         console.error('Error fetching user coins:', error)
