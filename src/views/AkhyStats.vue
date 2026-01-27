@@ -1166,13 +1166,16 @@ export default {
             rounded="0"
             style="backdrop-filter: blur(5px); z-index: 100"
           >
-            <h2>Historique des parties</h2>
+            <h2 style="width: fit-content; white-space: nowrap">
+              Historique des parties
+              <span class="ml-4" style="font-size: 0.8em">
+                {{ games?.length === 50 ? `${games?.length} dernières` : games?.length }} parties
+              </span>
+            </h2>
           </v-list-item>
           <v-list-item
-            v-if="games.filter((g) => g.type !== 'POKER_ROUND' && g.type !== 'SOTD').length > 0"
-            v-for="game in games
-              .filter((g) => g.type !== 'POKER_ROUND' && g.type !== 'SOTD')
-              .reverse()"
+            v-if="games.length > 0"
+            v-for="game in games"
             class="pb-3 px-2"
           >
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">

@@ -80,17 +80,20 @@
         {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
         <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
       </p>
-      <p v-if="user?.isAkhy">
-        {{ user?.warns }} warns
-        <span style="color: rgba(255, 255, 255, 0.3)">{{ user?.allTimeWarns }} all time</span>
-      </p>
 
-      <p class="mt-3">
-        {{ elos[discordId] }} FlopoRank
+      <p v-if="elos[discordId]" class="mt-3 d-flex ga-2" style="place-items: center;">
+        <div style="display: flex; place-items: center">
+          <v-img :src="rankIcon(user?.elo)" width="22" height="30">
+            <div
+              :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+            >
+              <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
+            </div>
+          </v-img>
+        </div>
+        {{ elos[discordId] }} FlopoElo
         <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
-          elos[discordId] < Math.max(...elo_graphs[discordId], 0)
-            ? Math.max(...elo_graphs[discordId], 0) + ' PB'
-            : 'PB'
+            'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
         }}</span>
       </p>
     </div>

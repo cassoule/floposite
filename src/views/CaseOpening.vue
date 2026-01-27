@@ -267,8 +267,8 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #5A9FE2, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px;">Standard&nbsp;Case&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline mb-1" size="20" @click="getCaseContent('standard')"/></h2>
-            <p class="text-secondary" style="width: 85px">500&nbsp;Coins</p>
+            <h2 class="mr-4" style="width: 177px;">Standard&nbsp;Case</h2>
+            <p class="text-secondary">500&nbsp;Coins&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline" size="20" @click="getCaseContent('standard')"/></p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -294,8 +294,8 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #D1548D, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px;">Premium&nbsp;Case&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline mb-1" size="20" @click="getCaseContent('premium')"/></h2>
-            <p class="text-secondary" style="width: 85px">750&nbsp;Coins</p>
+            <h2 class="mr-4" style="width: 177px;">Premium&nbsp;Case</h2>
+            <p class="text-secondary">750&nbsp;Coins&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline" size="20" @click="getCaseContent('premium')"/></p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -321,8 +321,8 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #F5955B, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px">Ultra Case&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline mb-1" size="20" @click="getCaseContent('ultra')"/></h2>
-            <p class="text-secondary" style="width: 85px">1500&nbsp;Coins</p>
+            <h2 class="mr-4" style="width: 177px">Ultra Case</h2>
+            <p class="text-secondary">1500&nbsp;Coins&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline" size="20" @click="getCaseContent('ultra')"/></p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -369,8 +369,8 @@ export default {
             />
           </div>
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px">Esport Case&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline mb-1" size="20" @click="getCaseContent('esport')"/></h2>
-            <p class="text-secondary" style="width: 85px">100&nbsp;Coins</p>
+            <h2 class="mr-4" style="width: 177px">Esport Case</h2>
+            <p class="text-secondary">100&nbsp;Coins&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline" size="20" @click="getCaseContent('esport')"/></p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
