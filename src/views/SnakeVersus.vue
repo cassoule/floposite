@@ -4,7 +4,7 @@
       class="d-flex"
       style="place-items: center; place-content: center; flex-wrap: wrap; gap: 2em"
     >
-      <div class="game-section">
+      <div class="game-section mt-16">
         <div class="header-section">
           <h2 class="text-white mb-2">Snake 1v1</h2>
           <p style="display: flex; justify-content: start; align-items: center; gap: 0.5em">
@@ -27,16 +27,26 @@
             {{ elo ? elo + ' Elo' : 'Non Classé' }}
           </p>
 
-          <v-btn
-            v-if="!foundLobby"
-            class="my-2"
-            color="primary"
-            text="Chercher un joueur"
-            :loading="inQueue"
-            :disabled="foundLobby !== null && foundLobby !== undefined"
-            style="border-radius: 10px"
-            @click="joinQueue"
-          />
+          <div class="d-flex gap-2 align-center">
+            <v-btn
+              v-if="!foundLobby"
+              class="my-2"
+              color="primary"
+              text="Chercher un joueur"
+              :loading="inQueue"
+              :disabled="(foundLobby !== null && foundLobby !== undefined) || isScreenTooSmall"
+              style="border-radius: 10px"
+              @click="joinQueue"
+            />
+            <!-- <v-btn
+              v-if="foundLobby && gameStarted"
+              class="my-2"
+              :color="autoplay ? 'success' : 'secondary'"
+              :text="autoplay ? 'Autoplay ON' : 'Autoplay OFF'"
+              style="border-radius: 10px"
+              @click="autoplay = !autoplay"
+            /> -->
+          </div>
           <p v-if="!foundLobby && queue.length > 0" class="mb-3">
             {{ !foundLobby && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp;' }}
             <span v-for="(p, index) in queue" :key="p">
@@ -49,7 +59,6 @@
         <div v-if="foundLobby" class="players-info">
           <div class="player-card my-grid">
             <div class="d-flex align-center gap-2">
-              <span>Toi</span>
               <v-img
                 v-if="playerAvatar"
                 :src="playerAvatar"
@@ -58,17 +67,31 @@
                 :height="25"
                 rounded="xl"
               ></v-img>
+              <span class="ml-3">Toi</span>
             </div>
-            <p class="score-text">
-              Score: <span class="font-weight-bold">{{ myScore }}</span>
-            </p>
-            <p v-if="myGameOver && !myWin" class="text-error">Perdu!</p>
-            <p v-if="myWin" class="text-success">Victoire!</p>
+            <div class="d-flex align-center ga-3">
+              <p class="score-text">
+                Score: <span class="font-weight-bold">{{ myScore }}</span>
+              </p>
+              <p v-if="myGameOver && !myWin" class="text-error font-weight-bold">Perdu !&nbsp;<span class="font-weight-regular text-secondary" style="font-size: .9em;">(en attente de l'adversaire)</span></p>
+              <p v-if="myWin" class="text-success font-weight-bold">Victoire !&nbsp;<span class="font-weight-regular text-secondary" style="font-size: .9em;">(en attente de l'adversaire)</span></p>
+            </div>
+            
+
+            <div v-if="foundLobby" class="grids-container mt-2" >
+              <div class="grid-wrapper">
+                <canvas
+                  ref="myCanvas"
+                  :width="canvasWidth"
+                  :height="canvasHeight"
+                  class="game-canvas my-canvas"
+                ></canvas>
+              </div>
+            </div>
           </div>
 
           <div class="player-card opp-grid">
-            <div class="d-flex align-center gap-2">
-              <span>{{ oppName }}</span>
+            <div class="d-flex align-center gap-2 w-100">
               <v-img
                 v-if="oppAvatar"
                 :src="oppAvatar"
@@ -77,6 +100,8 @@
                 :height="25"
                 rounded="xl"
               ></v-img>
+              <span class="ml-3" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 110px;">{{ oppName }}</span>
+              <v-spacer/>
               <v-img
                 v-if="oppElo"
                 :src="rankIcon(oppElo)"
@@ -100,42 +125,34 @@
                 </div>
               </v-img>
             </div>
-            <p class="score-text">
-              Score: <span class="font-weight-bold">{{ oppScore }}</span>
-            </p>
-            <p v-if="oppGameOver && !oppWin" class="text-error">Perdu!</p>
-            <p v-if="oppWin" class="text-success">Victoire!</p>
+            <div class="d-flex align-center ga-3">
+              <p class="score-text">
+                Score: <span class="font-weight-bold">{{ oppScore }}</span>
+              </p>
+              <p v-if="oppGameOver && !oppWin" class="text-error font-weight-bold">Perdu !</p>
+              <p v-if="oppWin" class="text-success font-weight-bold">Victoire !</p>
+            </div>
+
+            <div v-if="foundLobby" class="grids-container mt-2" >
+              <div class="grid-wrapper">
+                <canvas
+                  ref="oppCanvas"
+                  :width="canvasWidth"
+                  :height="canvasHeight"
+                  class="game-canvas opp-canvas"
+                ></canvas>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div v-if="foundLobby && countdown > 0" class="countdown-overlay">
+        <div v-if="foundLobby && countdown > 0 && !gameStarted" class="countdown-overlay">
           <div class="countdown-display">
-            <h2 class="text-white mb-2">La partie commence dans</h2>
             <div class="countdown-number">{{ countdown }}</div>
           </div>
         </div>
 
-        <div v-if="foundLobby" class="grids-container">
-          <div class="grid-wrapper">
-            <p class="grid-label text-white">Ta grille</p>
-            <canvas
-              ref="myCanvas"
-              :width="canvasWidth"
-              :height="canvasHeight"
-              class="game-canvas my-canvas"
-            ></canvas>
-          </div>
-
-          <div class="grid-wrapper">
-            <p class="grid-label text-white-50">Grille de {{ oppName }}</p>
-            <canvas
-              ref="oppCanvas"
-              :width="canvasWidth"
-              :height="canvasHeight"
-              class="game-canvas opp-canvas"
-            ></canvas>
-          </div>
-        </div>
+        
       </div>
     </v-main>
 
@@ -217,6 +234,13 @@ export default {
       // ELO
       elo: null,
       oppElo: null,
+
+      // Autoplay
+      autoplay: false,
+      autoplayCounter: 0,
+
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
     }
   },
 
@@ -233,16 +257,24 @@ export default {
     this.elo = await this.getElo(this.discordId)
   },
 
+  computed: {
+    isScreenTooSmall() {
+      return this.windowWidth < 800 || this.windowHeight < 870
+    },
+  },
+
   created() {
     this._boundHandleUnload = (e) => this.handleUnload(e)
     window.addEventListener('beforeunload', this._boundHandleUnload)
     window.addEventListener('pagehide', this._boundHandleUnload)
+    window.addEventListener('resize', this.handleResize)
   },
 
   beforeUnmount() {
     window.removeEventListener('beforeunload', this._boundHandleUnload)
     window.removeEventListener('pagehide', this._boundHandleUnload)
     window.removeEventListener('keydown', this.handleKeyPress)
+    window.removeEventListener('resize', this.handleResize)
     this.leaveQueueSync({ reason: 'component-destroy' })
     this.stopGameLoop()
     this.stopCountdown()
@@ -254,6 +286,10 @@ export default {
   },
 
   methods: {
+    handleResize() {
+      this.windowWidth = window.innerWidth
+      this.windowHeight = window.innerHeight
+    },
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
@@ -293,7 +329,49 @@ export default {
               : this.foundLobby.p1.id,
           )
 
-          if (!this.gameStarted && this.countdown === 0) {
+          // Restore game state from backend if game is already in progress
+          const myData = this.foundLobby.p1.id === this.discordId ? this.foundLobby.p1 : this.foundLobby.p2
+          const oppData = this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2 : this.foundLobby.p1
+
+          // Check if game has already started on backend
+          const gameInProgress = myData.snake && myData.snake.length > 0
+
+          if (gameInProgress) {
+            // Restore my game state from backend (backend is source of truth)
+            this.mySnake = myData.snake
+            this.myFood = myData.food
+            this.myScore = myData.score
+            this.myGameOver = myData.gameOver || false
+            this.myWin = myData.win || false
+            
+            // Restore opponent game state
+            this.oppSnake = oppData.snake
+            this.oppFood = oppData.food
+            this.oppScore = oppData.score
+            this.oppGameOver = oppData.gameOver
+            this.oppWin = oppData.win
+
+            // Restore direction (default to RIGHT if not set)
+            this.myDirection = myData.direction || 'RIGHT'
+            
+            // Mark game as started and restart game loop if not game over
+            this.gameStarted = true
+            if (!this.myGameOver && !this.myWin) {
+              this.startGameLoop()
+            }
+            
+            // Draw the restored state
+            this.$nextTick(() => {
+              this.drawMyGame()
+              this.drawOppGame()
+            })
+            
+            // Check if match already ended
+            if ((this.myGameOver || this.myWin) && (this.oppGameOver || this.oppWin)) {
+              this.handleMatchEnd()
+            }
+          } else if (!this.gameStarted && this.countdown === 0) {
+            // Only start countdown for new games
             this.startCountdown()
           }
         }
@@ -303,6 +381,8 @@ export default {
 
       this.socket.on('snakegamestate', (e) => {
         const lobby = e.lobby
+        this.foundLobby = lobby
+        console.log(lobby)
 
         if (lobby.p1.id === this.discordId) {
           // Update opponent state
@@ -327,10 +407,17 @@ export default {
           this.handleMatchEnd()
         }
       })
+
+      this.socket.on('snakegameOver', (e) => {
+        const lobby = e.lobby
+        this.foundLobby = lobby
+
+        this.handleMatchEnd()
+      })
     },
 
     handleUnload(evt) {
-      this.leaveQueueSync({ reason: 'unload' })
+      this.leaveQueueSync({ reason: evt.type })
     },
 
     leaveQueueSync(meta = {}) {
@@ -340,21 +427,17 @@ export default {
         ...meta,
       }
 
-      if (!this.inQueue && !this.foundLobby) return
+      // Don't send if we never initialized (no discordId)
+      if (!this.discordId) return
 
       const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
       try {
-        if (navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-          navigator.sendBeacon(url, blob)
-        } else {
-          fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            keepalive: true,
-          }).catch(() => {})
-        }
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(() => {})
       } catch {}
 
       if (this.socket?.connected) {
@@ -382,15 +465,17 @@ export default {
     },
 
     startCountdown() {
-      this.countdown = 5
+      this.countdown = 3
       this.initGame() // Initialize grids so they can be displayed
       this.drawMyGame() // Draw initial state
 
       this.countdownInterval = setInterval(() => {
         this.countdown--
-        if (this.countdown <= 0) {
+        if (this.countdown <= 0 || this.gameStarted) {
           this.stopCountdown()
-          this.startGame()
+          if (!this.gameStarted) {
+            this.startGame()
+          }
         }
       }, 1000)
     },
@@ -485,6 +570,18 @@ export default {
     update() {
       if (this.myGameOver || this.myWin) return
 
+      // Autoplay: move in a circle pattern
+      if (this.autoplay) {
+        this.autoplayCounter++
+        const directions = ['DOWN', 'LEFT', 'UP', 'RIGHT']
+        const directionIndex = this.autoplayCounter % 4
+        const newDirection = directions[directionIndex]
+        
+        if (newDirection !== this.myDirection) {
+          this.queueDirection(newDirection)
+        }
+      }
+
       // Update direction from queue
       if (this.myDirectionQueue.length > 0) {
         this.myDirection = this.myDirectionQueue.shift()
@@ -532,12 +629,12 @@ export default {
 
       // Check food collision
       if (head.x === this.myFood.x && head.y === this.myFood.y) {
-        this.myScore += 10
+        this.myScore += 1
         this.spawnFood()
 
         // Increase speed
-        if (this.myScore % 50 === 0 && this.gameSpeed > 50) {
-          this.gameSpeed -= 2
+        if (this.myScore % 5 === 0 && this.gameSpeed > 50) {
+          this.gameSpeed -= 5
           this.stopGameLoop()
           this.startGameLoop()
         }
@@ -572,14 +669,17 @@ export default {
     emitGameState() {
       if (!this.socket || !this.foundLobby) return
 
-      this.socket.emit('snakegamestate', {
+      const payload = {
         playerId: this.discordId,
         snake: this.mySnake,
         food: this.myFood,
         score: this.myScore,
+        direction: this.myDirection,
         gameOver: this.myGameOver,
         win: this.myWin,
-      })
+      }
+
+      this.socket.emit('snakegamestate', payload)
     },
 
     handleMatchEnd() {
@@ -590,11 +690,11 @@ export default {
       // Determine winner
       if (this.myWin && !this.oppWin) {
         this.title = 'Victoire'
-        this.message = 'Tu as rempli la grille en premier !'
+        this.message = this.myScore === ((this.canvasWidth/this.gridSize)**2) - 3 ? 'Tu as rempli la grille en premier !' : `${this.oppName} a abandonné !`
         this.socket.emit('snakegameOver', { playerId: this.discordId, winner: this.discordId })
       } else if (this.oppWin && !this.myWin) {
         this.title = 'Défaite'
-        this.message = `${this.oppName} a rempli la grille en premier`
+        this.message = this.oppScore === ((this.canvasWidth/this.gridSize)**2) - 3 ? `${this.oppName} a rempli la grille en premier` : `Tu as abandonné !`
         const winnerId =
           this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
         this.socket.emit('snakegameOver', { playerId: this.discordId, winner: winnerId })
@@ -602,11 +702,11 @@ export default {
         // Both lost, higher score wins
         if (this.myScore > this.oppScore) {
           this.title = 'Victoire'
-          this.message = `Tu as survécu plus longtemps ! (${this.myScore} vs ${this.oppScore})`
+          this.message = `Tu as marqué plus de points ! (${this.myScore} pts)`
           this.socket.emit('snakegameOver', { playerId: this.discordId, winner: this.discordId })
         } else if (this.oppScore > this.myScore) {
           this.title = 'Défaite'
-          this.message = `${this.oppName} a survécu plus longtemps (${this.oppScore} vs ${this.myScore})`
+          this.message = `${this.oppName} a marqué plus de points (${this.oppScore} pts)`
           const winnerId =
             this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
           this.socket.emit('snakegameOver', { playerId: this.discordId, winner: winnerId })
@@ -635,7 +735,7 @@ export default {
       if (!canvas) return
 
       const ctx = canvas.getContext('2d')
-      this.drawGame(ctx, this.mySnake, this.myFood)
+      this.drawGame(ctx, this.mySnake, this.myFood, this.myDirection)
     },
 
     drawOppGame() {
@@ -646,7 +746,7 @@ export default {
       this.drawGame(ctx, this.oppSnake, this.oppFood)
     },
 
-    drawGame(ctx, snake, food) {
+    drawGame(ctx, snake, food, direction = null) {
       // Clear canvas
       ctx.fillStyle = '#1a1a1a'
       ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
@@ -668,36 +768,71 @@ export default {
 
       // Draw food
       if (food) {
-        ctx.fillStyle = '#ff5252'
-        ctx.beginPath()
-        ctx.arc(
-          food.x * this.gridSize + this.gridSize / 2,
-          food.y * this.gridSize + this.gridSize / 2,
-          this.gridSize / 2 - 2,
-          0,
-          Math.PI * 2,
-        )
-        ctx.fill()
+        const x = food.x * this.gridSize
+        const y = food.y * this.gridSize
+
+        ctx.font = `${this.gridSize}px serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('🍎', x + this.gridSize / 2, y + this.gridSize / 2 + 2)
       }
 
       // Draw snake
-      if (snake && snake.length > 0) {
-        snake.forEach((segment, index) => {
-          let baseHeadColor = '#5862f2'
-          let alphaValue = 1 - (index / snake.length) * 0.7
-          let hexAlpha = Math.floor(alphaValue * 255)
-            .toString(16)
-            .padStart(2, '0')
-          ctx.fillStyle = baseHeadColor + hexAlpha
+      snake.forEach((segment, index) => {
+        let baseHeadColor = '#5862f2'
+        let alphaValue = 1 - (index / snake.length) * 0.6
+        let hexAlpha = Math.floor(alphaValue * 255)
+          .toString(16)
+          .padStart(2, '0')
+        ctx.fillStyle = baseHeadColor + hexAlpha
 
-          ctx.fillRect(
-            segment.x * this.gridSize + 1,
-            segment.y * this.gridSize + 1,
-            this.gridSize - 2,
-            this.gridSize - 2,
-          )
-        })
-      }
+        ctx.fillRect(
+          segment.x * this.gridSize + 1,
+          segment.y * this.gridSize + 1,
+          this.gridSize - 2,
+          this.gridSize - 2,
+        )
+
+        if (index === 0) {
+          // Draw eyes on head
+          const eyeSize = this.gridSize / 6
+          const eyeOffsetX = this.gridSize / 6
+          const eyeOffsetY = this.gridSize / 6
+
+          let eye1X, eye1Y, eye2X, eye2Y
+
+          switch (direction) {
+            case 'UP':
+              eye1X = segment.x * this.gridSize + eyeOffsetX
+              eye1Y = segment.y * this.gridSize + eyeOffsetY
+              eye2X = segment.x * this.gridSize + this.gridSize - 2 * eyeOffsetX
+              eye2Y = segment.y * this.gridSize + eyeOffsetY
+              break
+            case 'DOWN':
+              eye1X = segment.x * this.gridSize + eyeOffsetX
+              eye1Y = segment.y * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
+              eye2X = segment.x * this.gridSize + this.gridSize - 2 * eyeOffsetX
+              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
+              break
+            case 'LEFT':
+              eye1X = segment.x * this.gridSize + eyeOffsetY
+              eye1Y = segment.y * this.gridSize + eyeOffsetX
+              eye2X = segment.x * this.gridSize + eyeOffsetY
+              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetX - eyeSize
+              break
+            case 'RIGHT':
+              eye1X = segment.x * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
+              eye1Y = segment.y * this.gridSize + eyeOffsetX
+              eye2X = segment.x * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
+              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetX - eyeSize
+              break
+          }
+
+          ctx.fillStyle = '#000'
+          ctx.fillRect(eye1X, eye1Y, eyeSize, eyeSize)
+          ctx.fillRect(eye2X, eye2Y, eyeSize, eyeSize)
+        }
+      })
     },
 
     reload() {
@@ -770,20 +905,20 @@ export default {
 }
 
 .header-section {
-  text-align: center;
+  text-align: start;
 }
 
 .players-info {
   display: flex;
   gap: 2em;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
 }
 
 .player-card {
   background: rgba(255, 255, 255, 0.05);
-  padding: 1em 1.5em;
-  border-radius: 10px;
+  padding: 1em;
+  border-radius: 20px;
   min-width: 200px;
 }
 
@@ -792,6 +927,9 @@ export default {
 }
 
 .opp-grid {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -830,6 +968,7 @@ export default {
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
   opacity: 0.8;
+  height: 175px !important;
 }
 
 .countdown-overlay {
@@ -841,23 +980,24 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
   z-index: 1000;
 }
 
 .countdown-display {
   text-align: center;
-  padding: 2em;
+  padding: 1em 4em;
   background: rgba(88, 98, 242, 0.1);
+  backdrop-filter: blur(10px);
   border-radius: 20px;
   border: 2px solid #5862f2;
 }
 
 .countdown-number {
   font-size: 6em;
+  width: 50px;
+  text-align: center;
   font-weight: bold;
-  color: #5862f2;
+  color: white;
   animation: pulse 1s ease-in-out infinite;
 }
 

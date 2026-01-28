@@ -1,36 +1,48 @@
 <template>
   <v-layout>
     <v-main class="d-flex" style="place-items: center; place-content: center">
-      <div class="menu-container">
-        <h2 class="text-white mb-8" style="font-size: 3em; text-align: center">Snake</h2>
+      <div class="menu-container mt-16">
+        <h2 class="text-white mb-4" style="text-align: start">Snake Game</h2>
 
-        <div class="menu-buttons">
-          <v-btn
-            class="game-mode-btn"
-            color="#5862f2"
-            size="x-large"
-            rounded="xl"
-            @click="$router.push('/snake/solo')"
-          >
-            <div class="btn-content">
-              <v-icon size="30" class="mr-2">mdi-account</v-icon>
-              <span class="text-h5">Mode Solo</span>
-            </div>
-          </v-btn>
+        <v-card variant="tonal" rounded="xl">
+          <v-card-text>
+            <p>Gagne un FlopoCoin par pomme en solo et mesure toi à d'autres joueurs en 1v1.</p>
+          </v-card-text>
+          <v-card-actions class="d-flex pa-4 pt-0">
+            <v-btn
+              class="game-mode-btn"
+              style="flex-grow: 1;"
+              variant="flat"
+              color="#5862f2"
+              rounded="lg"
+              size="large"
+              :disabled="isScreenTooSmall"
+              @click="$router.push('/snake/solo')"
+            >
+              <div class="btn-content">
+                <v-icon size="30" class="mr-2">mdi-account</v-icon>
+                <span class="text-h5">Solo</span>
+              </div>
+            </v-btn>
 
-          <v-btn
-            class="game-mode-btn"
-            color="#5862f2"
-            size="x-large"
-            rounded="xl"
-            @click="$router.push('/snake/versus')"
-          >
-            <div class="btn-content">
-              <v-icon size="30" class="mr-2">mdi-account-multiple</v-icon>
-              <span class="text-h5">Mode 1v1</span>
-            </div>
-          </v-btn>
-        </div>
+            <v-btn
+              class="game-mode-btn"
+              style="flex-grow: 1;"
+              variant="flat"
+              color="#5862f2"
+              rounded="lg"
+              size="large"
+              :disabled="isScreenTooSmall"
+              @click="$router.push('/snake/versus')"
+            >
+              <div class="btn-content">
+                <v-icon size="30" class="mr-2">mdi-account-multiple</v-icon>
+                <span class="text-h5">Versus</span>
+                <v-chip class="ml-3 mt-1" color="dark" variant="flat" size="x-small">Bêta</v-chip>
+              </div>
+            </v-btn>
+          </v-card-actions>
+        </v-card>
       </div>
     </v-main>
 
@@ -48,9 +60,35 @@
 export default {
   name: 'SnakeMenu',
 
+  data() {
+    return {
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+    }
+  },
+
+  computed: {
+    isScreenTooSmall() {
+      return this.windowWidth < 800 || this.windowHeight < 870
+    },
+  },
+
   mounted() {
     const discordId = localStorage.getItem('discordId')
     if (!discordId) this.$router.push('/')
+
+    window.addEventListener('resize', this.handleResize)
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize)
+  },
+
+  methods: {
+    handleResize() {
+      this.windowWidth = window.innerWidth
+      this.windowHeight = window.innerHeight
+    },
   },
 }
 </script>
@@ -63,13 +101,11 @@ export default {
 
 .menu-buttons {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 1.5em;
 }
 
 .game-mode-btn {
-  width: 100%;
-  height: 70px !important;
   font-weight: 600;
   text-transform: none;
   letter-spacing: normal;

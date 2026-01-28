@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "auth": "node server/auth-server",
     "build": "vite build",
     "preview": "vite preview",
     "format": "prettier --write src/"

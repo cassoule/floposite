@@ -377,7 +377,7 @@
               gameCardsFilter === 'Elo' ||
               gameCardsFilter === '1v1'
             "
-            class="game-action-card bg-black"
+            class="game-action-card snake-action-card bg-black"
             variant="tonal"
             @click="$router.push('/snake')"
           >
@@ -2787,6 +2787,11 @@ button:disabled {
   background: url('/game_illu_mg.png') no-repeat center center;
   background-size: 30% auto;
   transform: rotate(-5deg);
+}
+.snake-action-card::after {
+  background: url('/game_illu_snake.png') no-repeat center center;
+  background-size: 30% auto;
+  transform: rotate(5deg);
 }
 
 .disabled-card::after {

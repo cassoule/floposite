@@ -15,7 +15,8 @@
             </v-card-text>
           </v-card>
           <div v-if="!gameStarted && !gameOver" class="start-message">
-            <p class="text-white">Appuie sur&nbsp;<kbd>ESPACE</kbd>&nbsp;pour commencer.</p>
+            <p v-if="!isScreenTooSmall" class="text-white">Appuie sur&nbsp;<kbd>ESPACE</kbd>&nbsp;pour commencer.</p>
+            <p v-else class="text-white">Ton écran est trop petit</p>
           </div>
           <div v-if="gameOver" class="game-over-message">
             <h3 v-if="isWin" class="text-white mb-2" style="font-size: 2em">Victoire !</h3>
@@ -37,49 +38,6 @@
           :height="canvasHeight"
           class="game-canvas"
         ></canvas>
-
-        <!-- <div class="mobile-controls">
-          <div class="control-row">
-            <v-btn
-              icon
-              size="large"
-              color="primary"
-              @touchstart.prevent="changeDirection('UP')"
-              @mousedown="changeDirection('UP')"
-            >
-              <v-icon>mdi-chevron-up</v-icon>
-            </v-btn>
-          </div>
-          <div class="control-row">
-            <v-btn
-              icon
-              size="large"
-              color="primary"
-              @touchstart.prevent="changeDirection('LEFT')"
-              @mousedown="changeDirection('LEFT')"
-            >
-              <v-icon>mdi-chevron-left</v-icon>
-            </v-btn>
-            <v-btn
-              icon
-              size="large"
-              color="primary"
-              @touchstart.prevent="changeDirection('DOWN')"
-              @mousedown="changeDirection('DOWN')"
-            >
-              <v-icon>mdi-chevron-down</v-icon>
-            </v-btn>
-            <v-btn
-              icon
-              size="large"
-              color="primary"
-              @touchstart.prevent="changeDirection('RIGHT')"
-              @mousedown="changeDirection('RIGHT')"
-            >
-              <v-icon>mdi-chevron-right</v-icon>
-            </v-btn>
-          </div>
-        </div> -->
       </div>
     </v-main>
 
@@ -94,11 +52,14 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'SnakeSolo',
 
   data() {
     return {
+      discordId: null,
       canvasWidth: 500,
       canvasHeight: 500,
       gridSize: 500 / 9,
@@ -113,7 +74,16 @@ export default {
       isWin: false,
       gameLoop: null,
       gameSpeed: 150, // milliseconds per frame
+
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
     }
+  },
+
+  computed: {
+    isScreenTooSmall() {
+      return this.windowWidth < 800 || this.windowHeight < 870
+    },
   },
 
   mounted() {
@@ -122,19 +92,28 @@ export default {
       this.$router.push('/')
       return
     }
+    this.discordId = discordId
 
     this.loadHighScore()
     this.initGame()
     this.setupKeyboardControls()
     this.drawGame()
+
+    window.addEventListener('resize', this.handleResize)
   },
 
   beforeUnmount() {
     this.stopGameLoop()
     window.removeEventListener('keydown', this.handleKeyPress)
+    window.removeEventListener('resize', this.handleResize)
   },
 
   methods: {
+    handleResize() {
+      this.windowWidth = window.innerWidth
+      this.windowHeight = window.innerHeight
+    },
+
     initGame() {
       // Initialize snake in the middle
       const startX = Math.floor(this.canvasWidth / this.gridSize / 2)
@@ -221,7 +200,7 @@ export default {
     },
 
     startGame() {
-      if (this.gameStarted) return
+      if (this.gameStarted || this.isScreenTooSmall) return
 
       this.gameStarted = true
       this.startGameLoop()
@@ -293,7 +272,7 @@ export default {
         this.spawnFood()
 
         // Increase speed slightly every 5 foods
-        if (this.score % 50 === 0 && this.gameSpeed > 50) {
+        if (this.score % 5 === 0 && this.gameSpeed > 50) {
           this.gameSpeed -= 5
           this.stopGameLoop()
           this.startGameLoop()
@@ -421,7 +400,7 @@ export default {
       })
     },
 
-    endGame() {
+    async endGame() {
       this.gameOver = true
       this.gameStarted = false
       this.stopGameLoop()
@@ -429,6 +408,17 @@ export default {
       if (this.score > this.highScore) {
         this.highScore = this.score
         this.saveHighScore()
+      }
+
+      const url = import.meta.env.VITE_FLAPI_URL + '/snake/reward'
+      try {
+
+        const response = await axios.post(
+          url,
+          { discordId: this.discordId, score: this.score, isWin: this.isWin },
+        )
+      } catch (error) {
+        console.error('Error rewarding snake solo score:', error)
       }
     },
 

@@ -220,7 +220,7 @@ export default {
     leaveQueueSync(meta = {}) {
       const payload = {
         discordId: this.discordId, // set this in mounted()
-        game: 'tictactoe',
+        game: 'connect4',
         ...meta,
       }
 
@@ -245,7 +245,7 @@ export default {
       // 2) Best-effort socket emit (may not flush on unload, but fine as a bonus)
       if (this.socket?.connected) {
         try {
-          this.socket.emit('tictactoe:queue:leave', payload)
+          this.socket.emit('connect4:queue:leave', payload)
         } catch {}
       }
     },
