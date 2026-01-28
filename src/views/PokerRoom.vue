@@ -126,19 +126,19 @@ export default {
         await this.getRoom()
         switch (data.type) {
           case 'player-joined':
-            break;
+            break
           case 'room-started':
             this.raiseValue =
               (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
-            break;
+            break
           case 'room-start':
             console.log('room start', data)
-            break;
+            break
           default:
             if (initialRoom === this.room) window.location.reload()
             this.raiseValue =
               (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
-            break;
+            break
         }
       })
 
@@ -147,17 +147,29 @@ export default {
           await this.getRoom()
           switch (data.type) {
             case 'player-fold':
-              this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} ` : ''}FOLDED`, true)
-              break;
+              this.showSuccessOrWarningToast(
+                `${data.playerId !== this.discordId ? `${data.playerName} ` : ''}FOLDED`,
+                true,
+              )
+              break
             case 'player-check':
-              this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}CHECK`, false)
-              break;
+              this.showSuccessOrWarningToast(
+                `${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}CHECK`,
+                false,
+              )
+              break
             case 'player-call':
-              this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}CALL`, false)
-              break;
+              this.showSuccessOrWarningToast(
+                `${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}CALL`,
+                false,
+              )
+              break
             case 'player-raise':
-              this.showSuccessOrWarningToast(`${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}RAISE par ${data.amount}`, false)
-              break;
+              this.showSuccessOrWarningToast(
+                `${data.playerId !== this.discordId ? `${data.playerName} a ` : 'Tu as '}RAISE par ${data.amount}`,
+                false,
+              )
+              break
             case 'player-winner':
               let playerNames = ''
               data.playerIds.forEach((playerId, index) => {
@@ -166,10 +178,13 @@ export default {
                 }
                 playerNames += this.room.players[playerId].globalName
               })
-              this.showSuccessOrWarningToast(`${data.playerIds.includes(this.discordId) ? `Tu as gagné ` : playerNames + (data.playerIds.length > 1 ? ' ont gagné ' : ' a gagné ')}${data.amount}`, false)
-              break;
+              this.showSuccessOrWarningToast(
+                `${data.playerIds.includes(this.discordId) ? `Tu as gagné ` : playerNames + (data.playerIds.length > 1 ? ' ont gagné ' : ' a gagné ')}${data.amount}`,
+                false,
+              )
+              break
             default:
-              break;
+              break
           }
         }
       })
@@ -220,7 +235,11 @@ export default {
     async handleKick(id) {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/kick'
       try {
-        const response = await axios.post(url, { commandUserId: this.discordId, userId: id, roomId: this.room.id })
+        const response = await axios.post(url, {
+          commandUserId: this.discordId,
+          userId: id,
+          roomId: this.room.id,
+        })
         this.showSuccessOrWarningToast(`Joueur ${this.room.players[id].globalName} expulsé`, true)
       } catch (e) {
         console.log(e)
@@ -400,18 +419,26 @@ export default {
               variant="tonal"
               rounded="lg"
               :disabled="
-                (Object.keys(room?.players)?.length - Object.keys(room?.afk)?.length < 2) ||
-                Object.values(room?.players).filter(p => p.bank === 0).length > 0
+                Object.keys(room?.players)?.length - Object.keys(room?.afk)?.length < 2 ||
+                Object.values(room?.players).filter((p) => p.bank === 0).length > 0
               "
               @click="startGame"
             />
             <v-btn
               v-if="!hasJoinedRoom"
-              :text="room?.fakeMoney ? 'S\'asseoir' : 'S\'asseoir pour ' + formatAmount(room?.minBet) + ' FC'"
+              :text="
+                room?.fakeMoney
+                  ? 'S\'asseoir'
+                  : 'S\'asseoir pour ' + formatAmount(room?.minBet) + ' FC'
+              "
               class="text-none"
               color="primary"
               rounded="lg"
-              :disabled="room?.fakeMoney ? false : room?.minBet > (users.find(u => u.id === discordId)?.coins ?? 0)"
+              :disabled="
+                room?.fakeMoney
+                  ? false
+                  : room?.minBet > (users.find((u) => u.id === discordId)?.coins ?? 0)
+              "
               :loading="isInQueue"
               @click="joinRoom"
             />
@@ -624,9 +651,23 @@ export default {
                   {{ player.solve }}
                 </v-card-text>
               </div>
-              <div v-if="discordId === room?.host_id && player.id !== room?.host_id && !(room.playing && (room.current_turn !== null && room.current_turn !== 4))">
+              <div
+                v-if="
+                  discordId === room?.host_id &&
+                  player.id !== room?.host_id &&
+                  !(room.playing && room.current_turn !== null && room.current_turn !== 4)
+                "
+              >
                 <v-card-actions class="pa-0 ma-0">
-                  <v-btn block variant="flat" density="compact" class="text-none" color="error" rounded="xl" @click="handleKick(player.id)">
+                  <v-btn
+                    block
+                    variant="flat"
+                    density="compact"
+                    class="text-none"
+                    color="error"
+                    rounded="xl"
+                    @click="handleKick(player.id)"
+                  >
                     Kick
                   </v-btn>
                 </v-card-actions>

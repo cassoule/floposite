@@ -1,11 +1,11 @@
 <script>
 export default {
-  name: "EryniesHomePage",
+  name: 'EryniesHomePage',
 }
 </script>
 
 <template>
-<!--  <div class="erynies-bg"></div>
+  <!--  <div class="erynies-bg"></div>
   <v-layout>
     <v-main>
       <h1>Erynies</h1>
@@ -32,6 +32,6 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at -400% -300%,#3a0000dd,#181818ff 150%);
+  background: radial-gradient(circle at -400% -300%, #3a0000dd, #181818ff 150%);
 }
 </style>

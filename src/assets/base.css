@@ -36,7 +36,9 @@
   --section-gap: 160px;
 }
 
-:root { color-scheme: light dark; }
+:root {
+  color-scheme: light dark;
+}
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -68,7 +70,7 @@ body {
   min-height: 100vh;
   color: var(--color-text);
   background: #181818;
-  background: radial-gradient(circle at -400% -300%,#5865f2,#181818 100%);
+  background: radial-gradient(circle at -400% -300%, #5865f2, #181818 100%);
   transition:
     color 0.5s,
     background-color 0.5s;

@@ -1,32 +1,37 @@
 <template>
   <v-layout>
-    <v-main class="d-flex" style="place-items: start; place-content: start; gap: 2em; flex-wrap: wrap">
+    <v-main
+      class="d-flex"
+      style="place-items: start; place-content: start; gap: 2em; flex-wrap: wrap"
+    >
       <div class="mt-8">
-        <p style="display: flex; justify-content: start; align-items: center; gap: .5em;">
+        <p style="display: flex; justify-content: start; align-items: center; gap: 0.5em">
           <v-img v-if="elo" :src="rankIcon(elo)" min-width="20" max-width="20" height="20">
-            <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
-              <p style="font-weight: 400;">{{rankDiv(elo)}}</p>
+            <div
+              :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+            >
+              <p style="font-weight: 400">{{ rankDiv(elo) }}</p>
             </div>
           </v-img>
           {{ elo ? elo + ' Elo' : 'Non Classé' }}
         </p>
-        <h1 class="text-white" style="position: relative;">Puissance 4</h1>
+        <h1 class="text-white" style="position: relative">Puissance 4</h1>
 
-          <v-btn
-            v-if="!foundLobby"
-            id="find"
-            class="my-2 "
-            color="primary"
-            text="Chercher un joueur"
-            :loading="inQueue"
-            :disabled="foundLobby !== null && foundLobby !== undefined"
-            style="border-radius: 10px"
-            @click="joinQueue"
+        <v-btn
+          v-if="!foundLobby"
+          id="find"
+          class="my-2"
+          color="primary"
+          text="Chercher un joueur"
+          :loading="inQueue"
+          :disabled="foundLobby !== null && foundLobby !== undefined"
+          style="border-radius: 10px"
+          @click="joinQueue"
         />
         <p v-if="!foundLobby && queue.length > 0" class="mb-3">
           {{ !foundLobby && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
           <span v-for="(p, index) in queue" :key="p">
-            {{index > 1 ? ',' : ''}}
+            {{ index > 1 ? ',' : '' }}
             {{ p }}
           </span>
         </p>
@@ -37,32 +42,61 @@
               <span :class="['player-indicator', playerValue === 'R' ? 'red' : 'yellow']"></span>
               Tu joues contre
               <strong class="text-primary ml-1">@{{ oppName }}</strong>
-              <v-img :src="oppAvatar" class="ml-1" :min-width="25" :max-width="25" :height="25" rounded="xl"></v-img>
-              <p class="ml-3" style="display: flex; justify-content: start; align-items: center; gap: .5em;">
-                <v-img v-if="oppElo" :src="rankIcon(oppElo)" min-width="20" max-width="20" height="20">
-                  <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
-                    <p style="font-weight: 400;">{{rankDiv(oppElo)}}</p>
+              <v-img
+                :src="oppAvatar"
+                class="ml-1"
+                :min-width="25"
+                :max-width="25"
+                :height="25"
+                rounded="xl"
+              ></v-img>
+              <p
+                class="ml-3"
+                style="display: flex; justify-content: start; align-items: center; gap: 0.5em"
+              >
+                <v-img
+                  v-if="oppElo"
+                  :src="rankIcon(oppElo)"
+                  min-width="20"
+                  max-width="20"
+                  height="20"
+                >
+                  <div
+                    :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+                  >
+                    <p style="font-weight: 400">{{ rankDiv(oppElo) }}</p>
                   </div>
                 </v-img>
                 {{ oppElo ? oppElo + ' Elo' : 'Non Classé' }}
               </p>
             </div>
             <p class="turn-indicator" :class="{ 'my-turn': isMyTurn }">
-              {{ gameOver ? 'Partie terminée' : (isMyTurn ? "C'est ton tour" : `C'est au tour de ${oppName}`) }}
+              {{
+                gameOver
+                  ? 'Partie terminée'
+                  : isMyTurn
+                    ? "C'est ton tour"
+                    : `C'est au tour de ${oppName}`
+              }}
             </p>
           </div>
 
           <!-- Game Board -->
           <div class="board">
-            <div v-for="(col, colIndex) in board[0]" :key="colIndex" class="column" @click="dropPiece(colIndex)">
+            <div
+              v-for="(col, colIndex) in board[0]"
+              :key="colIndex"
+              class="column"
+              @click="dropPiece(colIndex)"
+            >
               <div v-for="(cell, rowIndex) in board" :key="rowIndex" class="cell">
                 <div
                   :class="[
-              'piece',
-              board[rowIndex][colIndex] === 'R' ? 'red' : '',
-              board[rowIndex][colIndex] === 'Y' ? 'yellow' : '',
-              isWinningPiece(rowIndex, colIndex) ? 'win' : ''
-            ]"
+                    'piece',
+                    board[rowIndex][colIndex] === 'R' ? 'red' : '',
+                    board[rowIndex][colIndex] === 'Y' ? 'yellow' : '',
+                    isWinningPiece(rowIndex, colIndex) ? 'win' : '',
+                  ]"
                 ></div>
               </div>
             </div>
@@ -71,7 +105,7 @@
       </div>
     </v-main>
 
-    <v-progress-linear v-if="foundLobby" v-model="timeLeft" style="position: fixed; left: 0"/>
+    <v-progress-linear v-if="foundLobby" v-model="timeLeft" style="position: fixed; left: 0" />
 
     <v-dialog v-model="endGameDialog" persistent max-width="250">
       <v-card color="primary" style="border-radius: 15px">
@@ -87,12 +121,18 @@
       </v-card>
     </v-dialog>
 
-    <v-btn class="back-btn text-none" text="Retour" variant="tonal" color="#ddd" @click="$router.push('/dashboard')"></v-btn>
+    <v-btn
+      class="back-btn text-none"
+      text="Retour"
+      variant="tonal"
+      color="#ddd"
+      @click="$router.push('/dashboard')"
+    ></v-btn>
   </v-layout>
 </template>
 
 <script>
-import { io } from 'socket.io-client';
+import { io } from 'socket.io-client'
 import axios from 'axios'
 
 export default {
@@ -113,30 +153,36 @@ export default {
       now: Date.now(),
       oppElo: null,
       elo: null,
-    };
+    }
   },
   computed: {
     oppName() {
-      if (!this.foundLobby) return '';
-      return this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.name : this.foundLobby.p1.name;
+      if (!this.foundLobby) return ''
+      return this.foundLobby.p1.id === this.discordId
+        ? this.foundLobby.p2.name
+        : this.foundLobby.p1.name
     },
     oppAvatar() {
-      if (!this.foundLobby) return '';
-      return this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.avatar : this.foundLobby.p1.avatar;
+      if (!this.foundLobby) return ''
+      return this.foundLobby.p1.id === this.discordId
+        ? this.foundLobby.p2.avatar
+        : this.foundLobby.p1.avatar
     },
     playerValue() {
-      if (!this.foundLobby) return null;
-      return this.foundLobby.p1.id === this.discordId ? this.foundLobby.p1.val : this.foundLobby.p2.val;
+      if (!this.foundLobby) return null
+      return this.foundLobby.p1.id === this.discordId
+        ? this.foundLobby.p1.val
+        : this.foundLobby.p2.val
     },
     isMyTurn() {
-      if (!this.foundLobby || this.gameOver) return false;
-      return this.foundLobby.turn === this.discordId;
+      if (!this.foundLobby || this.gameOver) return false
+      return this.foundLobby.turn === this.discordId
     },
     gameOverMessage() {
-      if (!this.gameOver) return '';
-      if (this.winner === 'draw') return "Match nul !";
-      if (this.winner === this.discordId) return "Victoire !";
-      return "Défaite...";
+      if (!this.gameOver) return ''
+      if (this.winner === 'draw') return 'Match nul !'
+      if (this.winner === this.discordId) return 'Victoire !'
+      return 'Défaite...'
     },
     timeLeft() {
       if (this.endGameDialog) {
@@ -148,7 +194,8 @@ export default {
       )
       if (tl === 100) {
         let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2 : this.foundLobby.p1
-        let loser = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1.name : this.foundLobby.p2.name
+        let loser =
+          this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1.name : this.foundLobby.p2.name
 
         this.title = winner.id === this.discordId ? 'Victoire' : 'Défaite'
         this.message = `Temps écoulé pour ${loser}`
@@ -167,23 +214,23 @@ export default {
     handleUnload(evt) {
       //try { evt.preventDefault?.(); } catch {}
 
-      this.leaveQueueSync({ reason: 'unload' });
+      this.leaveQueueSync({ reason: 'unload' })
     },
 
     leaveQueueSync(meta = {}) {
       const payload = {
-        discordId: this.discordId,   // set this in mounted()
+        discordId: this.discordId, // set this in mounted()
         game: 'tictactoe',
         ...meta,
-      };
+      }
 
       // 1) Fire-and-forget HTTP that survives page close
       if (!this.inQueue) return
-      const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`;
+      const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
       try {
         if (navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-          navigator.sendBeacon(url, blob);
+          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+          navigator.sendBeacon(url, blob)
         } else {
           // Fallback for older browsers
           fetch(url, {
@@ -191,42 +238,44 @@ export default {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
             keepalive: true, // critical
-          }).catch(() => {});
+          }).catch(() => {})
         }
       } catch {}
 
       // 2) Best-effort socket emit (may not flush on unload, but fine as a bonus)
       if (this.socket?.connected) {
-        try { this.socket.emit('tictactoe:queue:leave', payload); } catch {}
+        try {
+          this.socket.emit('tictactoe:queue:leave', payload)
+        } catch {}
       }
     },
     joinQueue() {
-      this.inQueue = true;
-      this.socket.emit('connect4queue', { playerId: this.discordId });
+      this.inQueue = true
+      this.socket.emit('connect4queue', { playerId: this.discordId })
     },
     dropPiece(colIndex) {
-      if (!this.isMyTurn || this.gameOver) return;
+      if (!this.isMyTurn || this.gameOver) return
 
       // Check if column is full
       if (this.board[0][colIndex]) {
-        return;
+        return
       }
 
       this.socket.emit('connect4playing', {
         playerId: this.discordId,
         col: colIndex,
-      });
+      })
     },
     isWinningPiece(row, col) {
-      if (!this.foundLobby?.winningPieces) return false;
-      return this.foundLobby.winningPieces.some(p => p.row === row && p.col === col);
+      if (!this.foundLobby?.winningPieces) return false
+      return this.foundLobby.winningPieces.some((p) => p.row === row && p.col === col)
     },
     resetGame() {
-      this.inQueue = false;
-      this.foundLobby = null;
-      this.board = [];
-      this.gameOver = false;
-      this.winner = null;
+      this.inQueue = false
+      this.foundLobby = null
+      this.board = []
+      this.gameOver = false
+      this.winner = null
     },
 
     async getElo(id) {
@@ -241,19 +290,19 @@ export default {
 
     rankIcon(elo) {
       if (elo < 900) {
-        return '';
+        return ''
       } else if (elo < 1100) {
-        return '/ranks_icons/bronze.svg';
+        return '/ranks_icons/bronze.svg'
       } else if (elo < 1300) {
-        return '/ranks_icons/silver.svg';
+        return '/ranks_icons/silver.svg'
       } else if (elo < 1600) {
-        return '/ranks_icons/gold.svg';
+        return '/ranks_icons/gold.svg'
       } else if (elo < 2000) {
-        return '/ranks_icons/diamond.svg';
+        return '/ranks_icons/diamond.svg'
       } else if (elo >= 2000) {
-        return '/ranks_icons/master.svg';
+        return '/ranks_icons/master.svg'
       } else {
-        return '';
+        return ''
       }
     },
 
@@ -311,24 +360,24 @@ export default {
     },
   },
   beforeRouteLeave(to, from, next) {
-    this.leaveQueueSync({ reason: 'route-leave' });
-    next();
+    this.leaveQueueSync({ reason: 'route-leave' })
+    next()
   },
   created() {
-    this._boundHandleUnload = (e) => this.handleUnload(e);
+    this._boundHandleUnload = (e) => this.handleUnload(e)
 
-    window.addEventListener('beforeunload', this._boundHandleUnload);
-    window.addEventListener('pagehide', this._boundHandleUnload);
+    window.addEventListener('beforeunload', this._boundHandleUnload)
+    window.addEventListener('pagehide', this._boundHandleUnload)
 
     this.interval = setInterval(() => {
       this.now = Date.now()
     }, 1000)
   },
   beforeDestroy() {
-    window.removeEventListener('beforeunload', this._boundHandleUnload);
-    window.removeEventListener('pagehide', this._boundHandleUnload);
+    window.removeEventListener('beforeunload', this._boundHandleUnload)
+    window.removeEventListener('pagehide', this._boundHandleUnload)
 
-    this.leaveQueueSync({ reason: 'component-destroy' });
+    this.leaveQueueSync({ reason: 'component-destroy' })
 
     clearInterval(this.interval)
   },
@@ -345,53 +394,65 @@ export default {
     })
 
     this.socket.on('connect', () => {
-      console.log('Connected to server with socket ID:', this.socket.id);
-    });
+      console.log('Connected to server with socket ID:', this.socket.id)
+    })
 
     this.socket.on('connect4queue', async (data) => {
-      this.queue = data.queue;
+      this.queue = data.queue
       const myLobby = data.allPlayers.find(
-        (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId
-      );
+        (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId,
+      )
       if (myLobby) {
-        this.oppElo = await this.getElo(myLobby.p1.id === this.discordId ? myLobby.p2.id : myLobby.p1.id)
-        this.inQueue = false;
-        this.foundLobby = myLobby;
-        this.board = myLobby.board;
+        this.oppElo = await this.getElo(
+          myLobby.p1.id === this.discordId ? myLobby.p2.id : myLobby.p1.id,
+        )
+        this.inQueue = false
+        this.foundLobby = myLobby
+        this.board = myLobby.board
       }
-    });
+    })
 
     this.socket.on('connect4playing', (data) => {
       const myLobby = data.allPlayers.find(
-        (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId
-      );
+        (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId,
+      )
       if (myLobby) {
-        this.foundLobby = myLobby;
-        this.board = myLobby.board;
+        this.foundLobby = myLobby
+        this.board = myLobby.board
       }
-    });
+    })
 
     this.socket.on('connect4gameOver', async (data) => {
       if (this.foundLobby && this.foundLobby.msgId === data.game.msgId) {
-        this.gameOver = true;
-        this.winner = data.winner;
-        this.foundLobby.winningPieces = data.game.winningPieces; // Get winning pieces
-        this.title = this.winner === 'draw' ? 'Égalité' : (this.winner === this.discordId ? 'Victoire' : 'Défaite')
-        this.message = this.winner === 'draw' ? 'Personne ne gagne' : (this.foundLobby.p1.id === this.winner ? `Victoire de ${this.foundLobby.p1.name}` : `Victoire de ${this.foundLobby.p2.name}`)
+        this.gameOver = true
+        this.winner = data.winner
+        this.foundLobby.winningPieces = data.game.winningPieces // Get winning pieces
+        this.title =
+          this.winner === 'draw'
+            ? 'Égalité'
+            : this.winner === this.discordId
+              ? 'Victoire'
+              : 'Défaite'
+        this.message =
+          this.winner === 'draw'
+            ? 'Personne ne gagne'
+            : this.foundLobby.p1.id === this.winner
+              ? `Victoire de ${this.foundLobby.p1.name}`
+              : `Victoire de ${this.foundLobby.p2.name}`
         setTimeout(() => {
           this.endGameDialog = true
         }, 250)
       }
-    });
+    })
 
     this.socket.emit('connect4connection', { id: this.discordId })
   },
   beforeUnmount() {
     if (this.socket) {
-      this.socket.disconnect();
+      this.socket.disconnect()
     }
   },
-};
+}
 </script>
 
 <style scoped>
@@ -402,7 +463,8 @@ export default {
   border-radius: 12px;
 }
 
-.queue-section, .game-section {
+.queue-section,
+.game-section {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -473,8 +535,12 @@ export default {
   margin-right: 0.5em;
 }
 
-.player-indicator.red { background-color: #d90429; }
-.player-indicator.yellow { background-color: #ffb703; }
+.player-indicator.red {
+  background-color: #d90429;
+}
+.player-indicator.yellow {
+  background-color: #ffb703;
+}
 
 .turn-indicator.my-turn {
   font-weight: bold;

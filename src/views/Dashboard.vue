@@ -81,7 +81,7 @@
         <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
       </p>
 
-      <p v-if="elos[discordId]" class="mt-3 d-flex ga-2" style="place-items: center;">
+      <div v-if="elos[discordId]" class="mt-3 d-flex ga-2" style="place-items: center">
         <div style="display: flex; place-items: center">
           <v-img :src="rankIcon(user?.elo)" width="22" height="30">
             <div
@@ -93,9 +93,9 @@
         </div>
         {{ elos[discordId] }} FlopoElo
         <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
-            'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
+          'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
         }}</span>
-      </p>
+      </div>
     </div>
 
     <div
@@ -155,7 +155,12 @@
           ></v-icon>
         </v-btn>
       </div>
-      <v-chip-group v-model="gameCardsFilter" class="mb-0 pb-0 text-secondary" selected-class="text-white" :disabled="tab !== 'games'">
+      <v-chip-group
+        v-model="gameCardsFilter"
+        class="mb-0 pb-0 text-secondary"
+        selected-class="text-white"
+        :disabled="tab !== 'games'"
+      >
         <v-chip size="small" :value="'1v1'" filter>1v1</v-chip>
         <v-chip size="small" :value="'Multi'" filter>Multi</v-chip>
         <v-chip size="small" :value="'Solo'" filter>Solo</v-chip>
@@ -175,20 +180,25 @@
     >
       <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
       <v-tab v-if="user?.isAkhy" value="commandes" icon>
-        <i class="mdi mdi-slash-forward-box"/>
+        <i class="mdi mdi-slash-forward-box" />
       </v-tab>
       <v-tab v-if="user?.isAkhy" value="predictions" icon>
-        <i class="mdi mdi-tooltip-question-outline"/>
+        <i class="mdi mdi-tooltip-question-outline" />
       </v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="tab" class="w-100">
       <v-tabs-window-item value="games">
         <div class="actions-container">
-          <v-card v-if="!gameCardsFilter || gameCardsFilter === '1v1' || gameCardsFilter === 'Elo'" class="game-action-card c4-action-card bg-black" variant="tonal" @click="$router.push('/connect-4')">
+          <v-card
+            v-if="!gameCardsFilter || gameCardsFilter === '1v1' || gameCardsFilter === 'Elo'"
+            class="game-action-card c4-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/connect-4')"
+          >
             <v-card-title>
               Puissance 4
-              <v-chip-group style="float: right; pointer-events: none;">
+              <v-chip-group style="float: right; pointer-events: none">
                 <v-chip size="small">1v1</v-chip>
                 <v-chip size="small" class="mr-0">Elo</v-chip>
               </v-chip-group>
@@ -213,10 +223,15 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'" class="game-action-card sol-action-card bg-black" variant="tonal" @click="$router.push('/solitaire')">
+          <v-card
+            v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'"
+            class="game-action-card sol-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/solitaire')"
+          >
             <v-card-title>
               Solitaire
-              <v-chip-group style="float: right; pointer-events: none;">
+              <v-chip-group style="float: right; pointer-events: none">
                 <v-chip size="small">Solo</v-chip>
                 <v-chip size="small" class="mr-0">Coins</v-chip>
               </v-chip-group>
@@ -238,10 +253,15 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'" class="game-action-card poker-action-card bg-black" variant="tonal" @click="$router.push('/poker')">
+          <v-card
+            v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'"
+            class="game-action-card poker-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/poker')"
+          >
             <v-card-title>
               Flopoker
-              <v-chip-group style="float: right; pointer-events: none;">
+              <v-chip-group style="float: right; pointer-events: none">
                 <v-chip size="small">Multi</v-chip>
                 <v-chip size="small" class="mr-0">Coins</v-chip>
               </v-chip-group>
@@ -261,10 +281,15 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'" class="game-action-card bj-action-card bg-black" variant="tonal" @click="$router.push('/blackjack')">
+          <v-card
+            v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'"
+            class="game-action-card bj-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/blackjack')"
+          >
             <v-card-title>
               Blackjack
-              <v-chip-group style="float: right; pointer-events: none;">
+              <v-chip-group style="float: right; pointer-events: none">
                 <v-chip size="small">Multi</v-chip>
                 <v-chip size="small" class="mr-0">Coins</v-chip>
               </v-chip-group>
@@ -286,10 +311,15 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="!gameCardsFilter || gameCardsFilter === '1v1' || gameCardsFilter === 'Elo'" class="game-action-card ttt-action-card bg-black" variant="tonal" @click="$router.push('/tic-tac-toe')">
+          <v-card
+            v-if="!gameCardsFilter || gameCardsFilter === '1v1' || gameCardsFilter === 'Elo'"
+            class="game-action-card ttt-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/tic-tac-toe')"
+          >
             <v-card-title>
               Tic Tac Toe
-              <v-chip-group style="float: right; pointer-events: none;">
+              <v-chip-group style="float: right; pointer-events: none">
                 <v-chip size="small">1v1</v-chip>
                 <v-chip size="small" class="mr-0">Elo</v-chip>
               </v-chip-group>
@@ -309,10 +339,15 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'" class="game-action-card mg-action-card bg-black" variant="tonal" @click="$router.push('/monke-game')">
+          <v-card
+            v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'"
+            class="game-action-card mg-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/monke-game')"
+          >
             <v-card-title>
               Monke Game
-              <v-chip-group style="float: right; pointer-events: none;">
+              <v-chip-group style="float: right; pointer-events: none">
                 <v-chip size="small">Solo</v-chip>
                 <v-chip size="small" class="mr-0">Coins</v-chip>
               </v-chip-group>
@@ -334,21 +369,42 @@
             </v-card-text>
           </v-card>
 
-          <v-card v-if="!gameCardsFilter" class="red-action-card bg-black disabled-card" variant="flat">
-            <v-card-title>Erynies</v-card-title>
+          <v-card
+            v-if="
+              !gameCardsFilter ||
+              gameCardsFilter === 'Solo' ||
+              gameCardsFilter === 'Coins' ||
+              gameCardsFilter === 'Elo' ||
+              gameCardsFilter === '1v1'
+            "
+            class="game-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/snake')"
+          >
+            <v-card-title>
+              Snake Game
+              <v-chip-group style="float: right; pointer-events: none">
+                <v-chip size="small">Solo</v-chip>
+                <v-chip size="small">Coins</v-chip>
+                <v-chip size="small">1v1</v-chip>
+                <v-chip size="small" class="mr-0">Elo</v-chip>
+              </v-chip-group>
+            </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue une partie de ce loup-garou un peu particulier, à partir de 4 joueurs.</p>
+              <p>
+                Gagne des FlopoCoins en jouant au Snake en solo ou affronte un autre joueur en 1v1.
+              </p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
                 text="Jouer"
                 class="text-none"
-                append-icon="mdi-fire-circle"
-                color="#520701"
+                append-icon="mdi-snake"
+                color="primary"
                 variant="flat"
                 rounded="lg"
                 style="border-radius: 10px !important"
-                @click="false ?? $router.push('/erynies')"
+                @click="$router.push('/snake')"
               />
             </v-card-text>
           </v-card>

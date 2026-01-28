@@ -3,7 +3,7 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import vuetify from './plugins/vuetify'
-import { register } from 'swiper/element/bundle';
+import { register } from 'swiper/element/bundle'
 import { MotionPlugin } from '@vueuse/motion'
 
 import App from './App.vue'

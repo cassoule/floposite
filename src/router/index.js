@@ -13,6 +13,9 @@ import AkhyStats from '../views/AkhyStats.vue'
 import Market from '../views/Market.vue'
 import CaseOpening from '../views/CaseOpening.vue'
 import EryniesHome from '../views/EryniesHome.vue'
+import SnakeMenu from '../views/SnakeMenu.vue'
+import SnakeSolo from '../views/SnakeSolo.vue'
+import SnakeVersus from '../views/SnakeVersus.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -28,6 +31,9 @@ const routes = [
   { path: '/akhy/:id', component: AkhyStats },
   { path: '/market', component: Market },
   { path: '/cases', component: CaseOpening },
+  { path: '/snake', component: SnakeMenu },
+  { path: '/snake/solo', component: SnakeSolo },
+  { path: '/snake/versus', component: SnakeVersus },
   //{ path: '/erynies', component: EryniesHome },
 ]
 

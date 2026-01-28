@@ -267,8 +267,14 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #5A9FE2, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px;">Standard&nbsp;Case</h2>
-            <p class="text-secondary">500&nbsp;Coins&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline" size="20" @click="getCaseContent('standard')"/></p>
+            <h2 class="mr-4" style="width: 177px">Standard&nbsp;Case</h2>
+            <p class="text-secondary">
+              500&nbsp;Coins&nbsp;&nbsp;<v-icon
+                class="mdi mdi-information-outline"
+                size="20"
+                @click="getCaseContent('standard')"
+              />
+            </p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -294,8 +300,14 @@ export default {
             :style="`background: radial-gradient(circle at 70% 170%, #D1548D, transparent 100%)`"
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px;">Premium&nbsp;Case</h2>
-            <p class="text-secondary">750&nbsp;Coins&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline" size="20" @click="getCaseContent('premium')"/></p>
+            <h2 class="mr-4" style="width: 177px">Premium&nbsp;Case</h2>
+            <p class="text-secondary">
+              750&nbsp;Coins&nbsp;&nbsp;<v-icon
+                class="mdi mdi-information-outline"
+                size="20"
+                @click="getCaseContent('premium')"
+              />
+            </p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -322,7 +334,13 @@ export default {
           />
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
             <h2 class="mr-4" style="width: 177px">Ultra Case</h2>
-            <p class="text-secondary">1500&nbsp;Coins&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline" size="20" @click="getCaseContent('ultra')"/></p>
+            <p class="text-secondary">
+              1500&nbsp;Coins&nbsp;&nbsp;<v-icon
+                class="mdi mdi-information-outline"
+                size="20"
+                @click="getCaseContent('ultra')"
+              />
+            </p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -341,7 +359,15 @@ export default {
       <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <div
-            style="max-height: 150px; width: 100%; border-radius: 12px; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); overflow: hidden"
+            style="
+              max-height: 150px;
+              width: 100%;
+              border-radius: 12px;
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              grid-template-rows: repeat(2, 1fr);
+              overflow: hidden;
+            "
           >
             <v-img
               src="vct_logos/vct-emea.png"
@@ -370,7 +396,13 @@ export default {
           </div>
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
             <h2 class="mr-4" style="width: 177px">Esport Case</h2>
-            <p class="text-secondary">100&nbsp;Coins&nbsp;&nbsp;<v-icon class="mdi mdi-information-outline" size="20" @click="getCaseContent('esport')"/></p>
+            <p class="text-secondary">
+              100&nbsp;Coins&nbsp;&nbsp;<v-icon
+                class="mdi mdi-information-outline"
+                size="20"
+                @click="getCaseContent('esport')"
+              />
+            </p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -381,7 +413,7 @@ export default {
             rounded="lg"
             :disabled="user?.coins < 100 || loading"
             @click="fetchCase('esport')"
-          >Ouvrir</v-btn
+            >Ouvrir</v-btn
           >
         </v-card-item>
       </v-card>
@@ -397,33 +429,44 @@ export default {
   </v-layout>
 
   <v-dialog v-model="caseContentDialog" class="modals" width="600" scrim="#181818">
-    <v-card
-      color="#1A1A1A"
-      rounded="xl"
-      style="overflow-y: scroll;
-            scrollbar-width: auto;"
-    >
+    <v-card color="#1A1A1A" rounded="xl" style="overflow-y: scroll; scrollbar-width: auto">
       <v-card-title class="mx-2 pt-4">
-        Contenu de la caisse {{selectedCase.toUpperCase()}}
+        Contenu de la caisse {{ selectedCase.toUpperCase() }}
       </v-card-title>
       <v-card-subtitle class="mx-2">
-        {{caseContent ? caseContent.length + ' skins disponibles' : ''}}
+        {{ caseContent ? caseContent.length + ' skins disponibles' : '' }}
       </v-card-subtitle>
       <v-card-item>
         <div v-if="caseContent">
           <div
-            v-for="skin in caseContent" :key="skin.uuid + '-case-content'"
+            v-for="skin in caseContent"
+            :key="skin.uuid + '-case-content'"
             class="d-flex align-center"
             :style="`
-              background: radial-gradient(circle at -50% -50%, ${skin.isVCT ? getRegionColor(skin.vctRegion) : (skin.isChampions ? '#ffd700' : (skin.isMelee ? '#000' : '#' + skin.tierColor))}, transparent 80%);
+              background: radial-gradient(circle at -50% -50%, ${skin.isVCT ? getRegionColor(skin.vctRegion) : skin.isChampions ? '#ffd700' : skin.isMelee ? '#000' : '#' + skin.tierColor}, transparent 80%);
               border-radius: 12px; margin-bottom: .5em; padding: .2em 1em;
-              border: 2px solid ${skin.isChampions ? '#ffd700' : (skin.isMelee ? '#aaaaaaaa' : 'none')};
+              border: 2px solid ${skin.isChampions ? '#ffd700' : skin.isMelee ? '#aaaaaaaa' : 'none'};
             `"
           >
-            <v-img :src="skin.displayIcon" min-width="100px" max-width="100px" height="50px" class="ma-2"/>
-            <p class="font-weight-bold text-pretty" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden">{{skin.displayName}}</p>
+            <v-img
+              :src="skin.displayIcon"
+              min-width="100px"
+              max-width="100px"
+              height="50px"
+              class="ma-2"
+            />
+            <p
+              class="font-weight-bold text-pretty"
+              style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden"
+            >
+              {{ skin.displayName }}
+            </p>
             <v-spacer></v-spacer>
-            <p><span class="ml-2 font-weight-bold" style="white-space: nowrap">{{skin.basePrice}}&nbsp;-&nbsp;{{skin.maxPrice}}</span>&nbsp;Flopos</p>
+            <p>
+              <span class="ml-2 font-weight-bold" style="white-space: nowrap"
+                >{{ skin.basePrice }}&nbsp;-&nbsp;{{ skin.maxPrice }}</span
+              >&nbsp;Flopos
+            </p>
           </div>
         </div>
         <div v-else class="w-100 d-flex justify-center align-center pa-6">
@@ -465,12 +508,20 @@ export default {
               v-for="(skin, index) in doubledSkins"
               :key="skin.uuid + '_pos_' + index"
               class="skin-card"
-              :class="{'melee-skin-card': skin.isMelee, 'vct-skin-card': skin.isVCT, 'champions-skin-card': skin.isChampions}"
-              :style="skin.isVCT ? `
+              :class="{
+                'melee-skin-card': skin.isMelee,
+                'vct-skin-card': skin.isVCT,
+                'champions-skin-card': skin.isChampions,
+              }"
+              :style="
+                skin.isVCT
+                  ? `
                 background-image: url('vct_logos/${skin.vctRegion}.png');
                 border: 0px solid ${getRegionColor(skin.vctRegion)};
                 box-shadow: inset 0 0 20px 10px ${getRegionColor(skin.vctRegion)}55;
-              ` : ``"
+              `
+                  : ``
+              "
               ref="skinCards"
             >
               <v-img
@@ -621,7 +672,7 @@ export default {
           color="secondary"
           rounded="lg"
           class="px-4"
-          @click="$router.push('/akhy/'+discordId)"
+          @click="$router.push('/akhy/' + discordId)"
         >
           Voir l'inventaire
         </v-btn>
@@ -631,10 +682,7 @@ export default {
           color="secondary"
           rounded="lg"
           class="px-6"
-          @click="
-            skinResultDialog = false;
-            caseOpeningDialog = false
-          "
+          @click="((skinResultDialog = false), (caseOpeningDialog = false))"
         >
           Fermer
         </v-btn>
@@ -718,7 +766,7 @@ export default {
 
 .skin-card .v-img {
   z-index: 2;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }
 
 .melee-skin-card {
@@ -752,15 +800,21 @@ export default {
     transparent
   );
   transform: rotate(45deg) translateY(-100%);
-  animation: shine-sweep 10s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation: shine-sweep 10s infinite cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 3;
 }
 
 @keyframes shine-sweep {
-  0% { transform: rotate(70deg) translateY(-450px); }
-  20% { transform: rotate(70deg) translateY(250px); } /* Fast sweep */
-  100% { transform: rotate(70deg) translateY(450px); } /* Wait */
+  0% {
+    transform: rotate(70deg) translateY(-450px);
+  }
+  20% {
+    transform: rotate(70deg) translateY(250px);
+  } /* Fast sweep */
+  100% {
+    transform: rotate(70deg) translateY(450px);
+  } /* Wait */
 }
 
 /* --- 2. VCT EFFECTS (Custom Image) --- */
@@ -805,9 +859,15 @@ export default {
 }
 
 @keyframes gold-flow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Add some sparkles/dust to champions */
@@ -820,7 +880,6 @@ export default {
   opacity: 0.2;
   z-index: 1;
 }
-
 
 .glow-bg {
   position: absolute;

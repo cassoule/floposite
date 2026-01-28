@@ -651,7 +651,7 @@ export default {
         }, 6000) // Must match transition duration
       } catch (e) {
         console.error('Wheel error', e)
-        this.showErrorToast(e.response?.data?.error || 'Erreur lors de l\'amélioration.')
+        this.showErrorToast(e.response?.data?.error || "Erreur lors de l'amélioration.")
         this.isSpinning = false
       }
     },
@@ -1173,11 +1173,7 @@ export default {
               </span>
             </h2>
           </v-list-item>
-          <v-list-item
-            v-if="games.length > 0"
-            v-for="game in games"
-            class="pb-3 px-2"
-          >
+          <v-list-item v-if="games.length > 0" v-for="game in games" class="pb-3 px-2">
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">
               <v-card-text v-if="game.type !== 'SOTD'" class="pb-0">
                 <div class="d-flex justify-space-between" style="place-items: center">

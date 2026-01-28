@@ -174,8 +174,8 @@
                 Classement SOTD {{ new Date().toLocaleDateString() }}
               </v-card-title>
               <v-card-subtitle>
-                Le premier du classement recevra 2500 Flopos, 1500 pour le 2e, 750 pour le 3e, à la fin de chaque journée (en plus
-                des 1000 gagnés lors de la première complétion).
+                Le premier du classement recevra 2500 Flopos, 1500 pour le 2e, 750 pour le 3e, à la
+                fin de chaque journée (en plus des 1000 gagnés lors de la première complétion).
               </v-card-subtitle>
               <v-card-text>
                 <v-row v-if="rankings && rankings.length > 0" class="text-secondary">
@@ -216,13 +216,14 @@
                     />
                     <p>@{{ stats.globalName }}</p>
                   </v-col>
-                  <v-col
-                    cols="12"
-                    sm="0"
-                    order-sm="12"
-                    class="py-0 d-sm-none"
-                  >
-                    <v-divider color="#ddd" opacity=".3" class="mx-1" thickness="2" style="border-radius: 50px"></v-divider>
+                  <v-col cols="12" sm="0" order-sm="12" class="py-0 d-sm-none">
+                    <v-divider
+                      color="#ddd"
+                      opacity=".3"
+                      class="mx-1"
+                      thickness="2"
+                      style="border-radius: 50px"
+                    ></v-divider>
                   </v-col>
                   <v-col cols="3" offset="3" offset-sm="0" class="d-flex align-center justify-end">
                     {{ stats.score }}
@@ -435,15 +436,15 @@ export default {
       this.socket.on('solitaire:update', (payload) => {
         if (payload?.userId === this.userId) {
           if (!payload.moves || payload.moves.length === 0) window.location.reload()
-          let i = 0;
+          let i = 0
           const interval = setInterval(() => {
-            const move = payload.moves[i];
-            this.processMove(move);
-            i++;
+            const move = payload.moves[i]
+            this.processMove(move)
+            i++
             if (i >= payload.moves.length) {
-              clearInterval(interval); // stop when done
+              clearInterval(interval) // stop when done
             }
-          }, 100);
+          }, 100)
         }
       })
     },

@@ -4,14 +4,23 @@
       <h1 style="font-size: 3em"><span style="color: #5865f2">Flopo</span>Site</h1>
       <p>Connectes-toi via <span style="color: #5865f2">Discord</span> 👇</p>
 
-      <v-btn class="btn-login text-capitalize px-8" style="border-radius: 10px" height="40" color="white" variant="text" :disabled="!flapi_ready" @click="handleLogin">
+      <v-btn
+        class="btn-login text-capitalize px-8"
+        style="border-radius: 10px"
+        height="40"
+        color="white"
+        variant="text"
+        :disabled="!flapi_ready"
+        @click="handleLogin"
+      >
         <span>Connexion</span>
         <div class="shine"></div>
       </v-btn>
 
-      <p v-if="!flapi_ready" class="mt-5" style="color: #ddd">FlopoBot n'est pas disponible pour le moment :(</p>
+      <p v-if="!flapi_ready" class="mt-5" style="color: #ddd">
+        FlopoBot n'est pas disponible pour le moment :(
+      </p>
     </div>
-
   </div>
 
   <div class="flopo-img">
@@ -68,18 +77,18 @@ export default {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
-        }
-      });
+        },
+      })
 
       // Handle connection events
       this.socket.on('connect', async () => {
-        console.log('Connected to WebSocket server');
-        await this.checkFlapi();
-      });
+        console.log('Connected to WebSocket server')
+        await this.checkFlapi()
+      })
 
       this.socket.on('disconnect', () => {
-        console.log('Disconnected from WebSocket server');
-      });
+        console.log('Disconnected from WebSocket server')
+      })
     },
 
     handleLogin() {
@@ -93,20 +102,20 @@ export default {
         const flapiTestResponse = await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
-          withCredentials: false
+          withCredentials: false,
         })
-        console.log('flAPI ready');
+        console.log('flAPI ready')
         this.flapi_ready = true
       } catch (e) {
-        console.log('flAPI not ready');
+        console.log('flAPI not ready')
         this.flapi_ready = false
       }
       this.discordId = localStorage.getItem('discordId')
       if (this.discordId && this.flapi_ready) this.$router.push('/dashboard')
-    }
-  }
+    },
+  },
 }
 </script>
 
