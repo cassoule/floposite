@@ -14,10 +14,10 @@ export default {
   },
 
   created() {
-    this._boundHandleUnload = (e) => this.handleUnload(e);
+    this._boundHandleUnload = (e) => this.handleUnload(e)
 
-    window.addEventListener('beforeunload', this._boundHandleUnload);
-    window.addEventListener('pagehide', this._boundHandleUnload);
+    window.addEventListener('beforeunload', this._boundHandleUnload)
+    window.addEventListener('pagehide', this._boundHandleUnload)
 
     this.interval = setInterval(() => {
       this.now = Date.now()
@@ -25,10 +25,10 @@ export default {
   },
 
   beforeDestroy() {
-    window.removeEventListener('beforeunload', this._boundHandleUnload);
-    window.removeEventListener('pagehide', this._boundHandleUnload);
+    window.removeEventListener('beforeunload', this._boundHandleUnload)
+    window.removeEventListener('pagehide', this._boundHandleUnload)
 
-    this.leaveQueueSync({ reason: 'component-destroy' });
+    this.leaveQueueSync({ reason: 'component-destroy' })
 
     clearInterval(this.interval)
   },
@@ -71,7 +71,8 @@ export default {
       )
       if (tl === 100) {
         let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1 : this.foundLobby.p2
-        let loser = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2.name : this.foundLobby.p1.name
+        let loser =
+          this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2.name : this.foundLobby.p1.name
 
         this.title = winner.id === this.discordId ? 'Victoire' : 'Défaite'
         this.message = `Temps écoulé pour ${loser}`
@@ -86,23 +87,23 @@ export default {
     handleUnload(evt) {
       //try { evt.preventDefault?.(); } catch {}
 
-      this.leaveQueueSync({ reason: 'unload' });
+      this.leaveQueueSync({ reason: 'unload' })
     },
 
     leaveQueueSync(meta = {}) {
       const payload = {
-        discordId: this.discordId,   // set this in mounted()
+        discordId: this.discordId, // set this in mounted()
         game: 'tictactoe',
         ...meta,
-      };
+      }
 
       // 1) Fire-and-forget HTTP that survives page close
       if (!this.inQueue) return
-      const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`;
+      const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
       try {
         if (navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-          navigator.sendBeacon(url, blob);
+          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+          navigator.sendBeacon(url, blob)
         } else {
           // Fallback for older browsers
           fetch(url, {
@@ -110,13 +111,15 @@ export default {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
             keepalive: true, // critical
-          }).catch(() => {});
+          }).catch(() => {})
         }
       } catch {}
 
       // 2) Best-effort socket emit (may not flush on unload, but fine as a bonus)
       if (this.socket?.connected) {
-        try { this.socket.emit('tictactoe:queue:leave', payload); } catch {}
+        try {
+          this.socket.emit('tictactoe:queue:leave', payload)
+        } catch {}
       }
     },
 
@@ -151,11 +154,17 @@ export default {
             ? this.foundLobby?.p1.name
             : this.foundLobby?.p2.name
         this.value =
-          this.foundLobby?.p1.id === this.discordId ? this.foundLobby?.p1.val : this.foundLobby?.p2.val
+          this.foundLobby?.p1.id === this.discordId
+            ? this.foundLobby?.p1.val
+            : this.foundLobby?.p2.val
 
         this.inQueue = this.inQueue && (this.foundLobby === null || this.foundLobby === undefined)
 
-        this.oppElo = await this.getElo(this.foundLobby?.p1.id === this.discordId ? this.foundLobby?.p2.id : this.foundLobby?.p1.id)
+        this.oppElo = await this.getElo(
+          this.foundLobby?.p1.id === this.discordId
+            ? this.foundLobby?.p2.id
+            : this.foundLobby?.p1.id,
+        )
 
         this.foundLobby?.xs.forEach((x) => {
           document.getElementById(`btn${x}`).innerText = 'X'
@@ -308,19 +317,19 @@ export default {
 
     rankIcon(elo) {
       if (elo < 900) {
-        return '';
+        return ''
       } else if (elo < 1100) {
-        return '/ranks_icons/bronze.svg';
+        return '/ranks_icons/bronze.svg'
       } else if (elo < 1300) {
-        return '/ranks_icons/silver.svg';
+        return '/ranks_icons/silver.svg'
       } else if (elo < 1600) {
-        return '/ranks_icons/gold.svg';
+        return '/ranks_icons/gold.svg'
       } else if (elo < 2000) {
-        return '/ranks_icons/diamond.svg';
+        return '/ranks_icons/diamond.svg'
       } else if (elo >= 2000) {
-        return '/ranks_icons/master.svg';
+        return '/ranks_icons/master.svg'
       } else {
-        return '';
+        return ''
       }
     },
 
@@ -379,25 +388,25 @@ export default {
   },
 
   beforeRouteLeave(to, from, next) {
-    this.leaveQueueSync({ reason: 'route-leave' });
-    next();
+    this.leaveQueueSync({ reason: 'route-leave' })
+    next()
   },
 }
 </script>
 
 <template>
   <v-layout>
-    <v-main class="d-flex" style="place-items: center; place-content: center; gap: 2em; flex-wrap: wrap">
+    <v-main
+      class="d-flex"
+      style="place-items: center; place-content: center; gap: 2em; flex-wrap: wrap"
+    >
       <div class="mt-8">
-
-        <h1 class="text-white" style="position: relative;">
-          Tic Tac Toe
-        </h1>
+        <h1 class="text-white" style="position: relative">Tic Tac Toe</h1>
 
         <v-btn
           v-if="!oppName"
           id="find"
-          class="my-2 "
+          class="my-2"
           color="primary"
           text="Chercher un joueur"
           :loading="inQueue"
@@ -408,7 +417,7 @@ export default {
         <p v-if="!oppName" class="mb-3">
           {{ !oppName && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
           <span v-for="(p, index) in queue" :key="p">
-            {{index > 1 ? ',' : ''}}
+            {{ index > 1 ? ',' : '' }}
             {{ p }}
           </span>
         </p>
@@ -427,10 +436,15 @@ export default {
         </div>
       </div>
       <div class="mt-0" style="width: 300px">
-        <p class="mb-3" style="display: flex; justify-content: start; align-items: center; gap: 1em;">
+        <p
+          class="mb-3"
+          style="display: flex; justify-content: start; align-items: center; gap: 1em"
+        >
           <v-img v-if="this.elo" :src="rankIcon(this.elo)" max-width="20" height="20">
-            <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
-              <p style="font-weight: 400;">{{rankDiv(this.elo)}}</p>
+            <div
+              :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+            >
+              <p style="font-weight: 400">{{ rankDiv(this.elo) }}</p>
             </div>
           </v-img>
           {{ this.elo ? this.elo + ' Elo' : 'Non Classé' }}
@@ -439,12 +453,25 @@ export default {
           <p v-if="oppName" id="oppNameCont" class="d-flex" style="place-items: end">
             Tu joues contre
             <span id="oppName" class="text-primary ml-1">@{{ oppName }}</span>
-            <v-img :src="oppAvatar" class="ml-1" :min-width="25" :max-width="25" :height="25" rounded="xl"></v-img>
+            <v-img
+              :src="oppAvatar"
+              class="ml-1"
+              :min-width="25"
+              :max-width="25"
+              :height="25"
+              rounded="xl"
+            ></v-img>
           </p>
-          <span v-if="oppName" class="font-italic" style="display: flex; align-items: center; justify-content: start; gap: 1em">
+          <span
+            v-if="oppName"
+            class="font-italic"
+            style="display: flex; align-items: center; justify-content: start; gap: 1em"
+          >
             <v-img v-if="oppElo" :src="rankIcon(oppElo)" max-width="20" height="20">
-              <div :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`">
-                <p style="font-weight: 400;">{{rankDiv(oppElo)}}</p>
+              <div
+                :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+              >
+                <p style="font-weight: 400">{{ rankDiv(oppElo) }}</p>
               </div>
             </v-img>
             {{ oppElo ? `${oppElo} Elo` : 'Non classé' }}
@@ -463,7 +490,11 @@ export default {
         </p>
       </div>
     </v-main>
-    <v-progress-linear v-if="oppName && !title" v-model="timeLeft" style="position: fixed; left: 0"/>
+    <v-progress-linear
+      v-if="oppName && !title"
+      v-model="timeLeft"
+      style="position: fixed; left: 0"
+    />
 
     <v-dialog v-model="endGameDialog" persistent max-width="250">
       <v-card color="primary" style="border-radius: 15px">
@@ -474,12 +505,24 @@ export default {
           {{ message }}
         </v-card-text>
         <v-card-actions>
-          <v-btn class="rounded-lg" text="Ok" variant="tonal" @click="endGameDialog = false" @click.stop="reload"></v-btn>
+          <v-btn
+            class="rounded-lg"
+            text="Ok"
+            variant="tonal"
+            @click="endGameDialog = false"
+            @click.stop="reload"
+          ></v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-btn class="back-btn text-none" text="Retour" variant="tonal" color="#ddd" @click="$router.push('/dashboard')"></v-btn>
+    <v-btn
+      class="back-btn text-none"
+      text="Retour"
+      variant="tonal"
+      color="#ddd"
+      @click="$router.push('/dashboard')"
+    ></v-btn>
   </v-layout>
 </template>
 

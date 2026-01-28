@@ -651,7 +651,7 @@ export default {
         }, 6000) // Must match transition duration
       } catch (e) {
         console.error('Wheel error', e)
-        this.showErrorToast(e.response?.data?.error || 'Erreur lors de l\'amélioration.')
+        this.showErrorToast(e.response?.data?.error || "Erreur lors de l'amélioration.")
         this.isSpinning = false
       }
     },
@@ -1173,11 +1173,7 @@ export default {
               </span>
             </h2>
           </v-list-item>
-          <v-list-item
-            v-if="games.length > 0"
-            v-for="game in games"
-            class="pb-3 px-2"
-          >
+          <v-list-item v-if="games.length > 0" v-for="game in games" class="pb-3 px-2">
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">
               <v-card-text v-if="game.type !== 'SOTD'" class="pb-0">
                 <div class="d-flex justify-space-between" style="place-items: center">
@@ -1256,19 +1252,19 @@ export default {
                     class="d-flex"
                     style="gap: 0.5rem; place-items: center; place-content: center; width: 33%"
                   >
-                    <h2 class="bg-dark px-2 py-1 rounded" style="width: 30px; text-align: center">
+                    <h2 class="bg-dark px-2 py-1 rounded" style="min-width: 30px; text-align: center">
                       {{
                         game.p1 === $route.params.id
-                          ? game.p1_score.toFixed(0)
-                          : game.p2_score.toFixed(0)
+                          ? game.p1_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
+                          : game.p2_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
                       }}
                     </h2>
                     <h2>-</h2>
-                    <h2 class="bg-dark px-2 py-1 rounded" style="width: 30px; text-align: center">
+                    <h2 class="bg-dark px-2 py-1 rounded" style="min-width: 30px; text-align: center">
                       {{
                         game.p1 === $route.params.id
-                          ? game.p2_score.toFixed(0)
-                          : game.p1_score.toFixed(0)
+                          ? game.p2_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
+                          : game.p1_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
                       }}
                     </h2>
                   </div>
@@ -1341,51 +1337,6 @@ export default {
                   </div>
                 </div>
               </v-card-text>
-              <!--              <v-card-text v-else class="pb-0">
-                <div class="d-flex justify-space-between" style="place-items: start">
-                  <div
-                    class="d-flex flex-column"
-                    style="place-items: start; justify-content: start; width: 33%; gap: 1em"
-                  >
-                    <div class="d-flex" style="place-items: center; justify-content: start">
-                      <v-img
-                        class="mr-2"
-                        :src="
-                          game.p1 === $route.params.id
-                            ? users.find((u) => u.id === game.p1)?.avatarUrl
-                            : users.find((u) => u.id === game.p2)?.avatarUrl
-                        "
-                        :width="30"
-                        :height="30"
-                        rounded="circle"
-                      ></v-img>
-                      <h3
-                        class="username"
-                        :title="
-                          game.p1 === $route.params.id
-                            ? users.find((u) => u.id === game.p1)?.globalName
-                            : users.find((u) => u.id === game.p2)?.globalName
-                        "
-                      >
-                        {{
-                          game.p1 === $route.params.id
-                            ? users.find((u) => u.id === game.p1)?.globalName
-                            : users.find((u) => u.id === game.p2)?.globalName
-                        }}
-                      </h3>
-                    </div>
-                    <h4>#1 SOTD le {{ new Date(game.timestamp - 60000).toLocaleDateString() }}</h4>
-                  </div>
-                  <div
-                    class="d-flex"
-                    style="gap: 0.5rem; place-items: end; place-content: end; width: 33%"
-                  >
-                    <h2 class="bg-dark px-2 py-1 rounded" style="text-align: center">
-                      {{ game.p1_score.toFixed(0) }}
-                    </h2>
-                  </div>
-                </div>
-              </v-card-text>-->
               <v-card-subtitle class="text-right pb-2"
                 >{{ game.type }} -
                 {{ new Date(game.timestamp - 60000).toLocaleDateString() }}</v-card-subtitle

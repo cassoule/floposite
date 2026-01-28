@@ -589,7 +589,7 @@ export default {
           v-if="selectedOffer.status !== 'closed'"
           class="position-absolute right-0 top-0 mt-2 mr-2 px-2 rounded-xl"
           style="background: #343434; font-size: 0.7em"
-        >{{
+          >{{
             prettyTimeLeft(
               selectedOffer.status === 'pending'
                 ? selectedOffer.opening_at
@@ -597,10 +597,7 @@ export default {
             )
           }}</span
         >
-        <div
-          class="d-flex align-center cursor-pointer"
-          @click="goToUser(selectedOffer.seller.id)"
-        >
+        <div class="d-flex align-center cursor-pointer" @click="goToUser(selectedOffer.seller.id)">
           <v-img
             :src="selectedOffer.seller.avatarUrl"
             :alt="selectedOffer.seller.username"
@@ -635,8 +632,8 @@ export default {
                 :style="`${index + 1 === selectedOffer.skin.currentChroma ? 'border: 2px solid #' + selectedOffer.skin.tierColor : ''}`"
               />
               <span v-if="!chroma.swatch" class="font-weight-bold text-white"
-              >{{ getChromaName(selectedOffer.skin, skinsData[selectedOffer.skin.uuid]) }}
-                </span>
+                >{{ getChromaName(selectedOffer.skin, skinsData[selectedOffer.skin.uuid]) }}
+              </span>
             </div>
           </div>
           <v-card
@@ -652,7 +649,7 @@ export default {
                   <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
                     Rareté :
                     <strong :style="`color: #${selectedOffer.skin.tierColor}`"
-                    >{{ parseInt(selectedOffer.skin.tierRank) }}&nbsp;({{
+                      >{{ parseInt(selectedOffer.skin.tierRank) }}&nbsp;({{
                         selectedOffer.skin.tierText.split(':')[1]
                       }})</strong
                     >
@@ -661,13 +658,13 @@ export default {
                 <v-col class="py-0">
                   <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
                     Niveau : <strong>{{ selectedOffer.skin.currentLvl ?? '-' }}</strong
-                  >/{{ skinsData[selectedOffer.skin.uuid].levels?.length }}
+                    >/{{ skinsData[selectedOffer.skin.uuid].levels?.length }}
                   </p>
                 </v-col>
                 <v-col class="py-0">
                   <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
                     Chroma : <strong>{{ selectedOffer.skin.currentChroma ?? '-' }}</strong
-                  >/{{ skinsData[selectedOffer.skin.uuid].chromas?.length }}
+                    >/{{ skinsData[selectedOffer.skin.uuid].chromas?.length }}
                   </p>
                 </v-col>
               </v-row>
@@ -693,7 +690,7 @@ export default {
                 <p>
                   Dernière offre :
                   <strong
-                  >{{
+                    >{{
                       selectedOffer.bids.length > 0 ? getOfferLastPrice(selectedOffer) : '-'
                     }}&nbsp;Coins</strong
                   >
@@ -716,12 +713,7 @@ export default {
                 <v-list-item-title class="d-flex align-center ga-2 mr-4 mt-0">
                   <p class="ml-4 mr-2" style="font-size: 0.7em">{{ bid.offered_at }}</p>
                   <v-divider vertical></v-divider>
-                  <v-img
-                    :src="bid.bidder.avatarUrl"
-                    max-width="20"
-                    rounded="circle"
-                    class="ml-1"
-                  />
+                  <v-img :src="bid.bidder.avatarUrl" max-width="20" rounded="circle" class="ml-1" />
                   <p class="pb-1">{{ bid.bidder.username }}</p>
                   <v-spacer></v-spacer>
                   {{ bid.offer_amount }} Coins
@@ -771,13 +763,8 @@ export default {
       </v-card-text>
       <v-card-actions>
         <v-btn text="Annuler" rounded="lg" @click="buyoutModal = false">Annuler</v-btn>
-        <v-btn
-          text="Confirmer"
-          variant="flat"
-          rounded="lg"
-          color="primary"
-          @click="confirmPurchase"
-        >Confirmer</v-btn
+        <v-btn text="Confirmer" variant="flat" rounded="lg" color="primary" @click="confirmPurchase"
+          >Confirmer</v-btn
         >
       </v-card-actions>
     </v-card>
@@ -812,7 +799,7 @@ export default {
           color="primary"
           :disabled="!bidAmount"
           @click="confirmBid"
-        >Confirmer</v-btn
+          >Confirmer</v-btn
         >
       </v-card-actions>
     </v-card>
@@ -831,8 +818,8 @@ export default {
         <div v-if="userInventory?.length === 0">
           <p>Aucun skin dans l'inventaire.</p>
           <a href="/cases" class="text-white"
-          ><span class="text-decoration-underline">Ouvrir une caisse</span
-          ><span class="text-decoration-none">&nbsp;🗝️</span></a
+            ><span class="text-decoration-underline">Ouvrir une caisse</span
+            ><span class="text-decoration-none">&nbsp;🗝️</span></a
           >
         </div>
         <v-expansion-panels
@@ -856,11 +843,11 @@ export default {
               ></v-img>
               <p
                 style="
-                    font-weight: bold;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                  "
+                  font-weight: bold;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                "
               >
                 {{ skin.displayName }}
               </p>
@@ -888,7 +875,7 @@ export default {
                 <v-col> Chroma&nbsp;: </v-col>
                 <v-col>
                   <strong
-                  >{{ skin.currentChroma }}/{{ skinsData[skin.uuid]?.chromas.length }}</strong
+                    >{{ skin.currentChroma }}/{{ skinsData[skin.uuid]?.chromas.length }}</strong
                   >
                 </v-col>
               </v-row>
@@ -940,10 +927,10 @@ export default {
                 rounded="lg"
                 text="Créer"
                 :disabled="
-                    createOffer.price === null ||
-                    createOffer.delay === null ||
-                    createOffer.duration === null
-                  "
+                  createOffer.price === null ||
+                  createOffer.delay === null ||
+                  createOffer.duration === null
+                "
                 @click="handleCreateOffer(skin.uuid)"
               ></v-btn>
             </v-expansion-panel-text>

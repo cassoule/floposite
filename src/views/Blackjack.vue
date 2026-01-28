@@ -433,22 +433,22 @@ export default {
   },
 
   created() {
-    const userId = localStorage.getItem("discordId");
-    this._boundHandleUnload = (e) => this.handleUnload(e, userId);
+    const userId = localStorage.getItem('discordId')
+    this._boundHandleUnload = (e) => this.handleUnload(e, userId)
 
-    window.addEventListener('beforeunload', this._boundHandleUnload);
-    window.addEventListener('pagehide', this._boundHandleUnload);
+    window.addEventListener('beforeunload', this._boundHandleUnload)
+    window.addEventListener('pagehide', this._boundHandleUnload)
   },
 
   methods: {
     handleUnload(event, userId) {
       // Use the userId passed from created() or fallback to local data
-      const targetId = userId || this.discordId;
+      const targetId = userId || this.discordId
 
       // Safety check
-      if (!targetId || !this.isInRoom) return;
+      if (!targetId || !this.isInRoom) return
 
-      const url = (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave';
+      const url = (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave'
 
       // Use fetch with keepalive instead of sendBeacon
       fetch(url, {
@@ -458,10 +458,10 @@ export default {
         },
         body: JSON.stringify({ userId: targetId }),
         keepalive: true, // <--- Keeps request alive after tab close
-      }).catch(err => {
+      }).catch((err) => {
         // Optional: log error (though you won't see it if the tab is closed)
-        console.error('Leave room failed:', err);
-      });
+        console.error('Leave room failed:', err)
+      })
     },
     toast(msg) {
       this.snackbar = { show: true, msg }

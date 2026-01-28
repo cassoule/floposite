@@ -1,18 +1,18 @@
-import axios from 'axios';
+import axios from 'axios'
 
 // IMPORTANT: Replace this with your actual backend URL
 // For local development, it might be 'http://localhost:25578'
-const API_URL = import.meta.env.VITE_FLAPI_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_FLAPI_URL || 'http://localhost:3000/api'
 
 export default {
   getRankings() {
-    return axios.get(`${API_URL}/solitaire/sotd/rankings`);
+    return axios.get(`${API_URL}/solitaire/sotd/rankings`)
   },
   startNewGame(userId, userSeed, hardMode = false) {
-    return axios.post(`${API_URL}/solitaire/start`, { userId, userSeed, hardMode });
+    return axios.post(`${API_URL}/solitaire/start`, { userId, userSeed, hardMode })
   },
   startSOTD(userId) {
-    return axios.post(`${API_URL}/solitaire/start/sotd`, { userId });
+    return axios.post(`${API_URL}/solitaire/start/sotd`, { userId })
   },
   resetGame(userId) {
     return axios.post(`${API_URL}/solitaire/reset`, { userId })
@@ -24,7 +24,7 @@ export default {
    * @returns {Promise<Object>} The game state.
    */
   getGameState(userId) {
-    return axios.get(`${API_URL}/solitaire/state/${userId}`);
+    return axios.get(`${API_URL}/solitaire/state/${userId}`)
   },
 
   /**
@@ -36,8 +36,8 @@ export default {
     // The backend expects a body with userId and move details
     const payload = {
       ...moveData,
-    };
-    return axios.post(`${API_URL}/solitaire/move`, payload);
+    }
+    return axios.post(`${API_URL}/solitaire/move`, payload)
   },
 
   /**
@@ -46,10 +46,10 @@ export default {
    * @returns {Promise<Object>} The updated game state.
    */
   drawCard(userId) {
-    return axios.post(`${API_URL}/solitaire/draw`, { userId });
+    return axios.post(`${API_URL}/solitaire/draw`, { userId })
   },
 
   undoMove(userId) {
-    return axios.post(`${API_URL}/solitaire/undo`, { userId });
-  }
-};
+    return axios.post(`${API_URL}/solitaire/undo`, { userId })
+  },
+}

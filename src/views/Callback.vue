@@ -27,8 +27,8 @@ onMounted(async () => {
     const response = await axios.get(endpoint, {
       params: { code },
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     })
 
     if (!response.data.discordId) {
@@ -40,7 +40,7 @@ onMounted(async () => {
     await router.push('/dashboard')
   } catch (error) {
     console.error('Authentication failed:', error.response?.data || error.message)
-    showSuccessOrWarningToast('Erreur d\'authentification', true)
+    showSuccessOrWarningToast("Erreur d'authentification", true)
     await router.push('/')
   }
 })

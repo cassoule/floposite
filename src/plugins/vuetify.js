@@ -16,12 +16,12 @@ export default createVuetify({
           primary: '#5865f2',
           secondary: '#dee0fc88',
           dark: '#181818',
-          text: '#B2B3BB'
+          text: '#B2B3BB',
         },
       },
     },
   },
   components: {
     VVideo,
-  }
+  },
 })

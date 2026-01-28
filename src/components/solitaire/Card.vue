@@ -14,12 +14,7 @@
       :alt="`${card.rank} of ${card.suit}`"
       class="card-image"
     />
-    <img
-      v-else
-      src="/cards/webp/card_back.webp"
-      alt="card back"
-      class="card-back"
-    />
+    <img v-else src="/cards/webp/card_back.webp" alt="card back" class="card-back" />
   </div>
 </template>
 
@@ -39,31 +34,31 @@ export default {
     },
     isHidden: {
       type: Boolean,
-      default: false
+      default: false,
     },
   },
   methods: {
     // When a drag starts, emit the card and its index up to the pile
     onDragStart(event) {
       // Set some data for the browser's drag event (good practice)
-      event.dataTransfer.setData('text/plain', this.card.rank + this.card.suit);
-      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', this.card.rank + this.card.suit)
+      event.dataTransfer.effectAllowed = 'move'
 
       // Emit the index of THIS card up to the parent Pile.
-      this.$emit('card-drag-started', event, this.cardIndex);
+      this.$emit('card-drag-started', event, this.cardIndex)
     },
 
     onDragEnd() {
-      this.$emit('card-drag-ended');
+      this.$emit('card-drag-ended')
     },
 
     onClick() {
       if (this.card.faceUp) {
-        this.$emit('card-clicked', this.cardIndex);
+        this.$emit('card-clicked', this.cardIndex)
       }
     },
   },
-};
+}
 </script>
 
 <style scoped>
@@ -73,7 +68,7 @@ export default {
   cursor: grab;
   opacity: 1;
   transition: opacity 0.2s; /* No transition needed */
-  background-image: url("/cards/webp/card_back.webp");
+  background-image: url('/cards/webp/card_back.webp');
   background-size: cover;
   background-position: center center;
 }
@@ -88,13 +83,13 @@ export default {
   width: 100%;
   height: 100%;
 }
-@media(max-width: 850px) {
+@media (max-width: 850px) {
   .card-container {
     width: 50px;
     height: 72px;
   }
 }
-@media(max-width: 550px) {
+@media (max-width: 550px) {
   .card-container {
     width: 33px;
     height: 47px;
