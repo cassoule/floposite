@@ -240,10 +240,16 @@ export default {
 
       // Game control
       gameLoop: null,
+      renderLoop: null,
       gameSpeed: 150,
       gameStarted: false,
       countdown: 0,
       countdownInterval: null,
+      lastUpdateTime: 0,
+
+      // Previous frame for interpolation
+      prevMySnake: [],
+      prevOppSnake: [],
 
       // Dialog
       endGameDialog: false,
@@ -296,6 +302,7 @@ export default {
     window.removeEventListener('resize', this.handleResize)
     this.leaveQueueSync({ reason: 'component-destroy' })
     this.stopGameLoop()
+    this.stopRenderLoop()
     this.stopCountdown()
   },
 
@@ -380,6 +387,10 @@ export default {
 
             // Restore direction (default to RIGHT if not set)
             this.myDirection = myData.direction || 'RIGHT'
+
+            // Initialize previous state for interpolation
+            this.prevMySnake = this.mySnake.map(segment => ({ ...segment }))
+            this.prevOppSnake = this.oppSnake.map(segment => ({ ...segment }))
 
             // Mark game as started and restart game loop if not game over
             this.gameStarted = true
@@ -590,17 +601,37 @@ export default {
     },
 
     startGameLoop() {
+      this.lastUpdateTime = Date.now()
       this.gameLoop = setInterval(() => {
+        this.prevMySnake = this.mySnake.map(segment => ({ ...segment }))
+        this.prevOppSnake = this.oppSnake.map(segment => ({ ...segment }))
         this.update()
-        this.drawMyGame()
         this.emitGameState()
+        this.lastUpdateTime = Date.now()
       }, this.gameSpeed)
+      this.startRenderLoop()
     },
 
     stopGameLoop() {
       if (this.gameLoop) {
         clearInterval(this.gameLoop)
         this.gameLoop = null
+      }
+    },
+
+    startRenderLoop() {
+      const render = () => {
+        this.drawMyGame()
+        this.drawOppGame()
+        this.renderLoop = requestAnimationFrame(render)
+      }
+      this.renderLoop = requestAnimationFrame(render)
+    },
+
+    stopRenderLoop() {
+      if (this.renderLoop) {
+        cancelAnimationFrame(this.renderLoop)
+        this.renderLoop = null
       }
     },
 
@@ -778,7 +809,7 @@ export default {
       if (!canvas) return
 
       const ctx = canvas.getContext('2d')
-      this.drawGame(ctx, this.mySnake, this.myFood, this.myDirection)
+      this.drawGame(ctx, this.mySnake, this.myFood, this.myDirection, this.prevMySnake)
     },
 
     drawOppGame() {
@@ -786,10 +817,10 @@ export default {
       if (!canvas) return
 
       const ctx = canvas.getContext('2d')
-      this.drawGame(ctx, this.oppSnake, this.oppFood)
+      this.drawGame(ctx, this.oppSnake, this.oppFood, null, this.prevOppSnake)
     },
 
-    drawGame(ctx, snake, food, direction = null) {
+    drawGame(ctx, snake, food, direction = null, prevSnake = []) {
       // Clear canvas
       ctx.fillStyle = '#1a1a1a'
       ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
@@ -809,6 +840,11 @@ export default {
         ctx.stroke()
       }
 
+      // Calculate interpolation factor
+      const now = Date.now()
+      const timeSinceUpdate = now - this.lastUpdateTime
+      const progress = Math.min(timeSinceUpdate / this.gameSpeed, 1)
+
       // Draw food
       if (food) {
         const x = food.x * this.gridSize
@@ -820,62 +856,111 @@ export default {
         ctx.fillText('🍎', x + this.gridSize / 2, y + this.gridSize / 2 + 2)
       }
 
-      // Draw snake
-      snake.forEach((segment, index) => {
-        let baseHeadColor = '#5862f2'
-        let alphaValue = 1 - (index / snake.length) * 0.6
-        let hexAlpha = Math.floor(alphaValue * 255)
-          .toString(16)
-          .padStart(2, '0')
-        ctx.fillStyle = baseHeadColor + hexAlpha
+      // Draw snake with interpolation
+      const snakeSegments = snake.map((segment, index) => {
+        let displayX = segment.x
+        let displayY = segment.y
 
-        ctx.fillRect(
-          segment.x * this.gridSize + 1,
-          segment.y * this.gridSize + 1,
-          this.gridSize - 2,
-          this.gridSize - 2,
-        )
+        if (prevSnake[index]) {
+          const prev = prevSnake[index]
+          displayX = prev.x + (segment.x - prev.x) * progress
+          displayY = prev.y + (segment.y - prev.y) * progress
+        }
 
-        if (index === 0) {
-          // Draw eyes on head
-          const eyeSize = this.gridSize / 6
-          const eyeOffsetX = this.gridSize / 6
-          const eyeOffsetY = this.gridSize / 6
+        return {
+          displayX,
+          displayY,
+          index,
+          centerX: displayX * this.gridSize + this.gridSize / 2,
+          centerY: displayY * this.gridSize + this.gridSize / 2,
+        }
+      })
+
+      // Draw snake body as continuous shape
+      if (snakeSegments.length > 0) {
+        const bodyWidth = this.gridSize * 0.7
+
+        // Draw the body with gradient alpha
+        for (let i = snakeSegments.length - 1; i >= 0; i--) {
+          const segment = snakeSegments[i]
+          ctx.strokeStyle = '#5862f2'
+          ctx.lineWidth = bodyWidth
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+
+          // Draw line from this segment to the next
+          if (i < snakeSegments.length - 1) {
+            const nextSegment = snakeSegments[i + 1]
+            ctx.beginPath()
+            ctx.moveTo(nextSegment.centerX, nextSegment.centerY)
+            ctx.lineTo(segment.centerX, segment.centerY)
+            ctx.stroke()
+          }
+        }
+
+        // Draw head as larger circle
+        const head = snakeSegments[0]
+        const headRadius = ((this.gridSize * .7) - 2) / 2
+
+        ctx.fillStyle = '#5862f2'
+        ctx.beginPath()
+        ctx.arc(head.centerX, head.centerY, headRadius, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Draw eyes on head (only for player's own snake if direction is provided)
+        if (direction) {
+          const eyeSize = this.gridSize / 6.5
+          const eyeDistance = this.gridSize / 5
 
           let eye1X, eye1Y, eye2X, eye2Y
 
           switch (direction) {
             case 'UP':
-              eye1X = segment.x * this.gridSize + eyeOffsetX
-              eye1Y = segment.y * this.gridSize + eyeOffsetY
-              eye2X = segment.x * this.gridSize + this.gridSize - 2 * eyeOffsetX
-              eye2Y = segment.y * this.gridSize + eyeOffsetY
+              eye1X = head.centerX - eyeDistance
+              eye1Y = head.centerY - eyeDistance / 1.5
+              eye2X = head.centerX + eyeDistance
+              eye2Y = head.centerY - eyeDistance / 1.5
               break
             case 'DOWN':
-              eye1X = segment.x * this.gridSize + eyeOffsetX
-              eye1Y = segment.y * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
-              eye2X = segment.x * this.gridSize + this.gridSize - 2 * eyeOffsetX
-              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
+              eye1X = head.centerX - eyeDistance
+              eye1Y = head.centerY + eyeDistance / 1.5
+              eye2X = head.centerX + eyeDistance
+              eye2Y = head.centerY + eyeDistance / 1.5
               break
             case 'LEFT':
-              eye1X = segment.x * this.gridSize + eyeOffsetY
-              eye1Y = segment.y * this.gridSize + eyeOffsetX
-              eye2X = segment.x * this.gridSize + eyeOffsetY
-              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetX - eyeSize
+              eye1X = head.centerX - eyeDistance / 1.5
+              eye1Y = head.centerY - eyeDistance
+              eye2X = head.centerX - eyeDistance / 1.5
+              eye2Y = head.centerY + eyeDistance
               break
             case 'RIGHT':
-              eye1X = segment.x * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
-              eye1Y = segment.y * this.gridSize + eyeOffsetX
-              eye2X = segment.x * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
-              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetX - eyeSize
+              eye1X = head.centerX + eyeDistance / 1.5
+              eye1Y = head.centerY - eyeDistance
+              eye2X = head.centerX + eyeDistance / 1.5
+              eye2Y = head.centerY + eyeDistance
               break
           }
 
+          ctx.fillStyle = '#fff'
+          ctx.beginPath()
+          ctx.arc(eye1X, eye1Y, eyeSize / 2, 0, Math.PI * 2)
+          ctx.fill()
+
+          ctx.beginPath()
+          ctx.arc(eye2X, eye2Y, eyeSize / 2, 0, Math.PI * 2)
+          ctx.fill()
+
+          // Draw pupils
           ctx.fillStyle = '#000'
-          ctx.fillRect(eye1X, eye1Y, eyeSize, eyeSize)
-          ctx.fillRect(eye2X, eye2Y, eyeSize, eyeSize)
+          ctx.beginPath()
+          ctx.arc(eye1X, eye1Y, eyeSize / 3.5, 0, Math.PI * 2)
+          ctx.fill()
+
+          ctx.beginPath()
+          ctx.arc(eye2X, eye2Y, eyeSize / 3.5, 0, Math.PI * 2)
+          ctx.fill()
         }
-      })
+      }
     },
 
     reload() {

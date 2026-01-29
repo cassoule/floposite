@@ -66,6 +66,7 @@ export default {
       canvasHeight: 500,
       gridSize: 500 / 9,
       snake: [],
+      prevSnake: [], // Track previous frame for interpolation
       direction: 'RIGHT',
       directionQueue: [],
       food: null,
@@ -75,7 +76,9 @@ export default {
       gameOver: false,
       isWin: false,
       gameLoop: null,
+      renderLoop: null,
       gameSpeed: 150, // milliseconds per frame
+      lastUpdateTime: 0,
 
       windowWidth: window.innerWidth,
       windowHeight: window.innerHeight,
@@ -106,6 +109,7 @@ export default {
 
   beforeUnmount() {
     this.stopGameLoop()
+    this.stopRenderLoop()
     window.removeEventListener('keydown', this.handleKeyPress)
     window.removeEventListener('resize', this.handleResize)
   },
@@ -209,16 +213,34 @@ export default {
     },
 
     startGameLoop() {
+      this.lastUpdateTime = Date.now()
       this.gameLoop = setInterval(() => {
+        this.prevSnake = this.snake.map(segment => ({ ...segment }))
         this.update()
-        this.drawGame()
+        this.lastUpdateTime = Date.now()
       }, this.gameSpeed)
+      this.startRenderLoop()
     },
 
     stopGameLoop() {
       if (this.gameLoop) {
         clearInterval(this.gameLoop)
         this.gameLoop = null
+      }
+    },
+
+    startRenderLoop() {
+      const render = () => {
+        this.drawGame()
+        this.renderLoop = requestAnimationFrame(render)
+      }
+      this.renderLoop = requestAnimationFrame(render)
+    },
+
+    stopRenderLoop() {
+      if (this.renderLoop) {
+        cancelAnimationFrame(this.renderLoop)
+        this.renderLoop = null
       }
     },
 
@@ -333,6 +355,11 @@ export default {
         ctx.stroke()
       }
 
+      // Calculate interpolation factor
+      const now = Date.now()
+      const timeSinceUpdate = now - this.lastUpdateTime
+      const progress = Math.min(timeSinceUpdate / this.gameSpeed, 1)
+
       // Draw food
       if (this.food) {
         const x = this.food.x * this.gridSize
@@ -344,62 +371,113 @@ export default {
         ctx.fillText('🍎', x + this.gridSize / 2, y + this.gridSize / 2 + 2)
       }
 
-      // Draw snake
-      this.snake.forEach((segment, index) => {
-        let baseHeadColor = '#5862f2'
-        let alphaValue = 1 - (index / this.snake.length) * 0.6
-        let hexAlpha = Math.floor(alphaValue * 255)
-          .toString(16)
-          .padStart(2, '0')
-        ctx.fillStyle = baseHeadColor + hexAlpha
+      // Draw snake with interpolation
+      const snakeSegments = this.snake.map((segment, index) => {
+        let displayX = segment.x
+        let displayY = segment.y
 
-        ctx.fillRect(
-          segment.x * this.gridSize + 1,
-          segment.y * this.gridSize + 1,
-          this.gridSize - 2,
-          this.gridSize - 2,
-        )
+        if (this.prevSnake[index]) {
+          const prev = this.prevSnake[index]
+          displayX = prev.x + (segment.x - prev.x) * progress
+          displayY = prev.y + (segment.y - prev.y) * progress
+        }
 
-        if (index === 0) {
-          // Draw eyes on head
-          const eyeSize = this.gridSize / 6
-          const eyeOffsetX = this.gridSize / 6
-          const eyeOffsetY = this.gridSize / 6
-
-          let eye1X, eye1Y, eye2X, eye2Y
-
-          switch (this.direction) {
-            case 'UP':
-              eye1X = segment.x * this.gridSize + eyeOffsetX
-              eye1Y = segment.y * this.gridSize + eyeOffsetY
-              eye2X = segment.x * this.gridSize + this.gridSize - 2 * eyeOffsetX
-              eye2Y = segment.y * this.gridSize + eyeOffsetY
-              break
-            case 'DOWN':
-              eye1X = segment.x * this.gridSize + eyeOffsetX
-              eye1Y = segment.y * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
-              eye2X = segment.x * this.gridSize + this.gridSize - 2 * eyeOffsetX
-              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
-              break
-            case 'LEFT':
-              eye1X = segment.x * this.gridSize + eyeOffsetY
-              eye1Y = segment.y * this.gridSize + eyeOffsetX
-              eye2X = segment.x * this.gridSize + eyeOffsetY
-              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetX - eyeSize
-              break
-            case 'RIGHT':
-              eye1X = segment.x * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
-              eye1Y = segment.y * this.gridSize + eyeOffsetX
-              eye2X = segment.x * this.gridSize + this.gridSize - eyeOffsetY - eyeSize
-              eye2Y = segment.y * this.gridSize + this.gridSize - eyeOffsetX - eyeSize
-              break
-          }
-
-          ctx.fillStyle = '#000'
-          ctx.fillRect(eye1X, eye1Y, eyeSize, eyeSize)
-          ctx.fillRect(eye2X, eye2Y, eyeSize, eyeSize)
+        return {
+          displayX,
+          displayY,
+          index,
+          centerX: displayX * this.gridSize + this.gridSize / 2,
+          centerY: displayY * this.gridSize + this.gridSize / 2,
         }
       })
+
+      // Draw snake body as continuous shape
+      if (snakeSegments.length > 0) {
+        const bodyWidth = this.gridSize * .7
+
+        // Draw the body with gradient alpha
+        for (let i = snakeSegments.length - 1; i >= 0; i--) {
+          const segment = snakeSegments[i]
+
+          ctx.strokeStyle = '#5862f2'
+          ctx.lineWidth = bodyWidth
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+
+          // Draw line from this segment to the next
+          if (i < snakeSegments.length - 1) {
+            const nextSegment = snakeSegments[i + 1]
+            ctx.beginPath()
+            ctx.moveTo(nextSegment.centerX, nextSegment.centerY)
+            ctx.lineTo(segment.centerX, segment.centerY)
+            ctx.stroke()
+          }
+        }
+
+        // Draw head as larger circle
+        const head = snakeSegments[0]
+        const headRadius = ((this.gridSize * .7) - 2) / 2
+
+        ctx.fillStyle = '#5862f2'
+        ctx.beginPath()
+        ctx.arc(head.centerX, head.centerY, headRadius, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Draw eyes on head
+        const eyeSize = this.gridSize / 6.5
+        const eyeDistance = this.gridSize / 7
+
+        let eye1X, eye1Y, eye2X, eye2Y
+
+        switch (this.direction) {
+          case 'UP':
+            eye1X = head.centerX - eyeDistance
+            eye1Y = head.centerY - eyeDistance / 1.5
+            eye2X = head.centerX + eyeDistance
+            eye2Y = head.centerY - eyeDistance / 1.5
+            break
+          case 'DOWN':
+            eye1X = head.centerX - eyeDistance
+            eye1Y = head.centerY + eyeDistance / 1.5
+            eye2X = head.centerX + eyeDistance
+            eye2Y = head.centerY + eyeDistance / 1.5
+            break
+          case 'LEFT':
+            eye1X = head.centerX - eyeDistance / 1.5
+            eye1Y = head.centerY - eyeDistance
+            eye2X = head.centerX - eyeDistance / 1.5
+            eye2Y = head.centerY + eyeDistance
+            break
+          case 'RIGHT':
+            eye1X = head.centerX + eyeDistance / 1.5
+            eye1Y = head.centerY - eyeDistance
+            eye2X = head.centerX + eyeDistance / 1.5
+            eye2Y = head.centerY + eyeDistance
+            break
+        }
+
+        if (!this.gameOver) {
+          ctx.fillStyle = '#fff'
+          ctx.beginPath()
+          ctx.arc(eye1X, eye1Y, eyeSize / 2, 0, Math.PI * 2)
+          ctx.fill()
+
+          ctx.beginPath()
+          ctx.arc(eye2X, eye2Y, eyeSize / 2, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        
+
+        // Draw pupils
+        ctx.fillStyle = '#000'
+        ctx.beginPath()
+        ctx.arc(eye1X, eye1Y, eyeSize / 3.5, 0, Math.PI * 2)
+        ctx.fill()
+
+        ctx.beginPath()
+        ctx.arc(eye2X, eye2Y, eyeSize / 3.5, 0, Math.PI * 2)
+        ctx.fill()
+      }
     },
 
     async endGame() {
@@ -426,6 +504,7 @@ export default {
 
     resetGame() {
       this.stopGameLoop()
+      this.stopRenderLoop()
       this.gameSpeed = 150
       this.initGame()
       this.gameStarted = false
