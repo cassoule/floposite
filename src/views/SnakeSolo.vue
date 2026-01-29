@@ -296,11 +296,11 @@ export default {
         this.spawnFood()
 
         // Increase speed slightly every 5 foods
-        if (this.score % 5 === 0 && this.gameSpeed > 50) {
-          this.gameSpeed -= 5
-          this.stopGameLoop()
-          this.startGameLoop()
-        }
+        //if (this.score % 5 === 0 && this.gameSpeed > 50) {
+        this.gameSpeed -= 1
+        this.stopGameLoop()
+        this.startGameLoop()
+        //}
       } else {
         // Remove tail if no food eaten
         this.snake.pop()
@@ -378,8 +378,27 @@ export default {
 
         if (this.prevSnake[index]) {
           const prev = this.prevSnake[index]
-          displayX = prev.x + (segment.x - prev.x) * progress
-          displayY = prev.y + (segment.y - prev.y) * progress
+          const dx = segment.x - prev.x
+          const dy = segment.y - prev.y
+          
+          // Check if this is a turn (both x and y changed)
+          if (dx !== 0 && dy !== 0) {
+            // This is a turn - interpolate in an L-shape
+            // Move horizontally first, then vertically
+            if (progress < 0.5) {
+              // First half: move horizontally
+              displayX = prev.x + dx * (progress * 2)
+              displayY = prev.y
+            } else {
+              // Second half: move vertically
+              displayX = segment.x
+              displayY = prev.y + dy * ((progress - 0.5) * 2)
+            }
+          } else {
+            // Straight movement - normal interpolation
+            displayX = prev.x + dx * progress
+            displayY = prev.y + dy * progress
+          }
         }
 
         return {
@@ -407,8 +426,35 @@ export default {
           // Draw line from this segment to the next
           if (i < snakeSegments.length - 1) {
             const nextSegment = snakeSegments[i + 1]
+            const dx = Math.abs(segment.centerX - nextSegment.centerX)
+            const dy = Math.abs(segment.centerY - nextSegment.centerY)
+            
             ctx.beginPath()
             ctx.moveTo(nextSegment.centerX, nextSegment.centerY)
+            
+            // If both dx and dy are significant, draw an L-shaped path
+            if (dx > 1 && dy > 1) {
+              // Determine turn direction based on actual segment positions
+              const curr = this.snake[i]
+              const prev = this.prevSnake[i]
+              
+              if (prev && curr) {
+                const xChanged = curr.x !== prev.x
+                const yChanged = curr.y !== prev.y
+                
+                // If x changed (horizontal movement happened), draw vertical first
+                if (xChanged && !yChanged) {
+                  ctx.lineTo(nextSegment.centerX, segment.centerY)
+                } else {
+                  // Otherwise draw horizontal first
+                  ctx.lineTo(segment.centerX, nextSegment.centerY)
+                }
+              } else {
+                // Fallback: draw horizontal first
+                ctx.lineTo(segment.centerX, nextSegment.centerY)
+              }
+            }
+            
             ctx.lineTo(segment.centerX, segment.centerY)
             ctx.stroke()
           }
