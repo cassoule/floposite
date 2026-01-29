@@ -11,7 +11,7 @@
           <v-card-actions class="d-flex pa-4 pt-0">
             <v-btn
               class="game-mode-btn"
-              style="flex-grow: 1;"
+              style="flex-grow: 1"
               variant="flat"
               color="#5862f2"
               rounded="lg"
@@ -27,7 +27,7 @@
 
             <v-btn
               class="game-mode-btn"
-              style="flex-grow: 1;"
+              style="flex-grow: 1"
               variant="flat"
               color="#5862f2"
               rounded="lg"
@@ -69,7 +69,7 @@ export default {
 
   computed: {
     isScreenTooSmall() {
-      return this.windowWidth < 800 || this.windowHeight < 870
+      return this.windowWidth < 800 //|| this.windowHeight < 870
     },
   },
 

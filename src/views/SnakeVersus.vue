@@ -73,12 +73,23 @@
               <p class="score-text">
                 Score: <span class="font-weight-bold">{{ myScore }}</span>
               </p>
-              <p v-if="myGameOver && !myWin" class="text-error font-weight-bold">Perdu !&nbsp;<span class="font-weight-regular text-secondary" style="font-size: .9em;">(en attente de l'adversaire)</span></p>
-              <p v-if="myWin" class="text-success font-weight-bold">Victoire !&nbsp;<span class="font-weight-regular text-secondary" style="font-size: .9em;">(en attente de l'adversaire)</span></p>
+              <p v-if="myGameOver && !myWin" class="text-error font-weight-bold">
+                Perdu !&nbsp;<span
+                  class="font-weight-regular text-secondary"
+                  style="font-size: 0.9em"
+                  >(en attente de l'adversaire)</span
+                >
+              </p>
+              <p v-if="myWin" class="text-success font-weight-bold">
+                Victoire !&nbsp;<span
+                  class="font-weight-regular text-secondary"
+                  style="font-size: 0.9em"
+                  >(en attente de l'adversaire)</span
+                >
+              </p>
             </div>
-            
 
-            <div v-if="foundLobby" class="grids-container mt-2" >
+            <div v-if="foundLobby" class="grids-container mt-2">
               <div class="grid-wrapper">
                 <canvas
                   ref="myCanvas"
@@ -100,8 +111,17 @@
                 :height="25"
                 rounded="xl"
               ></v-img>
-              <span class="ml-3" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 110px;">{{ oppName }}</span>
-              <v-spacer/>
+              <span
+                class="ml-3"
+                style="
+                  overflow: hidden;
+                  white-space: nowrap;
+                  text-overflow: ellipsis;
+                  max-width: 110px;
+                "
+                >{{ oppName }}</span
+              >
+              <v-spacer />
               <v-img
                 v-if="oppElo"
                 :src="rankIcon(oppElo)"
@@ -133,7 +153,7 @@
               <p v-if="oppWin" class="text-success font-weight-bold">Victoire !</p>
             </div>
 
-            <div v-if="foundLobby" class="grids-container mt-2" >
+            <div v-if="foundLobby" class="grids-container mt-2">
               <div class="grid-wrapper">
                 <canvas
                   ref="oppCanvas"
@@ -151,8 +171,6 @@
             <div class="countdown-number">{{ countdown }}</div>
           </div>
         </div>
-
-        
       </div>
     </v-main>
 
@@ -259,7 +277,7 @@ export default {
 
   computed: {
     isScreenTooSmall() {
-      return this.windowWidth < 800 || this.windowHeight < 870
+      return this.windowWidth < 800 //|| this.windowHeight < 870
     },
   },
 
@@ -330,8 +348,10 @@ export default {
           )
 
           // Restore game state from backend if game is already in progress
-          const myData = this.foundLobby.p1.id === this.discordId ? this.foundLobby.p1 : this.foundLobby.p2
-          const oppData = this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2 : this.foundLobby.p1
+          const myData =
+            this.foundLobby.p1.id === this.discordId ? this.foundLobby.p1 : this.foundLobby.p2
+          const oppData =
+            this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2 : this.foundLobby.p1
 
           // Check if game has already started on backend
           const gameInProgress = myData.snake && myData.snake.length > 0
@@ -343,7 +363,7 @@ export default {
             this.myScore = myData.score
             this.myGameOver = myData.gameOver || false
             this.myWin = myData.win || false
-            
+
             // Restore opponent game state
             this.oppSnake = oppData.snake
             this.oppFood = oppData.food
@@ -353,19 +373,19 @@ export default {
 
             // Restore direction (default to RIGHT if not set)
             this.myDirection = myData.direction || 'RIGHT'
-            
+
             // Mark game as started and restart game loop if not game over
             this.gameStarted = true
             if (!this.myGameOver && !this.myWin) {
               this.startGameLoop()
             }
-            
+
             // Draw the restored state
             this.$nextTick(() => {
               this.drawMyGame()
               this.drawOppGame()
             })
-            
+
             // Check if match already ended
             if ((this.myGameOver || this.myWin) && (this.oppGameOver || this.oppWin)) {
               this.handleMatchEnd()
@@ -576,7 +596,7 @@ export default {
         const directions = ['DOWN', 'LEFT', 'UP', 'RIGHT']
         const directionIndex = this.autoplayCounter % 4
         const newDirection = directions[directionIndex]
-        
+
         if (newDirection !== this.myDirection) {
           this.queueDirection(newDirection)
         }
@@ -690,11 +710,17 @@ export default {
       // Determine winner
       if (this.myWin && !this.oppWin) {
         this.title = 'Victoire'
-        this.message = this.myScore === ((this.canvasWidth/this.gridSize)**2) - 3 ? 'Tu as rempli la grille en premier !' : `${this.oppName} a abandonné !`
+        this.message =
+          this.myScore === (this.canvasWidth / this.gridSize) ** 2 - 3
+            ? 'Tu as rempli la grille en premier !'
+            : `${this.oppName} a abandonné !`
         this.socket.emit('snakegameOver', { playerId: this.discordId, winner: this.discordId })
       } else if (this.oppWin && !this.myWin) {
         this.title = 'Défaite'
-        this.message = this.oppScore === ((this.canvasWidth/this.gridSize)**2) - 3 ? `${this.oppName} a rempli la grille en premier` : `Tu as abandonné !`
+        this.message =
+          this.oppScore === (this.canvasWidth / this.gridSize) ** 2 - 3
+            ? `${this.oppName} a rempli la grille en premier`
+            : `Tu as abandonné !`
         const winnerId =
           this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
         this.socket.emit('snakegameOver', { playerId: this.discordId, winner: winnerId })

@@ -15,7 +15,9 @@
             </v-card-text>
           </v-card>
           <div v-if="!gameStarted && !gameOver" class="start-message">
-            <p v-if="!isScreenTooSmall" class="text-white">Appuie sur&nbsp;<kbd>ESPACE</kbd>&nbsp;pour commencer.</p>
+            <p v-if="!isScreenTooSmall" class="text-white">
+              Appuie sur&nbsp;<kbd>ESPACE</kbd>&nbsp;pour commencer.
+            </p>
             <p v-else class="text-white">Ton écran est trop petit</p>
           </div>
           <div v-if="gameOver" class="game-over-message">
@@ -52,7 +54,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from 'axios'
 
 export default {
   name: 'SnakeSolo',
@@ -82,7 +84,7 @@ export default {
 
   computed: {
     isScreenTooSmall() {
-      return this.windowWidth < 800 || this.windowHeight < 870
+      return this.windowWidth < 800 //|| this.windowHeight < 870
     },
   },
 
@@ -412,11 +414,11 @@ export default {
 
       const url = import.meta.env.VITE_FLAPI_URL + '/snake/reward'
       try {
-
-        const response = await axios.post(
-          url,
-          { discordId: this.discordId, score: this.score, isWin: this.isWin },
-        )
+        const response = await axios.post(url, {
+          discordId: this.discordId,
+          score: this.score,
+          isWin: this.isWin,
+        })
       } catch (error) {
         console.error('Error rewarding snake solo score:', error)
       }
