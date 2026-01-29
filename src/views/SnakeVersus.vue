@@ -233,6 +233,7 @@ export default {
       playerAvatar: null,
       queue: [],
       foundLobby: null,
+      gameKey: null, // Track current game to filter events
       inQueue: false,
       oppName: null,
       oppAvatar: null,
@@ -318,6 +319,12 @@ export default {
 
       this.socket.emit('snakeconnection', { id: this.discordId })
 
+      // Listen for match confirmation with gameKey
+      this.socket.on('snakematch', (e) => {
+        console.log('Match found with gameKey:', e.gameKey)
+        this.gameKey = e.gameKey
+      })
+
       this.socket.on('snakequeue', async (e) => {
         this.queue = e.queue
 
@@ -400,6 +407,11 @@ export default {
       })
 
       this.socket.on('snakegamestate', (e) => {
+        // Filter by gameKey to only process updates for this game
+        if (e.gameKey !== this.gameKey) {
+          return
+        }
+
         const lobby = e.lobby
         this.foundLobby = lobby
         console.log(lobby)
@@ -429,6 +441,11 @@ export default {
       })
 
       this.socket.on('snakegameOver', (e) => {
+        // Filter by gameKey to ensure we only handle game over for this game
+        if (e.gameKey !== this.gameKey) {
+          return
+        }
+
         const lobby = e.lobby
         this.foundLobby = lobby
 
@@ -862,11 +879,13 @@ export default {
     },
 
     reload() {
+      this.gameKey = null // Clear gameKey on reload
       location.reload()
     },
 
     leaveAndGoBack() {
       this.leaveQueueSync({ reason: 'manual-leave' })
+      this.gameKey = null // Clear gameKey when leaving
       this.$router.push('/snake')
     },
 

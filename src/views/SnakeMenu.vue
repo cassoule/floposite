@@ -38,7 +38,9 @@
               <div class="btn-content">
                 <v-icon size="30" class="mr-2">mdi-account-multiple</v-icon>
                 <span class="text-h5">Versus</span>
-                <v-chip class="ml-3 mt-1" color="dark" variant="flat" size="x-small">Bêta</v-chip>
+                <v-chip class="ml-3 mt-1" color="dark" variant="flat" size="x-small">
+                  Bêta v0.2
+                </v-chip>
               </div>
             </v-btn>
           </v-card-actions>
@@ -95,7 +97,6 @@ export default {
 
 <style scoped>
 .menu-container {
-  max-width: 600px;
   padding: 2em;
 }
 
