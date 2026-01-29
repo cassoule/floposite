@@ -279,6 +279,56 @@
           <v-icon>mdi-cards</v-icon>
         </template>
       </v-snackbar>
+
+      <!-- Chat Box -->
+      <v-card class="w-50" variant="tonal" style="position: fixed; bottom: 20px; min-width: 200px; max-width: 330px; left: 20px; backdrop-filter: blur(20px);" rounded="xl">
+        <v-card-text class="py-3 mb-0 d-flex flex-row align-center cursor-pointer"  @click="openChat = !openChat, chatNotifs = 0">
+          <p class="mr-2">Chat</p>
+          <p v-if="chatNotifs > 0" class="bg-error d-flex align-center justify-center font-weight-black" style="font-size: .7em; border-radius: 20px; height: 17px; min-width: 17px !important;">{{  chatNotifs }}</p>
+          <v-spacer/>
+          <v-icon class="cursor-pointer">{{ openChat ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+        </v-card-text>
+        <v-card-item
+          ref="chatScroll"
+          class="px-4 py-0 mt-0"
+          style="overflow-y: scroll"
+          :style="{ maxHeight: openChat ? '300px' : '0px', transition: 'max-height 0.3s ease' }"
+        >
+          <div v-for="msg in chatMsgs" :key="msg.timestamp + (msg.user?.id || msg.id)" :style="{ background: !msg.user ? '' : msg.user?.id === me?.id ? '#5862f255' : '#dddddd22', padding: '5px 10px', borderRadius: '10px', marginBottom: '5px' }" >
+            <div v-if="msg.user" class="d-flex align-center w-100">
+              <v-img :src="msg.user.avatar" class="mr-2" max-width="20" min-width="20" rounded="circle"></v-img>
+              <p style="font-size: .9em; opacity: .9; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{ msg.user.name }}</p>
+              <v-spacer/> 
+              <span class="mt-1" style="font-size: .7em; opacity: .5;">{{ new Date(msg.timestamp).toLocaleTimeString() }}</span>
+            </div> 
+            <p class="mt-1">{{ msg.msg }}</p>
+          </div>
+        </v-card-item>
+        <v-card-item v-if="openChat" class="pa-4 pt-3">
+          <v-text-field 
+            v-model="textMsg" 
+            maxLength="100" 
+            :disabled="!isInRoom" 
+            variant="outlined" 
+            rounded="lg" 
+            hide-details 
+            density="compact" 
+            placeholder="Envoyer un message" 
+            @keyup.enter="handleMessageSend"
+          >
+            <template #append-inner>
+              <v-icon 
+                :color="textMsg.trim().length > 0 && isInRoom ? 'white' : 'grey'" 
+                class="cursor-pointer" 
+                :disabled="textMsg.trim().length === 0 || !isInRoom"
+                @click="handleMessageSend"
+              >
+                mdi-send-variant-outline
+              </v-icon>
+            </template>
+          </v-text-field>
+        </v-card-item>
+      </v-card>
     </v-main>
 
     <v-btn
@@ -305,6 +355,10 @@ export default {
     nowTick: Date.now(),
     socket: null,
     activeHandIndex: 0, // Tracks the currently selected hand for the 'me' player
+    textMsg: '',
+    chatMsgs: [],
+    openChat: true,
+    chatNotifs: 0,
   }),
 
   async mounted() {
@@ -381,6 +435,18 @@ export default {
   },
 
   watch: {
+    chatMsgs: {
+      handler() {
+        this.scrollChatToBottom()
+        if (!this.openChat) {
+          this.chatNotifs++
+        }
+      },
+      deep: true,
+    },
+    openChat(newVal) {
+      if (newVal) this.scrollChatToBottom()
+    },
     myHands: {
       handler(newHands, oldHands) {
         // If the number of hands changes, or if the active hand no longer exists,
@@ -441,6 +507,14 @@ export default {
   },
 
   methods: {
+    scrollChatToBottom() {
+      this.$nextTick(() => {
+        const el = this.$refs.chatScroll
+        if (!el) return
+        const target = el?.$el || el
+        target.scrollTop = target.scrollHeight
+      })
+    },
     handleUnload(event, userId) {
       // Use the userId passed from created() or fallback to local data
       const targetId = userId || this.discordId
@@ -502,6 +576,23 @@ export default {
           this.toast(this.humanToast(p))
         }
       })
+      this.socket.on('blackjack:chat', (msg) => {
+        this.chatMsgs.push(msg)
+      })
+    },
+
+    handleMessageSend() {
+      if (!this.textMsg.trim()) return
+      this.socket.emit('blackjack:chat', {
+        msg: this.textMsg, 
+        timestamp: Date.now(), 
+        user: {
+          id: this.discordId, 
+          name: this.me?.globalName || 'Anonyme', 
+          avatar: this.me?.avatar || ''
+        }
+      })
+      this.textMsg = ''
     },
 
     humanToast(p) {
@@ -750,6 +841,8 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  overflow-y: scroll;
+  max-height: 373px;
 }
 .player {
   gap: 0.75rem;
@@ -872,7 +965,6 @@ export default {
 .sidebar {
   min-height: 100px;
   max-height: 430px;
-  overflow-y: scroll;
 }
 .me-card {
   min-height: 235px;
