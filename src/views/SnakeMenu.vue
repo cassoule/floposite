@@ -2,13 +2,17 @@
   <v-layout>
     <v-main class="d-flex" style="place-items: center; place-content: center">
       <div class="menu-container mt-16">
-        <h2 class="text-white mb-4" style="text-align: start">Snake Game</h2>
-
-        <v-card variant="tonal" rounded="xl">
+        <v-card class="w-100" variant="tonal" rounded="xl">
+          <v-card-title>
+            <h2 class="text-white mb-4" style="text-align: start">Snake Game</h2>
+          </v-card-title>
           <v-card-text>
-            <p>Gagne un FlopoCoin par pomme en solo et mesure toi à d'autres joueurs en 1v1.</p>
+            <p style="font-size: 1.1em;">
+              Gagne un FlopoCoin par pomme en solo et mesure toi
+              <br> à d'autres joueurs en 1v1.
+            </p>
           </v-card-text>
-          <v-card-actions class="d-flex pa-4 pt-0">
+          <v-card-actions class="d-flex pa-4 pt-3">
             <v-btn
               class="game-mode-btn"
               style="flex-grow: 1"
@@ -39,7 +43,7 @@
                 <v-icon size="30" class="mr-2">mdi-account-multiple</v-icon>
                 <span class="text-h5">Versus</span>
                 <v-chip class="ml-3 mt-1" color="dark" variant="flat" size="x-small">
-                  Bêta v0.3
+                  Bêta v0.4
                 </v-chip>
               </div>
             </v-btn>

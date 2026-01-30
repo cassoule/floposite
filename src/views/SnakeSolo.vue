@@ -34,12 +34,20 @@
           </div>
         </div>
 
-        <canvas
-          ref="gameCanvas"
-          :width="canvasWidth"
-          :height="canvasHeight"
-          class="game-canvas"
-        ></canvas>
+        <div class="canvas-container">
+          <canvas
+            ref="bgCanvas"
+            :width="canvasWidth"
+            :height="canvasHeight"
+            class="bg-canvas"
+          ></canvas>
+          <canvas
+            ref="gameCanvas"
+            :width="canvasWidth"
+            :height="canvasHeight"
+            class="game-canvas"
+          ></canvas>
+        </div>
       </div>
     </v-main>
 
@@ -79,6 +87,9 @@ export default {
       renderLoop: null,
       gameSpeed: 150, // milliseconds per frame
       lastUpdateTime: 0,
+      lastRenderTime: 0,
+      targetFps: 60,
+      needsRender: true,
 
       windowWidth: window.innerWidth,
       windowHeight: window.innerHeight,
@@ -102,6 +113,7 @@ export default {
     this.loadHighScore()
     this.initGame()
     this.setupKeyboardControls()
+    this.drawStaticBackground()
     this.drawGame()
 
     window.addEventListener('resize', this.handleResize)
@@ -218,6 +230,7 @@ export default {
         this.prevSnake = this.snake.map(segment => ({ ...segment }))
         this.update()
         this.lastUpdateTime = Date.now()
+        this.needsRender = true
       }, this.gameSpeed)
       this.startRenderLoop()
     },
@@ -230,8 +243,24 @@ export default {
     },
 
     startRenderLoop() {
-      const render = () => {
-        this.drawGame()
+      const render = (timestamp) => {
+        const elapsed = timestamp - this.lastRenderTime
+        const frameTime = 1000 / this.targetFps
+        
+        if (elapsed >= frameTime && this.needsRender) {
+          this.drawGame()
+          this.lastRenderTime = timestamp
+          this.needsRender = false
+        }
+        
+        // Always render during interpolation
+        if (this.gameStarted && !this.gameOver) {
+          const timeSinceUpdate = Date.now() - this.lastUpdateTime
+          if (timeSinceUpdate < this.gameSpeed) {
+            this.needsRender = true
+          }
+        }
+        
         this.renderLoop = requestAnimationFrame(render)
       }
       this.renderLoop = requestAnimationFrame(render)
@@ -330,45 +359,59 @@ export default {
       this.food = newFood
     },
 
+    drawStaticBackground() {
+      const canvas = this.$refs.bgCanvas
+      if (!canvas) return
+
+      const ctx = canvas.getContext('2d')
+
+      // Clear and fill background
+      ctx.fillStyle = '#1a1a1a'
+      ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
+
+      // Draw grid once
+      ctx.strokeStyle = '#2a2a2a'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      for (let i = 0; i <= this.canvasWidth / this.gridSize; i++) {
+        ctx.moveTo(i * this.gridSize, 0)
+        ctx.lineTo(i * this.gridSize, this.canvasHeight)
+        ctx.moveTo(0, i * this.gridSize)
+        ctx.lineTo(this.canvasWidth, i * this.gridSize)
+      }
+      ctx.stroke()
+    },
+
     drawGame() {
       const canvas = this.$refs.gameCanvas
       if (!canvas) return
 
       const ctx = canvas.getContext('2d')
 
-      // Clear canvas
-      ctx.fillStyle = '#1a1a1a'
-      ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
-
-      // Draw grid
-      ctx.strokeStyle = '#2a2a2a'
-      ctx.lineWidth = 1
-      for (let i = 0; i <= this.canvasWidth / this.gridSize; i++) {
-        ctx.beginPath()
-        ctx.moveTo(i * this.gridSize, 0)
-        ctx.lineTo(i * this.gridSize, this.canvasHeight)
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.moveTo(0, i * this.gridSize)
-        ctx.lineTo(this.canvasWidth, i * this.gridSize)
-        ctx.stroke()
-      }
+      // Clear only the game layer (transparent)
+      ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
 
       // Calculate interpolation factor
       const now = Date.now()
       const timeSinceUpdate = now - this.lastUpdateTime
       const progress = Math.min(timeSinceUpdate / this.gameSpeed, 1)
 
-      // Draw food
+      // Draw food as circle (much faster than emoji)
       if (this.food) {
-        const x = this.food.x * this.gridSize
-        const y = this.food.y * this.gridSize
+        const x = this.food.x * this.gridSize + this.gridSize / 2
+        const y = this.food.y * this.gridSize + this.gridSize / 2
+        const radius = this.gridSize / 3
 
-        ctx.font = `${this.gridSize}px serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('🍎', x + this.gridSize / 2, y + this.gridSize / 2 + 2)
+        ctx.fillStyle = '#ff4444'
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fill()
+        
+        // Add small highlight
+        ctx.fillStyle = '#ff8888'
+        ctx.beginPath()
+        ctx.arc(x - radius / 3, y - radius / 3, radius / 3, 0, Math.PI * 2)
+        ctx.fill()
       }
 
       // Draw snake with interpolation
@@ -410,55 +453,50 @@ export default {
         }
       })
 
-      // Draw snake body as continuous shape
+      // Draw snake body as continuous shape with single path
       if (snakeSegments.length > 0) {
         const bodyWidth = this.gridSize * .7
 
-        // Draw the body with gradient alpha
-        for (let i = snakeSegments.length - 1; i >= 0; i--) {
+        ctx.strokeStyle = '#5862f2'
+        ctx.lineWidth = bodyWidth
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
+        ctx.beginPath()
+
+        // Start from tail
+        const tail = snakeSegments[snakeSegments.length - 1]
+        ctx.moveTo(tail.centerX, tail.centerY)
+
+        // Draw path through all segments
+        for (let i = snakeSegments.length - 2; i >= 0; i--) {
           const segment = snakeSegments[i]
-
-          ctx.strokeStyle = '#5862f2'
-          ctx.lineWidth = bodyWidth
-          ctx.lineCap = 'round'
-          ctx.lineJoin = 'round'
-
-          // Draw line from this segment to the next
-          if (i < snakeSegments.length - 1) {
-            const nextSegment = snakeSegments[i + 1]
-            const dx = Math.abs(segment.centerX - nextSegment.centerX)
-            const dy = Math.abs(segment.centerY - nextSegment.centerY)
+          const nextSegment = snakeSegments[i + 1]
+          const dx = Math.abs(segment.centerX - nextSegment.centerX)
+          const dy = Math.abs(segment.centerY - nextSegment.centerY)
+          
+          // If both dx and dy are significant, draw an L-shaped path
+          if (dx > 1 && dy > 1) {
+            const curr = this.snake[i]
+            const prev = this.prevSnake[i]
             
-            ctx.beginPath()
-            ctx.moveTo(nextSegment.centerX, nextSegment.centerY)
-            
-            // If both dx and dy are significant, draw an L-shaped path
-            if (dx > 1 && dy > 1) {
-              // Determine turn direction based on actual segment positions
-              const curr = this.snake[i]
-              const prev = this.prevSnake[i]
+            if (prev && curr) {
+              const xChanged = curr.x !== prev.x
+              const yChanged = curr.y !== prev.y
               
-              if (prev && curr) {
-                const xChanged = curr.x !== prev.x
-                const yChanged = curr.y !== prev.y
-                
-                // If x changed (horizontal movement happened), draw vertical first
-                if (xChanged && !yChanged) {
-                  ctx.lineTo(nextSegment.centerX, segment.centerY)
-                } else {
-                  // Otherwise draw horizontal first
-                  ctx.lineTo(segment.centerX, nextSegment.centerY)
-                }
+              if (xChanged && !yChanged) {
+                ctx.lineTo(nextSegment.centerX, segment.centerY)
               } else {
-                // Fallback: draw horizontal first
                 ctx.lineTo(segment.centerX, nextSegment.centerY)
               }
+            } else {
+              ctx.lineTo(segment.centerX, nextSegment.centerY)
             }
-            
-            ctx.lineTo(segment.centerX, segment.centerY)
-            ctx.stroke()
           }
+          
+          ctx.lineTo(segment.centerX, segment.centerY)
         }
+        
+        ctx.stroke()
 
         // Draw head as larger circle
         const head = snakeSegments[0]
@@ -554,6 +592,7 @@ export default {
       this.gameSpeed = 150
       this.initGame()
       this.gameStarted = false
+      this.needsRender = true
       this.drawGame()
     },
 
@@ -602,6 +641,7 @@ export default {
 .start-message,
 .game-over-message {
   position: absolute;
+  z-index: 200;
   text-align: center;
   padding: 1em;
   background: rgba(255, 255, 255, 0.05);
@@ -612,11 +652,26 @@ export default {
   backdrop-filter: blur(100px);
 }
 
-.game-canvas {
+.canvas-container {
+  position: relative;
+  display: inline-block;
+}
+
+.bg-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
   border: 3px solid #5862f2;
   border-radius: 10px;
   background: #1a1a1a;
   box-shadow: 0 0 30px rgba(88, 98, 242, 0.3);
+}
+
+.game-canvas {
+  position: relative;
+  border: 3px solid #5862f2;
+  border-radius: 10px;
+  pointer-events: none;
 }
 
 .mobile-controls {

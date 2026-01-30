@@ -92,6 +92,12 @@
             <div v-if="foundLobby" class="grids-container mt-2">
               <div class="grid-wrapper">
                 <canvas
+                  ref="myBgCanvas"
+                  :width="canvasWidth"
+                  :height="canvasHeight"
+                  class="bg-canvas"
+                ></canvas>
+                <canvas
                   ref="myCanvas"
                   :width="canvasWidth"
                   :height="canvasHeight"
@@ -155,6 +161,12 @@
 
             <div v-if="foundLobby" class="grids-container mt-2">
               <div class="grid-wrapper">
+                <canvas
+                  ref="oppBgCanvas"
+                  :width="canvasWidth"
+                  :height="canvasHeight"
+                  class="bg-canvas opp-canvas"
+                ></canvas>
                 <canvas
                   ref="oppCanvas"
                   :width="canvasWidth"
@@ -246,6 +258,9 @@ export default {
       countdown: 0,
       countdownInterval: null,
       lastUpdateTime: 0,
+      lastRenderTime: 0,
+      targetFps: 60,
+      needsRender: true,
 
       // Previous frame for interpolation
       prevMySnake: [],
@@ -400,6 +415,8 @@ export default {
 
             // Draw the restored state
             this.$nextTick(() => {
+              this.drawStaticBackground(this.$refs.myBgCanvas)
+              this.drawStaticBackground(this.$refs.oppBgCanvas)
               this.drawMyGame()
               this.drawOppGame()
             })
@@ -412,6 +429,9 @@ export default {
             // Only start countdown for new games
             this.startCountdown()
           }
+        } else {
+          // Clear backgrounds when lobby is lost
+          this.needsRender = true
         }
 
         this.inQueue = this.inQueue && (this.foundLobby === null || this.foundLobby === undefined)
@@ -515,7 +535,13 @@ export default {
     startCountdown() {
       this.countdown = 3
       this.initGame() // Initialize grids so they can be displayed
-      this.drawMyGame() // Draw initial state
+      
+      // Draw static backgrounds
+      this.$nextTick(() => {
+        this.drawStaticBackground(this.$refs.myBgCanvas)
+        this.drawStaticBackground(this.$refs.oppBgCanvas)
+        this.drawMyGame()
+      })
 
       this.countdownInterval = setInterval(() => {
         this.countdown--
@@ -608,6 +634,7 @@ export default {
         this.update()
         this.emitGameState()
         this.lastUpdateTime = Date.now()
+        this.needsRender = true
       }, this.gameSpeed)
       this.startRenderLoop()
     },
@@ -620,9 +647,25 @@ export default {
     },
 
     startRenderLoop() {
-      const render = () => {
-        this.drawMyGame()
-        this.drawOppGame()
+      const render = (timestamp) => {
+        const elapsed = timestamp - this.lastRenderTime
+        const frameTime = 1000 / this.targetFps
+        
+        if (elapsed >= frameTime && this.needsRender) {
+          this.drawMyGame()
+          this.drawOppGame()
+          this.lastRenderTime = timestamp
+          this.needsRender = false
+        }
+        
+        // Always render during interpolation
+        if (this.gameStarted && !this.myGameOver) {
+          const timeSinceUpdate = Date.now() - this.lastUpdateTime
+          if (timeSinceUpdate < this.gameSpeed) {
+            this.needsRender = true
+          }
+        }
+        
         this.renderLoop = requestAnimationFrame(render)
       }
       this.renderLoop = requestAnimationFrame(render)
@@ -818,42 +861,56 @@ export default {
 
       const ctx = canvas.getContext('2d')
       this.drawGame(ctx, this.oppSnake, this.oppFood, null, this.prevOppSnake)
+      this.needsRender = true // Opponent updates trigger render
     },
 
-    drawGame(ctx, snake, food, direction = null, prevSnake = []) {
-      // Clear canvas
+    drawStaticBackground(canvas) {
+      if (!canvas) return
+
+      const ctx = canvas.getContext('2d')
+
+      // Clear and fill background
       ctx.fillStyle = '#1a1a1a'
       ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
 
-      // Draw grid
+      // Draw grid once
       ctx.strokeStyle = '#2a2a2a'
       ctx.lineWidth = 1
+      ctx.beginPath()
       for (let i = 0; i <= this.canvasWidth / this.gridSize; i++) {
-        ctx.beginPath()
         ctx.moveTo(i * this.gridSize, 0)
         ctx.lineTo(i * this.gridSize, this.canvasHeight)
-        ctx.stroke()
-
-        ctx.beginPath()
         ctx.moveTo(0, i * this.gridSize)
         ctx.lineTo(this.canvasWidth, i * this.gridSize)
-        ctx.stroke()
       }
+      ctx.stroke()
+    },
+
+    drawGame(ctx, snake, food, direction = null, prevSnake = []) {
+      // Clear only the game layer (transparent)
+      ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
 
       // Calculate interpolation factor
       const now = Date.now()
       const timeSinceUpdate = now - this.lastUpdateTime
       const progress = Math.min(timeSinceUpdate / this.gameSpeed, 1)
 
-      // Draw food
+      // Draw food as circle (much faster than emoji)
       if (food) {
-        const x = food.x * this.gridSize
-        const y = food.y * this.gridSize
+        const x = food.x * this.gridSize + this.gridSize / 2
+        const y = food.y * this.gridSize + this.gridSize / 2
+        const radius = this.gridSize / 3
 
-        ctx.font = `${this.gridSize}px serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('🍎', x + this.gridSize / 2, y + this.gridSize / 2 + 2)
+        ctx.fillStyle = '#ff4444'
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fill()
+        
+        // Add small highlight
+        ctx.fillStyle = '#ff8888'
+        ctx.beginPath()
+        ctx.arc(x - radius / 3, y - radius / 3, radius / 3, 0, Math.PI * 2)
+        ctx.fill()
       }
 
       // Draw snake with interpolation
@@ -1126,23 +1183,29 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 0.5em;
+  position: relative;
 }
 
-.grid-label {
-  font-size: 0.9em;
-  font-weight: 500;
-}
-
-.game-canvas {
+.bg-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
   border: 3px solid #5862f2;
   border-radius: 10px;
   background: #1a1a1a;
   box-shadow: 0 0 20px rgba(88, 98, 242, 0.3);
 }
 
+.game-canvas {
+  position: relative;
+  border: 3px solid #5862f2;
+  border-radius: 10px;
+  pointer-events: none;
+}
+
 .opp-canvas {
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1) !important;
   opacity: 0.8;
   height: 175px !important;
 }
