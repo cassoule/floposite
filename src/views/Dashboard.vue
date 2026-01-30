@@ -75,26 +75,41 @@
       >
         timed out
       </span>
-      <span class="bubble-text" style="opacity: 0" />
-      <p class="d-flex mt-2" style="place-items: baseline">
-        {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
-        <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
-      </p>
-
-      <div v-if="elos[discordId]" class="mt-3 d-flex ga-2" style="place-items: center">
-        <div style="display: flex; place-items: center">
-          <v-img :src="rankIcon(user?.elo)" width="22" height="30">
-            <div
-              :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+      <span class="bubble-text" style="opacity: 0"></span>
+      <div class="d-flex flex-wrap mt-2 justify-space-between" style="column-gap: 2em;">
+        <p class="d-flex " style="place-items: baseline">
+          <span class="font-weight-bold">{{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}</span>
+          &nbsp;FlopoCoins&nbsp;
+          <v-btn
+              text="Acheter"
+              append-icon=""
+              class="text-none buy-btn ml-2"
+              color="white"
+              variant="tonal"
+              size="small"
+              rounded="lg"
+              @click="coinsModal = true"
             >
-              <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
-            </div>
-          </v-img>
+            <template #append>
+              <v-img src="star.svg" width="12px" height="12px" />
+            </template>
+          </v-btn>
+        </p>
+        <div v-if="elos[discordId]" class="d-flex ga-2" style="place-items: center">
+          <div style="display: flex; place-items: center">
+            <v-img :src="rankIcon(user?.elo)" width="22" height="30">
+              <div
+                :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+              >
+                <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
+              </div>
+            </v-img>
+          </div>
+          {{ elos[discordId] }} FlopoElo
+          <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
+            'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
+          }}</span>
         </div>
-        {{ elos[discordId] }} FlopoElo
-        <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
-          'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
-        }}</span>
       </div>
     </div>
 
@@ -112,7 +127,7 @@
           padding-right: 1em;
         "
       >
-        <v-btn-toggle rounded="lg" base-color="primary" variant="flat" density="compact">
+        <v-btn-toggle rounded="lg" base-color="primary" variant="flat" density="compact" style="border-radius:  10px !important;">
           <v-btn
             class="text-capitalize"
             text="Market"
@@ -126,19 +141,6 @@
           </v-btn>
         </v-btn-toggle>
 
-        <!--        <v-btn
-          text="Acheter"
-          append-icon=""
-          class="text-none buy-btn"
-          color="white"
-          variant="tonal"
-          rounded="lg"
-          @click="coinsModal = true"
-        >
-          <template #append>
-            <v-img src="star.svg" width="12px" height="12px" />
-          </template>
-        </v-btn>-->
         <v-btn
           v-if="!user.dailyQueried"
           color="primary"
@@ -2532,7 +2534,7 @@ button:disabled {
 }
 .buy-btn {
   z-index: 1;
-  border-radius: 10px !important;
+  /*border-radius: 10px !important;*/
   background:
     radial-gradient(
       ellipse farthest-corner at right bottom,
