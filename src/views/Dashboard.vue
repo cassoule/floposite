@@ -11,7 +11,7 @@
         line-width="0.5"
         :model-value="
           sparklines[discordId]?.length > 0
-            ? sparklines[discordId]?.map((entry) => entry.user_new_amount)
+            ? sparklines[discordId]?.map((entry) => entry.userNewAmount)
             : [0]
         "
         style="
@@ -807,7 +807,7 @@
                   line-width="2"
                   :model-value="
                     sparklines[akhy.id]?.length > 1
-                      ? sparklines[akhy.id]?.map((entry) => entry.user_new_amount)
+                      ? sparklines[akhy.id]?.map((entry) => entry.userNewAmount)
                       : [0, 0]
                   "
                   style="position: absolute; left: 0; top: 0"
@@ -2106,7 +2106,7 @@ export default {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo-graph'
       try {
         const response = await axios.get(fetchUrl)
-        return response.data.elo_graph
+        return response.data.eloGraph
       } catch (e) {
         console.error('flAPI error:', e)
       }

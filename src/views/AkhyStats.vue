@@ -28,7 +28,7 @@ export default {
       user: null,
       sparkline: null,
       elo: null,
-      elo_graph: null,
+      eloGraph: null,
       user_inventory: null,
       skinsVideoUrls: {},
       skinsData: {},
@@ -74,7 +74,7 @@ export default {
       const id = this.$route.params.id
       //this.sparkline = await this.getSparkline(id)
       this.elo = await this.getElo(id)
-      this.elo_graph = await this.getEloGraph(id)
+      this.eloGraph = await this.getEloGraph(id)
       await this.getActiveSlowmodes()
       await this.isTimedOut()
       await this.getGames()
@@ -205,7 +205,7 @@ export default {
         import.meta.env.VITE_FLAPI_URL + '/user/' + this.$route.params.id + '/elo-graph'
       try {
         const response = await axios.get(fetchUrl)
-        return response.data.elo_graph
+        return response.data.eloGraph
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -310,17 +310,17 @@ export default {
 
     cardClass(game) {
       if (game.p1 === this.$route.params.id) {
-        if (game.p1_score > game.p2_score) {
+        if (game.p1Score > game.p2Score) {
           return 'win-card'
-        } else if (game.p2_score > game.p1_score) {
+        } else if (game.p2Score > game.p1Score) {
           return 'lose-card'
         } else {
           return 'draw-card'
         }
       } else if (game.p2 === this.$route.params.id) {
-        if (game.p1_score > game.p2_score) {
+        if (game.p1Score > game.p2Score) {
           return 'lose-card'
-        } else if (game.p2_score > game.p1_score) {
+        } else if (game.p2Score > game.p1Score) {
           return 'win-card'
         } else {
           return 'draw-card'
@@ -754,9 +754,9 @@ export default {
                   </h2>
                   <h3 v-if="elo">
                     {{ elo }}
-                    <span style="color: rgba(255, 255, 255, 0.3)"
-                      >{{ Math.max(...elo_graph) }} PB</span
-                    >
+                    <span style="color: rgba(255, 255, 255, 0.3)">
+                      {{ Math.max(...eloGraph) }} PB
+                    </span>
                   </h3>
                   <h3 v-else>-</h3>
                 </div>
@@ -1212,9 +1212,7 @@ export default {
                       <v-img
                         class=""
                         :src="
-                          game.p1 === $route.params.id
-                            ? rankIcon(game.p1_elo)
-                            : rankIcon(game.p2_elo)
+                          game.p1 === $route.params.id ? rankIcon(game.p1Elo) : rankIcon(game.p2Elo)
                         "
                         min-width="20"
                         max-width="20"
@@ -1226,21 +1224,21 @@ export default {
                           <p style="font-weight: 300">
                             {{
                               game.p1 === $route.params.id
-                                ? rankDiv(game.p1_elo)
-                                : rankDiv(game.p2_elo)
+                                ? rankDiv(game.p1Elo)
+                                : rankDiv(game.p2Elo)
                             }}
                           </p>
                         </div>
                       </v-img>
-                      {{ game.p1 === $route.params.id ? game.p1_elo : game.p2_elo }}
+                      {{ game.p1 === $route.params.id ? game.p1Elo : game.p2Elo }}
                     </h4>
                     <h4>
                       {{
                         (() => {
                           const diff =
                             game.p1 === $route.params.id
-                              ? game.p1_new_elo - game.p1_elo
-                              : game.p2_new_elo - game.p2_elo
+                              ? game.p1NewElo - game.p1Elo
+                              : game.p2NewElo - game.p2Elo
 
                           return diff > 0 ? `+${diff}` : diff
                         })()
@@ -1252,19 +1250,57 @@ export default {
                     class="d-flex"
                     style="gap: 0.5rem; place-items: center; place-content: center; width: 33%"
                   >
-                    <h2 class="bg-dark px-2 py-1 rounded" style="min-width: 30px; text-align: center">
+                    <h2
+                      class="bg-dark px-2 py-1 rounded"
+                      style="min-width: 30px; text-align: center"
+                    >
                       {{
                         game.p1 === $route.params.id
-                          ? game.p1_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
-                          : game.p2_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
+                          ? game.p1Score
+                              .toFixed(0)
+                              .padStart(
+                                Math.max(
+                                  String(game.p1Score.toFixed(0)).length,
+                                  game.p2Score.toFixed(0).length,
+                                ),
+                                '0',
+                              )
+                          : game.p2Score
+                              .toFixed(0)
+                              .padStart(
+                                Math.max(
+                                  String(game.p1Score.toFixed(0)).length,
+                                  game.p2Score.toFixed(0).length,
+                                ),
+                                '0',
+                              )
                       }}
                     </h2>
                     <h2>-</h2>
-                    <h2 class="bg-dark px-2 py-1 rounded" style="min-width: 30px; text-align: center">
+                    <h2
+                      class="bg-dark px-2 py-1 rounded"
+                      style="min-width: 30px; text-align: center"
+                    >
                       {{
                         game.p1 === $route.params.id
-                          ? game.p2_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
-                          : game.p1_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
+                          ? game.p2Score
+                              .toFixed(0)
+                              .padStart(
+                                Math.max(
+                                  String(game.p1Score.toFixed(0)).length,
+                                  game.p2Score.toFixed(0).length,
+                                ),
+                                '0',
+                              )
+                          : game.p1Score
+                              .toFixed(0)
+                              .padStart(
+                                Math.max(
+                                  String(game.p1Score.toFixed(0)).length,
+                                  game.p2Score.toFixed(0).length,
+                                ),
+                                '0',
+                              )
                       }}
                     </h2>
                   </div>
@@ -1308,13 +1344,11 @@ export default {
                       ></v-img>
                     </div>
                     <h4 class="d-flex" style="gap: 0.5em">
-                      {{ game.p1 === $route.params.id ? game.p2_elo : game.p1_elo }}
+                      {{ game.p1 === $route.params.id ? game.p2Elo : game.p1Elo }}
                       <v-img
                         class=""
                         :src="
-                          game.p1 === $route.params.id
-                            ? rankIcon(game.p2_elo)
-                            : rankIcon(game.p1_elo)
+                          game.p1 === $route.params.id ? rankIcon(game.p2Elo) : rankIcon(game.p1Elo)
                         "
                         min-width="20"
                         max-width="20"
@@ -1326,8 +1360,8 @@ export default {
                           <p style="font-weight: 300">
                             {{
                               game.p1 === $route.params.id
-                                ? rankDiv(game.p2_elo)
-                                : rankDiv(game.p1_elo)
+                                ? rankDiv(game.p2Elo)
+                                : rankDiv(game.p1Elo)
                             }}
                           </p>
                         </div>
@@ -1637,10 +1671,10 @@ export default {
               <v-img :src="offer.seller.avatarUrl" rounded="circle" max-width="20"></v-img>
               <h3 class="mb-1">{{ offer.seller.username }}</h3>
               <v-spacer></v-spacer>
-              <p>{{ offer.posted_at }}</p>
+              <p>{{ offer.postedAt }}</p>
             </v-list-item-title>
             <v-list-item-subtitle class="d-flex align-center ga-1 pt-1">
-              <h3 class="mb-1">Prix de départ : {{ offer.starting_price }}</h3>
+              <h3 class="mb-1">Prix de départ : {{ offer.startingPrice }}</h3>
               <v-spacer></v-spacer>
               <v-chip
                 :color="
@@ -1679,7 +1713,7 @@ export default {
                 style="background: #343434"
               >
                 <div class="d-flex ga-2 align-center">
-                  <p style="white-space: nowrap; font-size: 0.8em">{{ bid.offered_at }}</p>
+                  <p style="white-space: nowrap; font-size: 0.8em">{{ bid.offeredAt }}</p>
                   <v-divider vertical />
                   <v-img
                     :src="bid.bidder.avatarUrl"
