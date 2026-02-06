@@ -190,7 +190,7 @@
                   class="text-white font-weight-bolder"
                   style="border-radius: 10px"
                   :style="
-                    stats.user_id === userId
+                    stats.userId === userId
                       ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)'
                       : ''
                   "
