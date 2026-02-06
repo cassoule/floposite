@@ -76,20 +76,22 @@
         timed out
       </span>
       <span class="bubble-text" style="opacity: 0"></span>
-      <div class="d-flex flex-wrap mt-2 justify-space-between" style="column-gap: 2em;">
-        <p class="d-flex " style="place-items: baseline">
-          <span class="font-weight-bold">{{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}</span>
+      <div class="d-flex flex-wrap mt-2 justify-space-between" style="column-gap: 2em">
+        <p class="d-flex" style="place-items: baseline">
+          <span class="font-weight-bold">{{
+            user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+          }}</span>
           &nbsp;FlopoCoins&nbsp;
           <v-btn
-              text="Acheter"
-              append-icon=""
-              class="text-none buy-btn ml-2"
-              color="white"
-              variant="tonal"
-              size="small"
-              rounded="lg"
-              @click="coinsModal = true"
-            >
+            text="Acheter"
+            append-icon=""
+            class="text-none buy-btn ml-2"
+            color="white"
+            variant="tonal"
+            size="small"
+            rounded="lg"
+            @click="coinsModal = true"
+          >
             <template #append>
               <v-img src="star.svg" width="12px" height="12px" />
             </template>
@@ -127,7 +129,13 @@
           padding-right: 1em;
         "
       >
-        <v-btn-toggle rounded="lg" base-color="primary" variant="flat" density="compact" style="border-radius:  10px !important;">
+        <v-btn-toggle
+          rounded="lg"
+          base-color="primary"
+          variant="flat"
+          density="compact"
+          style="border-radius: 10px !important"
+        >
           <v-btn
             class="text-capitalize"
             text="Market"
@@ -940,6 +948,11 @@
     :max-width="coinsModalMaxWidth"
     scroll-strategy="reposition"
     scrollable
+    @update:model-value="
+      () => {
+        acceptedCGV = false
+      }
+    "
   >
     <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
       <v-card-title class="pt-4"> Achat de FlopoCoins </v-card-title>
@@ -947,7 +960,7 @@
         <p>Recharge tes FlopoCoins !</p>
       </v-card-subtitle>
       <v-card-text
-        class="d-flex px-4 py-16"
+        class="d-flex px-4 pt-16"
         style="gap: 1em; place-content: start; flex-wrap: wrap; height: fit-content"
       >
         <v-card
@@ -957,9 +970,16 @@
           :disabled="paymentModal"
         >
           <v-card-item>
-            <v-img src="100Kbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
+            <v-img
+              src="5k.svg"
+              min-height="200px"
+              min-width="200"
+              width="100%"
+              cover
+              rounded="lg"
+            ></v-img>
           </v-card-item>
-          <v-card-subtitle> +100 000 FlopoCoins </v-card-subtitle>
+          <v-card-subtitle> +5 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
             <v-btn
               class="text-none"
@@ -967,9 +987,8 @@
               variant="flat"
               rounded="lg"
               block
-              @click="buyCoinsForm = { price: 99, coins: 100000 }"
-              @click.stop="paymentModal = true"
-              :disabled="loading"
+              @click="(buyCoins('offer_5000'), (coinsModal = false))"
+              :disabled="loading || !acceptedCGV"
             >
               0.99€
             </v-btn>
@@ -982,9 +1001,16 @@
           :disabled="paymentModal"
         >
           <v-card-item>
-            <v-img src="1Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
+            <v-img
+              src="20k.svg"
+              min-height="200px"
+              min-width="200"
+              width="100%"
+              cover
+              rounded="lg"
+            ></v-img>
           </v-card-item>
-          <v-card-subtitle> +1 000 000 FlopoCoins </v-card-subtitle>
+          <v-card-subtitle> +20 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
             <v-btn
               class="text-none"
@@ -992,9 +1018,39 @@
               variant="flat"
               rounded="lg"
               block
-              @click="buyCoinsForm = { price: 499, coins: 1000000 }"
-              @click.stop="paymentModal = true"
-              :disabled="loading"
+              @click="(buyCoins('offer_20000'), (coinsModal = false))"
+              :disabled="loading || !acceptedCGV"
+            >
+              2.99€
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+        <v-card
+          class="article-card"
+          color="transparent"
+          style="border-radius: 12px"
+          :disabled="paymentModal"
+        >
+          <v-card-item>
+            <v-img
+              src="40k.svg"
+              min-height="200px"
+              min-width="200"
+              width="100%"
+              cover
+              rounded="lg"
+            ></v-img>
+          </v-card-item>
+          <v-card-subtitle> +40 000 FlopoCoins </v-card-subtitle>
+          <v-card-actions>
+            <v-btn
+              class="text-none"
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              block
+              @click="(buyCoins('offer_40000'), (coinsModal = false))"
+              :disabled="loading || !acceptedCGV"
             >
               4.99€
             </v-btn>
@@ -1007,9 +1063,16 @@
           :disabled="paymentModal"
         >
           <v-card-item>
-            <v-img src="10Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
+            <v-img
+              src="100k.svg"
+              min-height="200px"
+              min-width="200"
+              width="100%"
+              cover
+              rounded="lg"
+            ></v-img>
           </v-card-item>
-          <v-card-subtitle> +10 000 000 FlopoCoins </v-card-subtitle>
+          <v-card-subtitle> +100 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
             <v-btn
               class="text-none"
@@ -1017,36 +1080,10 @@
               variant="flat"
               rounded="lg"
               block
-              @click="buyCoinsForm = { price: 2499, coins: 10000000 }"
-              @click.stop="paymentModal = true"
-              :disabled="loading"
+              @click="(buyCoins('offer_100000'), (coinsModal = false))"
+              :disabled="loading || !acceptedCGV"
             >
-              24.99€
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card
-          class="article-card"
-          color="transparent"
-          style="border-radius: 12px"
-          :disabled="paymentModal"
-        >
-          <v-card-item>
-            <v-img src="100Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
-          </v-card-item>
-          <v-card-subtitle> +100 000 000 FlopoCoins </v-card-subtitle>
-          <v-card-actions>
-            <v-btn
-              class="text-none"
-              color="primary"
-              variant="flat"
-              rounded="lg"
-              block
-              @click="buyCoinsForm = { price: 12499, coins: 100000000 }"
-              @click.stop="paymentModal = true"
-              :disabled="loading"
-            >
-              124.99€
+              9.99€
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -1055,7 +1092,20 @@
         class="pt-1 pb-4 px-5"
         style="color: #ddddddaa; text-align: right; overflow: hidden"
       >
-        Non remboursable
+        <v-checkbox v-model="acceptedCGV" class="pt-0 mt-0" color="white" hide-details>
+          <template #label>
+            <p class="text-left">
+              J'ai lu et j'accepte les
+              <a href="/cgv" target="_blank" style="color: #5865f2; text-decoration: none">
+                Conditions Générales de Vente</a
+              >, ainsi que la
+              <a href="/privacy" target="_blank" style="color: #5865f2; text-decoration: none">
+                Politique de Confidentialité
+              </a>
+              et je renonce expressément à mon droit de rétractation.
+            </p>
+          </template>
+        </v-checkbox>
       </v-card-text>
 
       <v-dialog
@@ -1867,6 +1917,8 @@ export default {
       stripePromise: null,
 
       gameCardsFilter: null,
+
+      acceptedCGV: false,
     }
   },
 
@@ -2306,14 +2358,34 @@ export default {
       }
     },
 
-    async buyCoins() {
+    async buyCoins(offerId) {
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/buy-coins', {
-          commandUserId: this.discordId,
-          coins: this.buyCoinsForm.coins,
-        })
+        this.loading = true
+
+        // Call the new checkout session endpoint
+        const response = await axios.post(
+          import.meta.env.VITE_FLAPI_URL + '/create-checkout-session',
+          {
+            userId: this.discordId,
+            offerId: offerId,
+          },
+        )
+
+        const { sessionId } = response.data
+
+        // Redirect to Stripe Checkout
+        const stripe = await loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLIC_KEY)
+        const { error } = await stripe.redirectToCheckout({ sessionId })
+
+        if (error) {
+          console.error('Stripe checkout error:', error)
+          this.showErrorToast('Erreur lors de la redirection vers le paiement')
+        }
       } catch (e) {
-        console.log(e)
+        console.error('Error creating checkout session:', e)
+        this.showErrorToast('Erreur lors de la création de la session de paiement')
+      } finally {
+        this.loading = false
       }
     },
 

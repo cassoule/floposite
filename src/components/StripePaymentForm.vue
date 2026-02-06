@@ -11,8 +11,8 @@
           <p>Impossible d'initialiser le formulaire de paiement</p>
         </v-alert>
       </div>
-      <button v-if="!failed" :disabled="loading || !ready">
-        {{ loading ? 'Traitement en cours...' : 'Payer' }}
+      <button v-if="!failed" :disabled="loading || !ready || !acceptedCGV">
+        {{ loading ? 'Traitement en cours...' : 'Payer ' + (amount / 100).toFixed(2) + '€' }}
       </button>
     </form>
   </div>
@@ -38,6 +38,7 @@ export default {
       paymentElement: null,
       ready: false,
       failed: false,
+      acceptedCGV: false,
     }
   },
   async mounted() {
@@ -57,23 +58,23 @@ export default {
         : '/.netlify/functions/payment'
 
       //DEV
-      /*const response = await fetch(endpoint, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: this.amount })
-      });
+        body: JSON.stringify({ amount: this.amount }),
+      })
 
-      const { clientSecret } = await response.json();*/
+      const { clientSecret } = await response.json()
 
       //PROD
-      const amount = this.amount
-      const response = await axios.get(endpoint, {
-        params: { amount },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      const clientSecret = await response.data.clientSecret
+      // const amount = this.amount
+      // const response = await axios.get(endpoint, {
+      //   params: { amount },
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      // })
+      // const clientSecret = await response.data.clientSecret
 
       // Initialize elements
       this.elements = this.stripe.elements({

@@ -16,6 +16,9 @@ import EryniesHome from '../views/EryniesHome.vue'
 import SnakeMenu from '../views/SnakeMenu.vue'
 import SnakeSolo from '../views/SnakeSolo.vue'
 import SnakeVersus from '../views/SnakeVersus.vue'
+import PaymentSuccess from '../views/PaymentSuccess.vue'
+import CGV from '../views/CGV.vue'
+import Privacy from '../views/Privacy.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -34,7 +37,10 @@ const routes = [
   { path: '/snake', component: SnakeMenu },
   { path: '/snake/solo', component: SnakeSolo },
   { path: '/snake/versus', component: SnakeVersus },
+  { path: '/payment-success', component: PaymentSuccess },
   //{ path: '/erynies', component: EryniesHome },
+  { path: '/cgv', component: CGV },
+  { path: '/privacy', component: Privacy },
 ]
 
 const router = createRouter({
