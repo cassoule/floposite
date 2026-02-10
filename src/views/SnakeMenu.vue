@@ -64,6 +64,7 @@
 </template>
 
 <script>
+/* global localStorage */
 export default {
   name: 'SnakeMenu',
 

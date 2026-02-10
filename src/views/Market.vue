@@ -1,6 +1,6 @@
 <script>
+/* global localStorage, setInterval, clearInterval */
 import axios from 'axios'
-import { frenchColorToHex } from '@/utils/colorToHex.js'
 import { useToastStore } from '@/stores/toastStore.js'
 import Toast from '@/components/Toast.vue'
 import { io } from 'socket.io-client'
@@ -51,7 +51,7 @@ export default {
       userInventory: null,
 
       nowTick: Date.now(),
-      _timer: null,
+      timer: null,
 
       delaySelect: [
         { title: 'Aucun délai', value: 0 },
@@ -84,6 +84,8 @@ export default {
     }
   },
 
+  computed: {},
+
   async mounted() {
     this.loading = true
     await this.fetchMarketOffers()
@@ -92,16 +94,14 @@ export default {
     this.initSocket()
 
     this._forceCooldown = 0
-    this._timer = setInterval(async () => {
+    this.timer = setInterval(async () => {
       this.nowTick = Date.now()
     }, 500)
   },
 
   beforeUnmount() {
-    if (this._timer) clearInterval(this._timer)
+    if (this.timer) clearInterval(this.timer)
   },
-
-  computed: {},
 
   methods: {
     initSocket() {
@@ -203,9 +203,9 @@ export default {
     },
     getOfferLastPrice(offer) {
       if (offer.bids.length > 0) {
-        return offer.bids[0].offer_amount
+        return offer.bids[0].offerAmount
       }
-      return offer.starting_price
+      return offer.startingPrice
     },
     filterOffers() {
       const normalize = (str) =>
@@ -367,7 +367,11 @@ export default {
           >
             Aucune offre trouvée.
           </div>
-          <div v-for="offer in filteredMarketOffers" class="w-100 w-md-50 pa-1 offer-card">
+          <div
+            v-for="offer in filteredMarketOffers"
+            :key="offer.uuid"
+            class="w-100 w-md-50 pa-1 offer-card"
+          >
             <v-card
               class="text-white offer-card-card mb-2"
               color="transparent"
@@ -418,9 +422,9 @@ export default {
                       v-if="offer.status !== 'closed'"
                       v-bind="props"
                       :color="
-                        offer.starting_price / offer.skin.currentPrice > 1.1
+                        offer.startingPrice / offer.skin.currentPrice > 1.1
                           ? 'red'
-                          : offer.starting_price / offer.skin.currentPrice < 0.9
+                          : offer.startingPrice / offer.skin.currentPrice < 0.9
                             ? 'green'
                             : ''
                       "
@@ -480,10 +484,10 @@ export default {
                           <v-list-item class="pb-3">
                             <h4>Enchère</h4>
                             <p class="d-flex text-grey">
-                              Prix de départ <v-spacer /> {{ offer.starting_price }}
+                              Prix de départ <v-spacer /> {{ offer.startingPrice }}
                             </p>
                             <p class="d-flex text-grey">
-                              Achat immédiat <v-spacer /> {{ offer.buyout_price ?? '-' }}
+                              Achat immédiat <v-spacer /> {{ offer.buyoutPrice ?? '-' }}
                             </p>
 
                             <p class="d-flex text-grey">
@@ -512,19 +516,19 @@ export default {
                   style="background: #343434; font-size: 1em"
                   title="Les enchères commenceront à la fin du compte à rebours"
                 >
-                  {{ prettyTimeLeft(offer.opening_at) }}&nbsp;
+                  {{ prettyTimeLeft(offer.openingAt) }}&nbsp;
                   <v-icon class="timer-icon mdi mdi-lock-outline" size="15"></v-icon>
                 </span>
                 <span
-                  v-else-if="timeLeft(offer.closing_at) > 0"
+                  v-else-if="timeLeft(offer.closingAt) > 0"
                   class="px-2 rounded-xl d-flex align-baseline mt-1 ml-1"
                   style="background: #343434; font-size: 1em"
                 >
-                  {{ prettyTimeLeft(offer.closing_at) }}&nbsp;
+                  {{ prettyTimeLeft(offer.closingAt) }}&nbsp;
                   <v-icon
                     class="timer-icon"
                     :class="
-                      timeLeft(offer.closing_at) % 2 === 0
+                      timeLeft(offer.closingAt) % 2 === 0
                         ? 'mdi mdi-timer-sand'
                         : 'mdi mdi-timer-sand-complete'
                     "
@@ -549,7 +553,7 @@ export default {
                   @click.stop="seeOffer = true"
                 >
                   {{
-                    timeLeft(offer.closing_at) >= 0 && offer.status === 'open' ? 'Enchérir' : 'Voir'
+                    timeLeft(offer.closingAt) >= 0 && offer.status === 'open' ? 'Enchérir' : 'Voir'
                   }}
                 </v-btn>
               </v-card-actions>
@@ -592,8 +596,8 @@ export default {
           >{{
             prettyTimeLeft(
               selectedOffer.status === 'pending'
-                ? selectedOffer.opening_at
-                : selectedOffer.closing_at,
+                ? selectedOffer.openingAt
+                : selectedOffer.closingAt,
             )
           }}</span
         >
@@ -622,7 +626,10 @@ export default {
             height="250"
           ></v-img>
           <div class="d-flex position-absolute top-1 right-0 mr-4" style="gap: 1em">
-            <div v-for="(chroma, index) in skinsData[selectedOffer.skin.uuid].chromas">
+            <div
+              v-for="(chroma, index) in skinsData[selectedOffer.skin.uuid].chromas"
+              :key="chroma.uuid || index"
+            >
               <v-img
                 v-if="chroma.swatch"
                 :src="chroma.swatch"
@@ -676,11 +683,11 @@ export default {
             <v-row>
               <v-col>
                 <p>
-                  Prix de départ : <strong>{{ selectedOffer.starting_price }}&nbsp;Coins</strong>
+                  Prix de départ : <strong>{{ selectedOffer.startingPrice }}&nbsp;Coins</strong>
                 </p>
                 <p>
                   Achat immédiat :
-                  <strong>{{ selectedOffer.buyout_price ?? 'N/A' }}&nbsp;Coins</strong>
+                  <strong>{{ selectedOffer.buyoutPrice ?? 'N/A' }}&nbsp;Coins</strong>
                 </p>
               </v-col>
               <v-col>
@@ -708,15 +715,20 @@ export default {
               bg-color="#343434"
               rounded="lg"
             >
-              <v-list-item v-for="bid in selectedOffer.bids" class="pa-0" style="min-height: 0">
+              <v-list-item
+                v-for="bid in selectedOffer.bids"
+                :key="bid.id || bid.offeredAt"
+                class="pa-0"
+                style="min-height: 0"
+              >
                 <v-divider></v-divider>
                 <v-list-item-title class="d-flex align-center ga-2 mr-4 mt-0">
-                  <p class="ml-4 mr-2" style="font-size: 0.7em">{{ bid.offered_at }}</p>
+                  <p class="ml-4 mr-2" style="font-size: 0.7em">{{ bid.offeredAt }}</p>
                   <v-divider vertical></v-divider>
                   <v-img :src="bid.bidder.avatarUrl" max-width="20" rounded="circle" class="ml-1" />
                   <p class="pb-1">{{ bid.bidder.username }}</p>
                   <v-spacer></v-spacer>
-                  {{ bid.offer_amount }} Coins
+                  {{ bid.offerAmount }} Coins
                 </v-list-item-title>
                 <v-divider></v-divider>
               </v-list-item>
@@ -746,10 +758,10 @@ export default {
           rounded="lg"
           color="primary"
           variant="flat"
-          :disabled="selectedOffer.buyout_price === null"
+          :disabled="selectedOffer.buyoutPrice === null"
           @click="buyoutModal = true"
         >
-          Acheter pour {{ selectedOffer.buyout_price ?? '-' }}
+          Acheter pour {{ selectedOffer.buyoutPrice ?? '-' }}
         </v-btn>-->
       </v-card-actions>
     </v-card>
@@ -759,7 +771,7 @@ export default {
     <v-card class="modal-card" color="primary" variant="flat">
       <v-card-title>Confirmer l'achat</v-card-title>
       <v-card-text>
-        Êtes-vous sûr de vouloir acheter ce skin pour {{ selectedOffer.buyout_price }} Coins ?
+        Êtes-vous sûr de vouloir acheter ce skin pour {{ selectedOffer.buyoutPrice }} Coins ?
       </v-card-text>
       <v-card-actions>
         <v-btn text="Annuler" rounded="lg" @click="buyoutModal = false">Annuler</v-btn>
@@ -890,8 +902,8 @@ export default {
               <v-divider class="mt-1 mb-5"></v-divider>
               <div class="w-100 d-flex flex-wrap">
                 <v-number-input
-                  v-model="createOffer.price"
                   :key="'COP-' + skin.uuid"
+                  v-model="createOffer.price"
                   variant="outlined"
                   rounded="lg"
                   density="comfortable"
@@ -902,8 +914,8 @@ export default {
               </div>
               <div class="w-100 d-sm-flex ga-3">
                 <v-select
-                  v-model="createOffer.delay"
                   :key="'CODL-' + skin.uuid"
+                  v-model="createOffer.delay"
                   variant="outlined"
                   rounded="lg"
                   density="comfortable"
@@ -912,8 +924,8 @@ export default {
                   style="flex-grow: 1; flex-shrink: 1; flex-basis: 50%"
                 ></v-select>
                 <v-select
-                  v-model="createOffer.duration"
                   :key="'CODU-' + skin.uuid"
+                  v-model="createOffer.duration"
                   variant="outlined"
                   rounded="lg"
                   density="comfortable"

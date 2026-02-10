@@ -33,3 +33,4 @@ coverage
 .netlify
 .env
 werewolf_docs
+eslint.config.js

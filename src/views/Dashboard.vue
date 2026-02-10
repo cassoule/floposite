@@ -1,6 +1,4 @@
 <template>
-  <!--  <CoinsCounter/>-->
-
   <div v-if="user" class="user-tab">
     <div style="position: relative; margin-top: 1rem">
       <v-sparkline
@@ -11,7 +9,7 @@
         line-width="0.5"
         :model-value="
           sparklines[discordId]?.length > 0
-            ? sparklines[discordId]?.map((entry) => entry.user_new_amount)
+            ? sparklines[discordId]?.map((entry) => entry.userNewAmount)
             : [0]
         "
         style="
@@ -151,11 +149,11 @@
 
         <v-btn
           v-if="!user.dailyQueried"
+          :key="Date.now() + '-daily-reward'"
           color="primary"
           variant="tonal"
           rounded="lg"
           style="border: 1px solid #5865f2"
-          :key="Date.now() + '-daily-reward'"
           @click="handleDailyQuery"
         >
           <v-icon
@@ -750,6 +748,7 @@
         "
       >
         <div
+          v-if="akhy"
           style="
             display: flex;
             place-content: space-between;
@@ -757,7 +756,6 @@
             width: 100%;
             padding: 0.5em 1em;
           "
-          v-if="akhy"
         >
           <span style="color: #ddd; display: flex; place-items: center; gap: 0.7rem">
             <v-img
@@ -817,7 +815,7 @@
                   line-width="2"
                   :model-value="
                     sparklines[akhy.id]?.length > 1
-                      ? sparklines[akhy.id]?.map((entry) => entry.user_new_amount)
+                      ? sparklines[akhy.id]?.map((entry) => entry.userNewAmount)
                       : [0, 0]
                   "
                   style="position: absolute; left: 0; top: 0"
@@ -880,6 +878,7 @@
     <div class="leaderboard">
       <v-skeleton-loader
         v-for="n in 19"
+        :key="n"
         type="text"
         color="transparent"
         style="min-width: 300px"
@@ -921,8 +920,8 @@
           color="error"
           variant="flat"
           rounded="lg"
-          @click="logout"
           :disabled="loading"
+          @click="logout"
         >
           Quitter
         </v-btn>
@@ -932,13 +931,27 @@
           color="primary"
           variant="flat"
           rounded="lg"
+          :disabled="loading"
           @click="handleRegister"
           @click.stop="isRegistered = false"
-          :disabled="loading"
         >
           +5000 FlopoCoins
         </v-btn>
       </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="loading" style="backdrop-filter: blur(10px) contrast(0.5)">
+    <v-card class="px-6 py-4" variant="text" elevation="0">
+      <v-card-text class="d-flex justify-center">
+        <v-progress-circular
+          :size="70"
+          :width="10"
+          color="primary"
+          indeterminate
+        ></v-progress-circular>
+      </v-card-text>
+      <v-card-subtitle class="text-center">Traitement de votre demande en cours...</v-card-subtitle>
     </v-card>
   </v-dialog>
 
@@ -987,8 +1000,8 @@
               variant="flat"
               rounded="lg"
               block
-              @click="(buyCoins('offer_5000'), (coinsModal = false))"
               :disabled="loading || !acceptedCGV"
+              @click="(buyCoins('offer_5000'), (coinsModal = false))"
             >
               0.99€
             </v-btn>
@@ -1018,8 +1031,8 @@
               variant="flat"
               rounded="lg"
               block
-              @click="(buyCoins('offer_20000'), (coinsModal = false))"
               :disabled="loading || !acceptedCGV"
+              @click="(buyCoins('offer_20000'), (coinsModal = false))"
             >
               2.99€
             </v-btn>
@@ -1049,8 +1062,8 @@
               variant="flat"
               rounded="lg"
               block
-              @click="(buyCoins('offer_40000'), (coinsModal = false))"
               :disabled="loading || !acceptedCGV"
+              @click="(buyCoins('offer_40000'), (coinsModal = false))"
             >
               4.99€
             </v-btn>
@@ -1080,8 +1093,8 @@
               variant="flat"
               rounded="lg"
               block
-              @click="(buyCoins('offer_100000'), (coinsModal = false))"
               :disabled="loading || !acceptedCGV"
+              @click="(buyCoins('offer_100000'), (coinsModal = false))"
             >
               9.99€
             </v-btn>
@@ -1107,31 +1120,6 @@
           </template>
         </v-checkbox>
       </v-card-text>
-
-      <v-dialog
-        v-model="paymentModal"
-        max-width="600"
-        style="
-          backdrop-filter: blur(100px);
-          background: radial-gradient(circle at -100% 50%, #5865f2, transparent 100%);
-        "
-        scrollable
-      >
-        <v-card color="white" style="border-radius: 20px">
-          <v-card-title class="pt-4"
-            >Achat de {{ formatAmount(buyCoinsForm.coins) }} FlopoCoins ({{
-              buyCoinsForm.price / 100
-            }}€)</v-card-title
-          >
-          <v-card-subtitle
-            >Les FlopoCoins seront crédités instantanément une fois le paiement
-            effectué</v-card-subtitle
-          >
-          <v-card-item class="px-4 pt-6 pb-4">
-            <StripePaymentForm :amount="buyCoinsForm.price" @payment-success="handleSuccess" />
-          </v-card-item>
-        </v-card>
-      </v-dialog>
     </v-card>
   </v-dialog>
 
@@ -1178,7 +1166,7 @@
           rounded="lg"
           density="comfortable"
           class="text-white w-100"
-          maxLength="20"
+          max-length="20"
           :hint="!nicknameForm.nickname ? 'Nom par défaut' : ''"
           persistent-hint
         />
@@ -1218,7 +1206,7 @@
           rounded="lg"
           density="comfortable"
         >
-          <template #item="{ props, item }" style="background: transparent !important">
+          <template #item="{ props, item }">
             <v-list-item v-bind="props" rounded="lg" color="primary">
               <template #title>
                 <div style="display: flex; place-items: center; place-content: start; gap: 1em">
@@ -1271,7 +1259,7 @@
           hint="Tu peux retirer ton slowmode en te mettant toi-même"
           persistent-hint
         >
-          <template #item="{ props, item }" style="background: transparent !important">
+          <template #item="{ props, item }">
             <v-list-item v-bind="props" rounded="lg" color="primary">
               <template #title>
                 <div style="display: flex; place-items: center; place-content: start; gap: 1em">
@@ -1324,7 +1312,7 @@
           hint="Tu peux retirer ton time-out en te mettant toi-même"
           persistent-hint
         >
-          <template #item="{ props, item }" style="background: transparent !important">
+          <template #item="{ props, item }">
             <v-list-item v-bind="props" rounded="lg" color="primary">
               <template #title>
                 <div style="display: flex; place-items: center; place-content: start; gap: 1em">
@@ -1418,7 +1406,7 @@
         <v-text-field
           v-model="prediForm.label"
           label="Titre de la prédi"
-          maxLength="64"
+          max-length="64"
           clearable
           variant="outlined"
           class="text-white w-50"
@@ -1431,7 +1419,7 @@
         <v-text-field
           v-model="prediForm.options[0]"
           label="Option 1"
-          maxLength="32"
+          max-length="32"
           clearable
           variant="outlined"
           class="text-white w-50"
@@ -1441,7 +1429,7 @@
         <v-text-field
           v-model="prediForm.options[1]"
           label="Option 2"
-          maxLength="32"
+          max-length="32"
           clearable
           variant="outlined"
           class="text-white w-50"
@@ -1472,7 +1460,7 @@
     scroll-strategy="reposition"
     scrollable
   >
-    <v-card v-if="selectedPredi" class="modal-card" variant="tonal" :key="Date.now()">
+    <v-card v-if="selectedPredi" :key="Date.now()" class="modal-card" variant="tonal">
       <v-card-title>{{ selectedPredi.label }}</v-card-title>
       <v-card-subtitle>
         <p>Choisis un montant à parier</p>
@@ -1731,21 +1719,16 @@
 </template>
 
 <script>
+/* global localStorage */
 import axios from 'axios'
 import { io } from 'socket.io-client'
 import Toast from '../components/Toast.vue'
 import { useToastStore } from '../stores/toastStore.js'
-import { computed, watch } from 'vue'
-import { loadStripe } from '@stripe/stripe-js'
-import StripePaymentForm from '../components/StripePaymentForm.vue'
 import 'animate.css'
-import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   components: {
-    StripePaymentForm,
     Toast,
-    CoinsCounter,
   },
 
   setup() {
@@ -1784,64 +1767,6 @@ export default {
       showSuccessOrWarningToast,
       showErrorToast,
     }
-  },
-
-  computed: {
-    user() {
-      const filtered = this.users?.filter((u) => u.id === this.discordId)
-      if (filtered?.length < 1) return null
-      return this.users?.filter((u) => u.id === this.discordId)[0]
-    },
-    inventoryValue() {
-      if (!this.user_inventory) return 0
-      let sum = 0
-      this.user_inventory.forEach((s) => {
-        sum += s.currentPrice
-      })
-      return sum
-    },
-    devId() {
-      return import.meta.env.VITE_DEV_ID
-    },
-    unseenActivePoll() {
-      return (
-        Object.values(this.active_polls)?.filter((p) => {
-          return !p.voters.includes(this.discordId)
-        })?.length > 0
-      )
-    },
-    coinsModalMaxWidth() {
-      if (this.windowWidth <= 850) {
-        return 350
-      } else if (this.windowWidth <= 1200) {
-        return 511
-      } else {
-        return 1005
-      }
-    },
-    percentages() {
-      if (!this.selectedPredi) return
-      let res1 = 0
-      let res2 = 0
-      if (
-        this.selectedPredi.options[0].votes.length === 0 &&
-        this.selectedPredi.options[1].votes.length === 0
-      )
-        return {
-          res1,
-          res2,
-        }
-
-      res1 =
-        this.selectedPredi.options[1].votes.length === 0
-          ? 100
-          : (this.prediOptionStats(this.selectedPredi.options[0].votes, 'amount') /
-              this.prediOptionStats(this.selectedPredi.options[1].votes, 'amount')) *
-            100
-      res2 = 100 - res1
-
-      return { res1, res2 }
-    },
   },
 
   data() {
@@ -1922,6 +1847,71 @@ export default {
     }
   },
 
+  computed: {
+    user() {
+      const filtered = this.users?.filter((u) => u.id === this.discordId)
+      if (filtered?.length < 1) return null
+      return this.users?.filter((u) => u.id === this.discordId)[0]
+    },
+    inventoryValue() {
+      if (!this.user_inventory) return 0
+      let sum = 0
+      this.user_inventory.forEach((s) => {
+        sum += s.currentPrice
+      })
+      return sum
+    },
+    devId() {
+      return import.meta.env.VITE_DEV_ID
+    },
+    unseenActivePoll() {
+      return (
+        Object.values(this.active_polls)?.filter((p) => {
+          return !p.voters.includes(this.discordId)
+        })?.length > 0
+      )
+    },
+    coinsModalMaxWidth() {
+      if (this.windowWidth <= 850) {
+        return 350
+      } else if (this.windowWidth <= 1200) {
+        return 511
+      } else {
+        return 1005
+      }
+    },
+    percentages() {
+      if (!this.selectedPredi) return
+      let res1 = 0
+      let res2 = 0
+      if (
+        this.selectedPredi.options[0].votes.length === 0 &&
+        this.selectedPredi.options[1].votes.length === 0
+      )
+        return {
+          res1,
+          res2,
+        }
+
+      res1 =
+        this.selectedPredi.options[1].votes.length === 0
+          ? 100
+          : (this.prediOptionStats(this.selectedPredi.options[0].votes, 'amount') /
+              this.prediOptionStats(this.selectedPredi.options[1].votes, 'amount')) *
+            100
+      res2 = 100 - res1
+
+      return { res1, res2 }
+    },
+  },
+
+  watch: {
+    prediVoteModal(newValue) {
+      this.selectedOption = !newValue ? null : this.selectedOption
+      this.getActivePredis()
+    },
+  },
+
   async mounted() {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
@@ -1948,11 +1938,11 @@ export default {
     window.addEventListener('resize', this.updateWindowWidth)
   },
 
-  watch: {
-    prediVoteModal(newValue) {
-      this.selectedOption = !newValue ? null : this.selectedOption
-      this.getActivePredis()
-    },
+  beforeUnmount() {
+    // Clean up socket connection when component is destroyed
+    if (this.socket) {
+      this.socket.disconnect()
+    }
   },
 
   methods: {
@@ -1968,6 +1958,35 @@ export default {
     leaderboardSwitch() {
       this.leaderboardType = this.leaderboardType === 'coins' ? 'rank' : 'coins'
       this.leaderboardUsers = this.leaderboardType === 'coins' ? this.users : this.usersByElo
+    },
+
+    updateUserCoinsLocally(userId, newCoins) {
+      // Update coins in the users array (sorted by coins)
+      if (this.users) {
+        const userIndex = this.users.findIndex((u) => u.id === userId)
+        if (userIndex !== -1) {
+          this.users[userIndex].coins = newCoins
+          // Re-sort the array by coins (descending)
+          this.users.sort((a, b) => b.coins - a.coins)
+        }
+      }
+
+      // Update coins in the usersByElo array as well
+      if (this.usersByElo) {
+        const userEloIndex = this.usersByElo.findIndex((u) => u.id === userId)
+        if (userEloIndex !== -1) {
+          this.usersByElo[userEloIndex].coins = newCoins
+          // Keep the ELO sorting intact, only update the coins value
+        }
+      }
+
+      // Trigger reactivity by reassigning the current leaderboard
+      // This will cause the TransitionGroup to animate the position changes
+      if (this.leaderboardType === 'coins') {
+        this.leaderboardUsers = [...this.users]
+      } else {
+        this.leaderboardUsers = [...this.usersByElo]
+      }
     },
 
     initSocket() {
@@ -1988,9 +2007,15 @@ export default {
 
       // Listen for data updates
       this.socket.on('data-updated', (data) => {
-        console.log('Database updated:', data)
-        this.getUsers() // Refresh data when updates occur
-        this.fetchSparklines()
+        // If we have userId and newCoins, update locally with animation
+        if (data.userId && data.newCoins !== undefined) {
+          this.updateUserCoinsLocally(data.userId, data.newCoins)
+          this.sparklines[data.userId] = this.getSparkline(data.userId)
+        } else {
+          // Fallback to full refresh if data format is unexpected
+          this.getUsers()
+          this.fetchSparklines()
+        }
       })
 
       this.socket.on('new-poll', (data) => {
@@ -2160,7 +2185,7 @@ export default {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo-graph'
       try {
         const response = await axios.get(fetchUrl)
-        return response.data.elo_graph
+        return response.data.eloGraph
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -2350,7 +2375,7 @@ export default {
 
     async addCoins() {
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
+        await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
           commandUserId: this.discordId,
         })
       } catch (e) {
@@ -2371,29 +2396,21 @@ export default {
           },
         )
 
-        const { sessionId } = response.data
+        const { url } = response.data
 
-        // Redirect to Stripe Checkout
-        const stripe = await loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLIC_KEY)
-        const { error } = await stripe.redirectToCheckout({ sessionId })
-
-        if (error) {
-          console.error('Stripe checkout error:', error)
-          this.showErrorToast('Erreur lors de la redirection vers le paiement')
-        }
+        // Redirect to Stripe Checkout (Stripe.js v8 method)
+        window.location.href = url
       } catch (e) {
         console.error('Error creating checkout session:', e)
         this.showErrorToast('Erreur lors de la création de la session de paiement')
       } finally {
-        this.loading = false
+        // this.loading = false will be handled on the success page after redirection
       }
     },
 
     async handleDailyQuery() {
       try {
-        const response = await axios.get(
-          import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily',
-        )
+        await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily')
         this.user.dailyQueried = true
       } catch (e) {
         console.log(e)
@@ -2549,13 +2566,6 @@ export default {
         return ''
       }
     },
-  },
-
-  beforeUnmount() {
-    // Clean up socket connection when component is destroyed
-    if (this.socket) {
-      this.socket.disconnect()
-    }
   },
 }
 </script>

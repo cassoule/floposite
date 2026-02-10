@@ -62,6 +62,7 @@
 </template>
 
 <script>
+/* global localStorage, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame */
 import axios from 'axios'
 
 export default {
@@ -227,7 +228,7 @@ export default {
     startGameLoop() {
       this.lastUpdateTime = Date.now()
       this.gameLoop = setInterval(() => {
-        this.prevSnake = this.snake.map(segment => ({ ...segment }))
+        this.prevSnake = this.snake.map((segment) => ({ ...segment }))
         this.update()
         this.lastUpdateTime = Date.now()
         this.needsRender = true
@@ -246,13 +247,13 @@ export default {
       const render = (timestamp) => {
         const elapsed = timestamp - this.lastRenderTime
         const frameTime = 1000 / this.targetFps
-        
+
         if (elapsed >= frameTime && this.needsRender) {
           this.drawGame()
           this.lastRenderTime = timestamp
           this.needsRender = false
         }
-        
+
         // Always render during interpolation
         if (this.gameStarted && !this.gameOver) {
           const timeSinceUpdate = Date.now() - this.lastUpdateTime
@@ -260,7 +261,7 @@ export default {
             this.needsRender = true
           }
         }
-        
+
         this.renderLoop = requestAnimationFrame(render)
       }
       this.renderLoop = requestAnimationFrame(render)
@@ -406,7 +407,7 @@ export default {
         ctx.beginPath()
         ctx.arc(x, y, radius, 0, Math.PI * 2)
         ctx.fill()
-        
+
         // Add small highlight
         ctx.fillStyle = '#ff8888'
         ctx.beginPath()
@@ -423,7 +424,7 @@ export default {
           const prev = this.prevSnake[index]
           const dx = segment.x - prev.x
           const dy = segment.y - prev.y
-          
+
           // Check if this is a turn (both x and y changed)
           if (dx !== 0 && dy !== 0) {
             // This is a turn - interpolate in an L-shape
@@ -455,7 +456,7 @@ export default {
 
       // Draw snake body as continuous shape with single path
       if (snakeSegments.length > 0) {
-        const bodyWidth = this.gridSize * .7
+        const bodyWidth = this.gridSize * 0.7
 
         ctx.strokeStyle = '#5862f2'
         ctx.lineWidth = bodyWidth
@@ -473,16 +474,16 @@ export default {
           const nextSegment = snakeSegments[i + 1]
           const dx = Math.abs(segment.centerX - nextSegment.centerX)
           const dy = Math.abs(segment.centerY - nextSegment.centerY)
-          
+
           // If both dx and dy are significant, draw an L-shaped path
           if (dx > 1 && dy > 1) {
             const curr = this.snake[i]
             const prev = this.prevSnake[i]
-            
+
             if (prev && curr) {
               const xChanged = curr.x !== prev.x
               const yChanged = curr.y !== prev.y
-              
+
               if (xChanged && !yChanged) {
                 ctx.lineTo(nextSegment.centerX, segment.centerY)
               } else {
@@ -492,15 +493,15 @@ export default {
               ctx.lineTo(segment.centerX, nextSegment.centerY)
             }
           }
-          
+
           ctx.lineTo(segment.centerX, segment.centerY)
         }
-        
+
         ctx.stroke()
 
         // Draw head as larger circle
         const head = snakeSegments[0]
-        const headRadius = ((this.gridSize * .7) - 2) / 2
+        const headRadius = (this.gridSize * 0.7 - 2) / 2
 
         ctx.fillStyle = '#5862f2'
         ctx.beginPath()
@@ -550,7 +551,6 @@ export default {
           ctx.arc(eye2X, eye2Y, eyeSize / 2, 0, Math.PI * 2)
           ctx.fill()
         }
-        
 
         // Draw pupils
         ctx.fillStyle = '#000'
@@ -576,7 +576,7 @@ export default {
 
       const url = import.meta.env.VITE_FLAPI_URL + '/snake/reward'
       try {
-        const response = await axios.post(url, {
+        await axios.post(url, {
           discordId: this.discordId,
           score: this.score,
           isWin: this.isWin,

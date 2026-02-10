@@ -3,7 +3,7 @@
     <v-main class="w-100 text-white">
       <div class="privacy-content pa-6">
         <h1 class="font-weight-bold">Politique de Confidentialité</h1>
-        <p><em>Dernière mise à jour : 6 février 2026</em></p>
+        <p><em>Dernière mise à jour : 10 février 2026</em></p>
 
         <h2 class="font-weight-bold">1. Responsable du traitement</h2>
         <ul>

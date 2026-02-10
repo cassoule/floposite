@@ -12,7 +12,6 @@ import Blackjack from '../views/Blackjack.vue'
 import AkhyStats from '../views/AkhyStats.vue'
 import Market from '../views/Market.vue'
 import CaseOpening from '../views/CaseOpening.vue'
-import EryniesHome from '../views/EryniesHome.vue'
 import SnakeMenu from '../views/SnakeMenu.vue'
 import SnakeSolo from '../views/SnakeSolo.vue'
 import SnakeVersus from '../views/SnakeVersus.vue'
@@ -46,7 +45,7 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior() {
     return { top: 0 }
   },
 })

@@ -1,4 +1,5 @@
 <script>
+/* global localStorage */
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import Toast from '@/components/Toast.vue'

@@ -3,13 +3,13 @@
     <v-main class="w-100 text-white">
       <div class="cgv-content pa-6">
         <h1 class="font-weight-bold">Conditions Générales de Vente</h1>
-        <p><em>Dernière mise à jour : 6 février 2026</em></p>
+        <p><em>Dernière mise à jour : 10 février 2026</em></p>
 
         <h2 class="font-weight-bold">1. Identification du vendeur</h2>
         <ul>
           <li><strong>Nom</strong> : Milo Gourvest</li>
           <li><strong>Statut</strong> : Micro-entrepreneur</li>
-          <li><strong>SIRET</strong> : [NUMÉRO SIRET]</li>
+          <li><strong>SIRET</strong> : 10093812500018</li>
           <li>
             <strong>Adresse</strong> : 181 Bd St-Jean-Baptiste de la Salle, 35000 Rennes, France
           </li>
@@ -158,24 +158,6 @@
           modifications entrent en vigueur dès leur publication sur le site. L'utilisateur est
           invité à consulter régulièrement les CGV.
         </p>
-
-        <!-- <h2 class="font-weight-bold">12. Droit applicable et litiges</h2>
-        <p>
-          Les présentes CGV sont soumises au droit français. En cas de litige, l'utilisateur peut
-          recourir à un médiateur de la consommation. Conformément à l'article L612-1 du Code de la
-          consommation, l'utilisateur peut saisir gratuitement le médiateur suivant :
-        </p>
-        <ul>
-          <li><strong>Médiateur</strong> : [NOM DU MÉDIATEUR DE LA CONSOMMATION]</li>
-          <li><strong>Site</strong> : [URL DU MÉDIATEUR]</li>
-        </ul>
-        <p>
-          Plateforme européenne de règlement des litiges en ligne :
-          <a href="https://ec.europa.eu/consumers/odr" target="_blank">
-            https://ec.europa.eu/consumers/odr
-          </a>
-        </p>
-        <p>À défaut de résolution amiable, les tribunaux français seront compétents.</p> -->
 
         <h2 class="font-weight-bold">12. Contact</h2>
         <p>

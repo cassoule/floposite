@@ -1,4 +1,5 @@
 <script>
+/* global localStorage, setTimeout */
 import axios from 'axios'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
 import Toast from '../components/Toast.vue'
@@ -67,26 +68,6 @@ export default {
     }
   },
 
-  async mounted() {
-    this.users = await this.getUsers()
-    this.user = this.users.find((u) => u.id === this.$route.params.id)
-    if (this.user) {
-      const id = this.$route.params.id
-      //this.sparkline = await this.getSparkline(id)
-      this.elo = await this.getElo(id)
-      this.elo_graph = await this.getEloGraph(id)
-      await this.getActiveSlowmodes()
-      await this.isTimedOut()
-      await this.getGames()
-    }
-    this.loading = false
-    if (this.user) {
-      this.loadingInventory = true
-      await this.getInventory()
-      await this.fetchSkinsVideoUrls()
-    }
-  },
-
   computed: {
     inventoryValue() {
       if (!this.user_inventory) return null
@@ -144,6 +125,26 @@ export default {
     formattedDisplayPrice() {
       return this.displayPrice.toFixed(0)
     },
+  },
+
+  async mounted() {
+    this.users = await this.getUsers()
+    this.user = this.users.find((u) => u.id === this.$route.params.id)
+    if (this.user) {
+      const id = this.$route.params.id
+      //this.sparkline = await this.getSparkline(id)
+      this.elo = await this.getElo(id)
+      this.elo_graph = await this.getEloGraph(id)
+      await this.getActiveSlowmodes()
+      await this.isTimedOut()
+      await this.getGames()
+    }
+    this.loading = false
+    if (this.user) {
+      this.loadingInventory = true
+      await this.getInventory()
+      await this.fetchSkinsVideoUrls()
+    }
   },
 
   methods: {
@@ -205,7 +206,7 @@ export default {
         import.meta.env.VITE_FLAPI_URL + '/user/' + this.$route.params.id + '/elo-graph'
       try {
         const response = await axios.get(fetchUrl)
-        return response.data.elo_graph
+        return response.data.eloGraph
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -310,17 +311,17 @@ export default {
 
     cardClass(game) {
       if (game.p1 === this.$route.params.id) {
-        if (game.p1_score > game.p2_score) {
+        if (game.p1Score > game.p2Score) {
           return 'win-card'
-        } else if (game.p2_score > game.p1_score) {
+        } else if (game.p2Score > game.p1Score) {
           return 'lose-card'
         } else {
           return 'draw-card'
         }
       } else if (game.p2 === this.$route.params.id) {
-        if (game.p1_score > game.p2_score) {
+        if (game.p1Score > game.p2Score) {
           return 'lose-card'
-        } else if (game.p2_score > game.p1_score) {
+        } else if (game.p2Score > game.p1Score) {
           return 'win-card'
         } else {
           return 'draw-card'
@@ -555,7 +556,7 @@ export default {
       const url =
         import.meta.env.VITE_FLAPI_URL + '/skin/' + this.selectedSkin.uuid + '/instant-sell'
       try {
-        const response = await axios.post(url, { userId: discordId })
+        await axios.post(url, { userId: discordId })
         await this.getInventory()
         this.users = await this.getUsers()
         this.user = this.users.find((u) => u.id === this.$route.params.id)
@@ -587,6 +588,7 @@ export default {
         this.upgradeCost = response.data.upgradePrice
         console.log(response.data)
       } catch (e) {
+        console.error('flAPI error:', e)
         this.skinDetailsDialog = false
       }
       this.fetchingSkinStats = false
@@ -897,6 +899,7 @@ export default {
                   ></div>
                   <div
                     v-for="akhy in users"
+                    :key="akhy.id"
                     class="cursor-pointer user-rank-point"
                     :style="`position: absolute;
                       left: ${playerPositoin(akhy?.elo)}px;
@@ -1173,7 +1176,7 @@ export default {
               </span>
             </h2>
           </v-list-item>
-          <v-list-item v-if="games.length > 0" v-for="game in games" class="pb-3 px-2">
+          <v-list-item v-for="game in games" :key="game.id || game.date" class="pb-3 px-2">
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">
               <v-card-text v-if="game.type !== 'SOTD'" class="pb-0">
                 <div class="d-flex justify-space-between" style="place-items: center">
@@ -1212,9 +1215,7 @@ export default {
                       <v-img
                         class=""
                         :src="
-                          game.p1 === $route.params.id
-                            ? rankIcon(game.p1_elo)
-                            : rankIcon(game.p2_elo)
+                          game.p1 === $route.params.id ? rankIcon(game.p1Elo) : rankIcon(game.p2Elo)
                         "
                         min-width="20"
                         max-width="20"
@@ -1226,21 +1227,21 @@ export default {
                           <p style="font-weight: 300">
                             {{
                               game.p1 === $route.params.id
-                                ? rankDiv(game.p1_elo)
-                                : rankDiv(game.p2_elo)
+                                ? rankDiv(game.p1Elo)
+                                : rankDiv(game.p2Elo)
                             }}
                           </p>
                         </div>
                       </v-img>
-                      {{ game.p1 === $route.params.id ? game.p1_elo : game.p2_elo }}
+                      {{ game.p1 === $route.params.id ? game.p1Elo : game.p2Elo }}
                     </h4>
                     <h4>
                       {{
                         (() => {
                           const diff =
                             game.p1 === $route.params.id
-                              ? game.p1_new_elo - game.p1_elo
-                              : game.p2_new_elo - game.p2_elo
+                              ? game.p1NewElo - game.p1Elo
+                              : game.p2NewElo - game.p2Elo
 
                           return diff > 0 ? `+${diff}` : diff
                         })()
@@ -1252,19 +1253,57 @@ export default {
                     class="d-flex"
                     style="gap: 0.5rem; place-items: center; place-content: center; width: 33%"
                   >
-                    <h2 class="bg-dark px-2 py-1 rounded" style="min-width: 30px; text-align: center">
+                    <h2
+                      class="bg-dark px-2 py-1 rounded"
+                      style="min-width: 30px; text-align: center"
+                    >
                       {{
                         game.p1 === $route.params.id
-                          ? game.p1_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
-                          : game.p2_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
+                          ? game.p1Score
+                              .toFixed(0)
+                              .padStart(
+                                Math.max(
+                                  String(game.p1Score.toFixed(0)).length,
+                                  game.p2Score.toFixed(0).length,
+                                ),
+                                '0',
+                              )
+                          : game.p2Score
+                              .toFixed(0)
+                              .padStart(
+                                Math.max(
+                                  String(game.p1Score.toFixed(0)).length,
+                                  game.p2Score.toFixed(0).length,
+                                ),
+                                '0',
+                              )
                       }}
                     </h2>
                     <h2>-</h2>
-                    <h2 class="bg-dark px-2 py-1 rounded" style="min-width: 30px; text-align: center">
+                    <h2
+                      class="bg-dark px-2 py-1 rounded"
+                      style="min-width: 30px; text-align: center"
+                    >
                       {{
                         game.p1 === $route.params.id
-                          ? game.p2_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
-                          : game.p1_score.toFixed(0).padStart(Math.max(String(game.p1_score.toFixed(0)).length, game.p2_score.toFixed(0).length), '0')
+                          ? game.p2Score
+                              .toFixed(0)
+                              .padStart(
+                                Math.max(
+                                  String(game.p1Score.toFixed(0)).length,
+                                  game.p2Score.toFixed(0).length,
+                                ),
+                                '0',
+                              )
+                          : game.p1Score
+                              .toFixed(0)
+                              .padStart(
+                                Math.max(
+                                  String(game.p1Score.toFixed(0)).length,
+                                  game.p2Score.toFixed(0).length,
+                                ),
+                                '0',
+                              )
                       }}
                     </h2>
                   </div>
@@ -1308,13 +1347,11 @@ export default {
                       ></v-img>
                     </div>
                     <h4 class="d-flex" style="gap: 0.5em">
-                      {{ game.p1 === $route.params.id ? game.p2_elo : game.p1_elo }}
+                      {{ game.p1 === $route.params.id ? game.p2Elo : game.p1Elo }}
                       <v-img
                         class=""
                         :src="
-                          game.p1 === $route.params.id
-                            ? rankIcon(game.p2_elo)
-                            : rankIcon(game.p1_elo)
+                          game.p1 === $route.params.id ? rankIcon(game.p2Elo) : rankIcon(game.p1Elo)
                         "
                         min-width="20"
                         max-width="20"
@@ -1326,8 +1363,8 @@ export default {
                           <p style="font-weight: 300">
                             {{
                               game.p1 === $route.params.id
-                                ? rankDiv(game.p2_elo)
-                                : rankDiv(game.p1_elo)
+                                ? rankDiv(game.p2Elo)
+                                : rankDiv(game.p1Elo)
                             }}
                           </p>
                         </div>
@@ -1343,7 +1380,7 @@ export default {
               >
             </v-card>
           </v-list-item>
-          <v-list-item v-else>
+          <v-list-item v-if="games.length === 0">
             <p class="text-center pt-12 pb-16">Aucune partie classée</p>
           </v-list-item>
         </v-list>
@@ -1494,7 +1531,10 @@ export default {
                     >
                       <v-spacer></v-spacer>
                       <div class="d-flex" style="gap: 1em">
-                        <div v-for="(chroma, index) in skinsData[skin.uuid].chromas">
+                        <div
+                          v-for="(chroma, index) in skinsData[skin.uuid].chromas"
+                          :key="chroma.uuid || index"
+                        >
                           <v-img
                             v-if="chroma.swatch"
                             :src="chroma.swatch"
@@ -1629,6 +1669,7 @@ export default {
         <v-list bg-color="transparent" class="text-white px-0">
           <v-list-item
             v-for="offer in selectedSkin.offers"
+            :key="offer.uuid || offer.id"
             variant="tonal"
             rounded="xl"
             class="mb-2"
@@ -1637,10 +1678,10 @@ export default {
               <v-img :src="offer.seller.avatarUrl" rounded="circle" max-width="20"></v-img>
               <h3 class="mb-1">{{ offer.seller.username }}</h3>
               <v-spacer></v-spacer>
-              <p>{{ offer.posted_at }}</p>
+              <p>{{ offer.postedAt }}</p>
             </v-list-item-title>
             <v-list-item-subtitle class="d-flex align-center ga-1 pt-1">
-              <h3 class="mb-1">Prix de départ : {{ offer.starting_price }}</h3>
+              <h3 class="mb-1">Prix de départ : {{ offer.startingPrice }}</h3>
               <v-spacer></v-spacer>
               <v-chip
                 :color="
@@ -1674,12 +1715,13 @@ export default {
               </v-list-item>
               <v-list-item
                 v-for="bid in offer.bids"
+                :key="bid.id || bid.offeredAt"
                 class="mb-1 w-100"
                 rounded="lg"
                 style="background: #343434"
               >
                 <div class="d-flex ga-2 align-center">
-                  <p style="white-space: nowrap; font-size: 0.8em">{{ bid.offered_at }}</p>
+                  <p style="white-space: nowrap; font-size: 0.8em">{{ bid.offeredAt }}</p>
                   <v-divider vertical />
                   <v-img
                     :src="bid.bidder.avatarUrl"
@@ -1699,7 +1741,7 @@ export default {
                     {{ bid.bidder.username }}
                   </p>
                   <v-spacer></v-spacer>
-                  <p>{{ bid.offer_amount }}</p>
+                  <p>{{ bid.offerAmount }}</p>
                 </div>
               </v-list-item>
             </v-list>
@@ -1836,7 +1878,10 @@ export default {
               >
                 <v-spacer></v-spacer>
                 <div class="d-flex" style="gap: 1em">
-                  <div v-for="(chroma, index) in skinsData[selectedSkin.uuid].chromas">
+                  <div
+                    v-for="(chroma, index) in skinsData[selectedSkin.uuid].chromas"
+                    :key="chroma.uuid || index"
+                  >
                     <v-img
                       v-if="chroma.swatch"
                       :src="chroma.swatch"
@@ -1969,7 +2014,7 @@ export default {
 
                   <!-- Glowing Segments -->
                   <circle
-                    v-for="(segment, index) in computedSegments"
+                    v-for="segment in computedSegments"
                     :key="segment.id"
                     cx="50"
                     cy="50"

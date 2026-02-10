@@ -1,17 +1,11 @@
 <script>
+/* global localStorage, setTimeout */
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   components: {
     CoinsCounter,
-  },
-
-  async mounted() {
-    this.discordId = localStorage.getItem('discordId')
-    if (!this.discordId) this.$router.push('/')
-
-    this.userGamePath = await this.getUserGamePathArray()
   },
 
   data() {
@@ -51,6 +45,13 @@ export default {
       let gains = this.currentWithdrawValue - this.initialBet
       return gains
     },
+  },
+
+  async mounted() {
+    this.discordId = localStorage.getItem('discordId')
+    if (!this.discordId) this.$router.push('/')
+
+    this.userGamePath = await this.getUserGamePathArray()
   },
 
   methods: {
@@ -168,18 +169,19 @@ export default {
         </div>
         <div
           v-for="step in userGamePath"
+          :key="step.round"
           class="w-100 d-flex ga-2 align-center justify-center mb-2"
         >
           <span class="mr-2 text-center" style="width: 25px">{{ step.round + 1 }}</span>
           <v-btn
             v-for="key in [0, 1, 2]"
+            :key="'btn' + key"
             class="game-btn"
             :class="{ 'wrong-btn': step.result === key, 'chosen-btn': step.choice === key }"
             style="position: relative"
             :color="step.result === key ? 'error' : 'primary'"
             rounded="lg"
             :disabled="step.round < userGamePath?.length - 1"
-            :key="'btn' + key"
             @click="handleClick(step, key)"
           ></v-btn>
         </div>
@@ -219,7 +221,7 @@ export default {
               <v-icon class="mt-1" color="white" icon="mdi-cash-plus"></v-icon>
             </template>
           </v-btn>
-          <template v-slot:actions="{ expanded }">
+          <template #actions="{ expanded }">
             <v-icon color="white" :icon="expanded ? 'mdi-menu-up' : 'mdi-menu-down'"></v-icon>
           </template>
         </v-expansion-panel-title>

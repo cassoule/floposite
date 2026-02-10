@@ -211,11 +211,17 @@
 </template>
 
 <script>
+/* global localStorage, fetch, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, location */
 import { io } from 'socket.io-client'
 import axios from 'axios'
 
 export default {
   name: 'SnakeVersus',
+
+  beforeRouteLeave(to, from, next) {
+    this.leaveQueueSync({ reason: 'route-leave' })
+    next()
+  },
 
   data() {
     return {
@@ -284,6 +290,12 @@ export default {
     }
   },
 
+  computed: {
+    isScreenTooSmall() {
+      return this.windowWidth < 800 //|| this.windowHeight < 870
+    },
+  },
+
   async mounted() {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) {
@@ -295,12 +307,6 @@ export default {
     this.setupKeyboardControls()
 
     this.elo = await this.getElo(this.discordId)
-  },
-
-  computed: {
-    isScreenTooSmall() {
-      return this.windowWidth < 800 //|| this.windowHeight < 870
-    },
   },
 
   created() {
@@ -319,11 +325,6 @@ export default {
     this.stopGameLoop()
     this.stopRenderLoop()
     this.stopCountdown()
-  },
-
-  beforeRouteLeave(to, from, next) {
-    this.leaveQueueSync({ reason: 'route-leave' })
-    next()
   },
 
   methods: {
@@ -404,8 +405,8 @@ export default {
             this.myDirection = myData.direction || 'RIGHT'
 
             // Initialize previous state for interpolation
-            this.prevMySnake = this.mySnake.map(segment => ({ ...segment }))
-            this.prevOppSnake = this.oppSnake.map(segment => ({ ...segment }))
+            this.prevMySnake = this.mySnake.map((segment) => ({ ...segment }))
+            this.prevOppSnake = this.oppSnake.map((segment) => ({ ...segment }))
 
             // Mark game as started and restart game loop if not game over
             this.gameStarted = true
@@ -505,13 +506,19 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
           keepalive: true,
-        }).catch(() => {})
-      } catch {}
+        }).catch(() => {
+          // Ignore errors during page unload
+        })
+      } catch {
+        // Ignore errors during page unload
+      }
 
       if (this.socket?.connected) {
         try {
           this.socket.emit('snake:queue:leave', payload)
-        } catch {}
+        } catch {
+          // Ignore errors during page unload
+        }
       }
     },
 
@@ -535,7 +542,7 @@ export default {
     startCountdown() {
       this.countdown = 3
       this.initGame() // Initialize grids so they can be displayed
-      
+
       // Draw static backgrounds
       this.$nextTick(() => {
         this.drawStaticBackground(this.$refs.myBgCanvas)
@@ -629,8 +636,8 @@ export default {
     startGameLoop() {
       this.lastUpdateTime = Date.now()
       this.gameLoop = setInterval(() => {
-        this.prevMySnake = this.mySnake.map(segment => ({ ...segment }))
-        this.prevOppSnake = this.oppSnake.map(segment => ({ ...segment }))
+        this.prevMySnake = this.mySnake.map((segment) => ({ ...segment }))
+        this.prevOppSnake = this.oppSnake.map((segment) => ({ ...segment }))
         this.update()
         this.emitGameState()
         this.lastUpdateTime = Date.now()
@@ -650,14 +657,14 @@ export default {
       const render = (timestamp) => {
         const elapsed = timestamp - this.lastRenderTime
         const frameTime = 1000 / this.targetFps
-        
+
         if (elapsed >= frameTime && this.needsRender) {
           this.drawMyGame()
           this.drawOppGame()
           this.lastRenderTime = timestamp
           this.needsRender = false
         }
-        
+
         // Always render during interpolation
         if (this.gameStarted && !this.myGameOver) {
           const timeSinceUpdate = Date.now() - this.lastUpdateTime
@@ -665,7 +672,7 @@ export default {
             this.needsRender = true
           }
         }
-        
+
         this.renderLoop = requestAnimationFrame(render)
       }
       this.renderLoop = requestAnimationFrame(render)
@@ -905,7 +912,7 @@ export default {
         ctx.beginPath()
         ctx.arc(x, y, radius, 0, Math.PI * 2)
         ctx.fill()
-        
+
         // Add small highlight
         ctx.fillStyle = '#ff8888'
         ctx.beginPath()
@@ -922,7 +929,7 @@ export default {
           const prev = prevSnake[index]
           const dx = segment.x - prev.x
           const dy = segment.y - prev.y
-          
+
           // Check if this is a turn (both x and y changed)
           if (dx !== 0 && dy !== 0) {
             // This is a turn - interpolate in an L-shape
@@ -969,20 +976,20 @@ export default {
             const nextSegment = snakeSegments[i + 1]
             const dx = Math.abs(segment.centerX - nextSegment.centerX)
             const dy = Math.abs(segment.centerY - nextSegment.centerY)
-            
+
             ctx.beginPath()
             ctx.moveTo(nextSegment.centerX, nextSegment.centerY)
-            
+
             // If both dx and dy are significant, draw an L-shaped path
             if (dx > 1 && dy > 1) {
               // Determine turn direction based on actual segment positions
               const curr = snake[i]
               const prev = prevSnake[i]
-              
+
               if (prev && curr) {
                 const xChanged = curr.x !== prev.x
                 const yChanged = curr.y !== prev.y
-                
+
                 // If x changed (horizontal movement happened), draw vertical first
                 if (xChanged && !yChanged) {
                   ctx.lineTo(nextSegment.centerX, segment.centerY)
@@ -995,7 +1002,7 @@ export default {
                 ctx.lineTo(segment.centerX, nextSegment.centerY)
               }
             }
-            
+
             ctx.lineTo(segment.centerX, segment.centerY)
             ctx.stroke()
           }
@@ -1003,7 +1010,7 @@ export default {
 
         // Draw head as larger circle
         const head = snakeSegments[0]
-        const headRadius = ((this.gridSize * .7) - 2) / 2
+        const headRadius = (this.gridSize * 0.7 - 2) / 2
 
         ctx.fillStyle = '#5862f2'
         ctx.beginPath()

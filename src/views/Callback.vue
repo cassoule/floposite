@@ -1,4 +1,5 @@
 <script setup>
+/* global localStorage */
 import axios from 'axios'
 import { useToastStore } from '../stores/toastStore'
 import { onMounted } from 'vue'

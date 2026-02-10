@@ -1,32 +1,11 @@
 <script>
-import { InfiniteCarousel, InfiniteCarouselItem } from 'vue-infinite-carousel'
-import 'vue-infinite-carousel/dist/vue-infinite-carousel.css'
-import 'swiper/css'
+/* global localStorage, setTimeout */
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   components: {
     CoinsCounter,
-    InfiniteCarousel,
-    InfiniteCarouselItem,
-  },
-  async mounted() {
-    // Fetch user data from localStorage or an API
-    const discordId = localStorage.getItem('discordId')
-    if (!discordId) this.$router.push('/')
-    this.discordId = discordId
-    try {
-      const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId)
-      this.user = response.data.user
-    } catch (e) {
-      console.log(e)
-      this.$router.push('/')
-    }
-    window.addEventListener('resize', this.updatePosition)
-  },
-  beforeUnmount() {
-    window.removeEventListener('resize', this.updatePosition)
   },
   data() {
     return {
@@ -92,6 +71,23 @@ export default {
         this.playResultAnimations()
       }
     },
+  },
+  async mounted() {
+    // Fetch user data from localStorage or an API
+    const discordId = localStorage.getItem('discordId')
+    if (!discordId) this.$router.push('/')
+    this.discordId = discordId
+    try {
+      const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId)
+      this.user = response.data.user
+    } catch (e) {
+      console.log(e)
+      this.$router.push('/')
+    }
+    window.addEventListener('resize', this.updatePosition)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.updatePosition)
   },
   methods: {
     async fetchCase(caseType = 'standard') {
@@ -490,7 +486,7 @@ export default {
       :style="`box-shadow: inset 0 0 10px 2px ${caseColor};`"
     >
       <v-card-item class="px-0">
-        <div class="roulette-container" ref="rouletteContainer">
+        <div ref="rouletteContainer" class="roulette-container">
           <div
             class="selector-line"
             :style="`background: ${caseColor}; box-shadow: 0 0 10px 1px ${caseColor}99;`"
@@ -507,6 +503,7 @@ export default {
             <div
               v-for="(skin, index) in doubledSkins"
               :key="skin.uuid + '_pos_' + index"
+              ref="skinCards"
               class="skin-card"
               :class="{
                 'melee-skin-card': skin.isMelee,
@@ -522,7 +519,6 @@ export default {
               `
                   : ``
               "
-              ref="skinCards"
             >
               <v-img
                 :src="getImageUrl(skin)"
@@ -640,12 +636,12 @@ export default {
             >
               <v-img
                 v-if="chroma.swatch"
+                v-motion
                 :src="chroma.swatch"
                 class="rounded-lg"
                 width="40px"
                 height="40px"
                 :style="`${index + 1 === skins.updatedSkin.currentChroma ? 'border: 3px solid #' + skins.updatedSkin.tierColor : ''}`"
-                v-motion
                 :initial="{ opacity: 0, y: 20 }"
                 :enter="{
                   opacity: 1,

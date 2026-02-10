@@ -1,4 +1,5 @@
 // netlify/functions/auth.js
+/* global URLSearchParams */
 import axios from 'axios'
 
 export const handler = async (event) => {
@@ -7,7 +8,7 @@ export const handler = async (event) => {
   if (!code) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Missing authorization code' })
+      body: JSON.stringify({ error: 'Missing authorization code' }),
     }
   }
 
@@ -20,14 +21,12 @@ export const handler = async (event) => {
     params.append('redirect_uri', process.env.REDIRECT_URI)
     params.append('scope', 'identify')
 
-    const tokenResponse = await axios.post(
-      'https://discord.com/api/oauth2/token',
-      params,
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    )
+    const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    })
 
     const userResponse = await axios.get('https://discord.com/api/users/@me', {
-      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
     })
 
     console.log(userResponse.data)
@@ -36,8 +35,8 @@ export const handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         discordId: userResponse.data.id,
-        username: userResponse.data.username
-      })
+        username: userResponse.data.username,
+      }),
     }
   } catch (error) {
     console.error('Full error:', error.response?.data || error.message)
@@ -45,8 +44,8 @@ export const handler = async (event) => {
       statusCode: 400,
       body: JSON.stringify({
         error: 'Discord authentication failed',
-        discordError: error.response?.data || error.message
-      })
+        discordError: error.response?.data || error.message,
+      }),
     }
   }
 }

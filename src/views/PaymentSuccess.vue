@@ -36,6 +36,7 @@
 </template>
 
 <script>
+/* global setInterval, clearInterval */
 export default {
   name: 'PaymentSuccess',
   data() {

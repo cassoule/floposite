@@ -52,7 +52,7 @@
           <div>Seed : {{ gameState.seed }}</div>
         </div>
 
-        <div v-if="gameState" class="solitaire-board pb-16" :key="Date.now()">
+        <div v-if="gameState" :key="Date.now()" class="solitaire-board pb-16">
           <div class="top-section">
             <div class="stock-and-waste">
               <Pile type="stock" :pile="gameState.stockPile" @stock-pile-clicked="handleDrawCard" />
@@ -185,12 +185,12 @@
                 </v-row>
 
                 <v-row
-                  v-for="(stats, index) in rankings"
+                  v-for="stats in rankings"
                   :key="stats.id"
                   class="text-white font-weight-bolder"
                   style="border-radius: 10px"
                   :style="
-                    stats.user_id === userId
+                    stats.userId === userId
                       ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)'
                       : ''
                   "
@@ -207,14 +207,14 @@
                       gap: 0.7em;
                       align-items: center;
                     "
-                    :title="'@' + stats.globalName"
+                    :title="'@' + stats.user.globalName"
                   >
                     <v-img
-                      :src="avatars[stats.id]"
+                      :src="stats.user.avatarUrl"
                       color="transparent"
                       style="border-radius: 50%; min-width: 30px; max-width: 30px; height: 30px"
                     />
-                    <p>@{{ stats.globalName }}</p>
+                    <p>@{{ stats.user.globalName }}</p>
                   </v-col>
                   <v-col cols="12" sm="0" order-sm="12" class="py-0 d-sm-none">
                     <v-divider
@@ -249,7 +249,6 @@
                       text-overflow: ellipsis;
                       text-align: center;
                     "
-                    title="@cassoule"
                   >
                     Personne n'a complété le SOTD aujourd'hui
                   </v-col>
@@ -356,6 +355,7 @@
 </template>
 
 <script>
+/* global localStorage, setInterval, clearInterval, Image */
 import Pile from '../components/solitaire/Pile.vue'
 import api from '../services/api'
 import axios from 'axios'
@@ -537,7 +537,7 @@ export default {
     async handleReset() {
       await this.getRankings()
       try {
-        const response = await api.resetGame(this.userId)
+        await api.resetGame(this.userId)
         this.gameState = null
       } catch (error) {
         console.error('Failed to reset game:', error)
@@ -624,7 +624,7 @@ export default {
           this.gameState.endTime = response.data.endTime
           this.winDialog = true
         }
-      } catch (error) {
+      } catch {
         console.warn('Invalid move detected by server. Reverting UI.')
         this.gameState = oldState // Roll back on error
       } finally {
@@ -781,7 +781,7 @@ export default {
     async preloadImages() {
       const imagePaths = getAllCardImagePaths()
       const promises = imagePaths.map((imagePath) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           const img = new Image()
           img.src = imagePath
           img.onload = () => resolve()

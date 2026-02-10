@@ -31,10 +31,19 @@
     <v-img src="flopobot.webp" width="200px"></v-img>
   </div>
 
+  <footer
+    class="w-100 d-flex justify-end flex-wrap px-4"
+    style="position: fixed; bottom: 5px; left: 0; z-index: 10; column-gap: 4em"
+  >
+    <a href="/cgv">Conditions Générales de Vente</a>
+    <a href="/privacy">Politique de Confidentialité</a>
+  </footer>
+
   <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 </template>
 
 <script>
+/* global localStorage */
 import Toast from '@/components/Toast.vue'
 import { useToastStore } from '@/stores/toastStore.js'
 import axios from 'axios'
@@ -58,17 +67,17 @@ export default {
     }
   },
 
-  async mounted() {
-    //await this.checkFlapi()
-    this.initSocket()
-  },
-
   computed: {
     discordAuthUrl() {
       const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID
       const redirectUri = encodeURIComponent(import.meta.env.VITE_REDIRECT_URI)
       return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify`
     },
+  },
+
+  async mounted() {
+    //await this.checkFlapi()
+    this.initSocket()
   },
 
   methods: {
@@ -99,7 +108,7 @@ export default {
       console.log('Checking flAPI...')
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/check'
       try {
-        const flapiTestResponse = await axios.get(fetchUrl, {
+        await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',
             'Content-Type': 'application/json',
@@ -108,7 +117,7 @@ export default {
         })
         console.log('flAPI ready')
         this.flapi_ready = true
-      } catch (e) {
+      } catch {
         console.log('flAPI not ready')
         this.flapi_ready = false
       }
@@ -252,5 +261,15 @@ export default {
   .login {
     margin-top: 10rem;
   }
+}
+
+a {
+  color: #dddddd77 !important;
+  font-size: 0.9em;
+  line-height: 0.95em;
+}
+
+a:hover {
+  color: #ddd !important;
 }
 </style>

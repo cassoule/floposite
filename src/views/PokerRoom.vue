@@ -1,4 +1,5 @@
 <script>
+/* global localStorage, setTimeout, setInterval, clearInterval */
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import { time } from '@discordjs/formatters'
@@ -34,34 +35,6 @@ export default {
 
       now: Date.now(),
       users: {},
-    }
-  },
-
-  async mounted() {
-    this.discordId = localStorage.getItem('discordId')
-    if (!this.discordId) this.$router.push('/')
-
-    await this.getUsers()
-    this.initSocket()
-    await this.getRoom()
-  },
-
-  created() {
-    setTimeout(() => {
-      if (!this.room) this.roomTimeout = true
-    }, 2000)
-
-    this.interval = setInterval(() => {
-      this.now = Date.now()
-    }, 1)
-  },
-
-  beforeDestroy() {
-    clearInterval(this.interval)
-    if (this.socket) {
-      this.socket.off('poker-update')
-      this.socket.off('poker-toast')
-      this.socket.disconnect()
     }
   },
 
@@ -109,6 +82,34 @@ export default {
         return sum + (player.bet || 0)
       }, 0)
     },
+  },
+
+  async mounted() {
+    this.discordId = localStorage.getItem('discordId')
+    if (!this.discordId) this.$router.push('/')
+
+    await this.getUsers()
+    this.initSocket()
+    await this.getRoom()
+  },
+
+  created() {
+    setTimeout(() => {
+      if (!this.room) this.roomTimeout = true
+    }, 2000)
+
+    this.interval = setInterval(() => {
+      this.now = Date.now()
+    }, 1)
+  },
+
+  beforeUnmount() {
+    clearInterval(this.interval)
+    if (this.socket) {
+      this.socket.off('poker-update')
+      this.socket.off('poker-toast')
+      this.socket.disconnect()
+    }
   },
 
   methods: {
@@ -170,7 +171,7 @@ export default {
                 false,
               )
               break
-            case 'player-winner':
+            case 'player-winner': {
               let playerNames = ''
               data.playerIds.forEach((playerId, index) => {
                 if (index > 0) {
@@ -183,6 +184,7 @@ export default {
                 false,
               )
               break
+            }
             default:
               break
           }
@@ -204,7 +206,7 @@ export default {
     async joinRoom() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/join'
       try {
-        const response = await axios.post(url, { userId: this.discordId, roomId: this.room_id })
+        await axios.post(url, { userId: this.discordId, roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -214,7 +216,7 @@ export default {
     async handleAccept(id) {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/accept'
       try {
-        const response = await axios.post(url, { userId: id, roomId: this.room_id })
+        await axios.post(url, { userId: id, roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -225,7 +227,7 @@ export default {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/leave'
       try {
         this.$router.push('/poker')
-        const response = await axios.post(url, { userId: this.discordId, roomId: this.room_id })
+        await axios.post(url, { userId: this.discordId, roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -235,7 +237,7 @@ export default {
     async handleKick(id) {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/kick'
       try {
-        const response = await axios.post(url, {
+        await axios.post(url, {
           commandUserId: this.discordId,
           userId: id,
           roomId: this.room.id,
@@ -254,7 +256,7 @@ export default {
           ? '/poker/next-hand'
           : '/poker/start')
       try {
-        const response = await axios.post(url, { roomId: this.room_id })
+        await axios.post(url, { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -264,7 +266,7 @@ export default {
     async handleFold() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/fold'
       try {
-        const response = await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
+        await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
       } catch (e) {
         console.log(e)
       }
@@ -274,7 +276,7 @@ export default {
     async handleCheck() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/check'
       try {
-        const response = await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
+        await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
       } catch (e) {
         console.log(e)
       }
@@ -284,7 +286,7 @@ export default {
     async handleCall() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/call'
       try {
-        const response = await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
+        await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
       } catch (e) {
         console.log(e)
       }
@@ -294,7 +296,7 @@ export default {
     async handleRaise() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/raise'
       try {
-        const response = await axios.post(url, {
+        await axios.post(url, {
           roomId: this.room_id,
           playerId: this.discordId,
           amount: this.raiseValue,
@@ -506,7 +508,7 @@ export default {
               <div v-for="card in room.tapis" :key="card" class="mr-2 mb-2">
                 <v-img :src="'/cards/webp/' + card + '.webp'" :alt="card" width="80" />
               </div>
-              <div v-for="card in [1, 2, 3, 4, 5]">
+              <div v-for="card in [1, 2, 3, 4, 5]" :key="card">
                 <v-img
                   v-if="room.tapis.length < card"
                   :src="'/cards/webp/card_back.webp'"
@@ -532,7 +534,7 @@ export default {
           <v-divider class="mt-6" />
           <div class="d-flex mb-16 pb-16" style="gap: 1rem; flex-wrap: wrap">
             <v-card
-              v-for="(player, index) in Object.values(room.players)"
+              v-for="player in Object.values(room.players)"
               :key="player.id"
               :variant="player.id === discordId ? 'tonal' : 'text'"
               class="mt-6"
@@ -675,7 +677,7 @@ export default {
             </v-card>
             <div v-if="Object.values(room?.queue).length > 0" class="mt-6 ml-6 d-flex flex-column">
               <p class="mb-3">File d'attente</p>
-              <p v-for="player in room?.queue" class="mb-3">
+              <p v-for="player in room?.queue" :key="player.id" class="mb-3">
                 {{ player.globalName }}
                 <button
                   v-if="discordId === room?.host_id"

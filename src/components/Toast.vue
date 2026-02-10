@@ -1,6 +1,6 @@
 <script>
 import { useToastStore } from '../stores/toastStore'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 export default {
   name: 'Toast',
