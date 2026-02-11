@@ -300,9 +300,7 @@ export default {
 
     async isTimedOut() {
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout', {
-          userId: this.$route.params.id,
-        })
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout')
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
         console.log(e)
@@ -556,7 +554,7 @@ export default {
       const url =
         import.meta.env.VITE_FLAPI_URL + '/skin/' + this.selectedSkin.uuid + '/instant-sell'
       try {
-        await axios.post(url, { userId: discordId })
+        await axios.post(url)
         await this.getInventory()
         this.users = await this.getUsers()
         this.user = this.users.find((u) => u.id === this.$route.params.id)
@@ -601,7 +599,7 @@ export default {
 
       try {
         const url = import.meta.env.VITE_FLAPI_URL + '/skin-upgrade/' + this.selectedSkin.uuid
-        const response = await axios.post(url, { userId: this.user.id })
+        const response = await axios.post(url)
         this.users = await this.getUsers()
         this.user = this.users.find((u) => u.id === this.$route.params.id)
         const winningSegmentId = response.data.wonId

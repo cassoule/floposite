@@ -1994,12 +1994,11 @@ export default {
       // Connect to your bot's Socket.IO server
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
       })
-
-      this.socket.emit('user-connected', this.discordId)
 
       // Handle connection events
       this.socket.on('connect', () => {
@@ -2050,9 +2049,7 @@ export default {
     async handleRegister() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/register-user'
       try {
-        const response = await axios.post(fetchUrl, {
-          discordUserId: this.discordId,
-        })
+        const response = await axios.post(fetchUrl)
         this.showSuccessOrWarningToast(response.data.message, false)
         await this.getUsers()
         this.avatar = await this.getAvatar(this.discordId)
@@ -2113,6 +2110,7 @@ export default {
 
     logout() {
       localStorage.removeItem('discordId')
+      localStorage.removeItem('token')
       this.showLogoutToast()
       this.$router.push('/')
     },
@@ -2246,7 +2244,6 @@ export default {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/change-nickname', {
           userId: this.nicknameForm.id,
           nickname: this.nicknameForm.nickname,
-          commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
@@ -2259,7 +2256,6 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/spam-ping', {
           userId: this.spamPingForm.id,
-          commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
@@ -2271,7 +2267,6 @@ export default {
       this.showCommandToast('Envoi du vote...')
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout/vote', {
-          commandUserId: this.discordId,
           voteKey: voteKey,
           voteFor: voteFor,
         })
@@ -2286,7 +2281,6 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/slowmode', {
           userId: this.slowmodeForm.id,
-          commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
@@ -2299,7 +2293,6 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout', {
           userId: this.timeoutForm.id,
-          commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
@@ -2311,7 +2304,6 @@ export default {
       this.showCommandToast('Création de la prédiction...')
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/start-predi', {
-          commandUserId: this.discordId,
           label: this.prediForm.label,
           options: this.prediForm.options,
           closingTime: this.prediForm.closingTime,
@@ -2342,7 +2334,6 @@ export default {
       this.showCommandToast('Prise en compte du vote...')
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/vote-predi', {
-          commandUserId: this.discordId,
           predi: this.selectedPrediKey,
           amount: this.prediVoteForm.amount,
           option: this.selectedOption,
@@ -2361,7 +2352,6 @@ export default {
       }
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/end-predi', {
-          commandUserId: this.discordId,
           predi: this.selectedPrediKey,
           confirm: confirm,
           winningOption: winningOption,
@@ -2376,9 +2366,7 @@ export default {
 
     async addCoins() {
       try {
-        await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
-          commandUserId: this.discordId,
-        })
+        await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins')
       } catch (e) {
         console.log(e)
       }
@@ -2392,7 +2380,6 @@ export default {
         const response = await axios.post(
           import.meta.env.VITE_FLAPI_URL + '/create-checkout-session',
           {
-            userId: this.discordId,
             offerId: offerId,
           },
         )
@@ -2451,10 +2438,7 @@ export default {
 
     async isTimedOut() {
       try {
-        const id = this.discordId
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout', {
-          userId: id,
-        })
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout')
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
         console.log(e)

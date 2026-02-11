@@ -93,6 +93,7 @@ export default {
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -107,7 +108,6 @@ export default {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/create'
       try {
         const response = await axios.post(url, {
-          creatorId: this.discordId,
           minBet: this.formattedRoomMinBet,
           fakeMoney: this.roomFakeMoney,
         })

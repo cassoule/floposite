@@ -577,7 +577,6 @@ export default {
       const url = import.meta.env.VITE_FLAPI_URL + '/snake/reward'
       try {
         await axios.post(url, {
-          discordId: this.discordId,
           score: this.score,
           isWin: this.isWin,
         })

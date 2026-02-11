@@ -69,9 +69,7 @@ export default {
 
   computed: {
     discordAuthUrl() {
-      const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID
-      const redirectUri = encodeURIComponent(import.meta.env.VITE_REDIRECT_URI)
-      return `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify`
+      return import.meta.env.VITE_FLAPI_URL + '/auth/discord'
     },
   },
 
@@ -122,7 +120,8 @@ export default {
         this.flapi_ready = false
       }
       this.discordId = localStorage.getItem('discordId')
-      if (this.discordId && this.flapi_ready) this.$router.push('/dashboard')
+      const token = localStorage.getItem('token')
+      if (this.discordId && token && this.flapi_ready) this.$router.push('/dashboard')
     },
   },
 }

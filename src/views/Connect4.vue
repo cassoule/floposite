@@ -244,6 +244,7 @@ export default {
     this.elo = await this.getElo(this.discordId)
     this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
       withCredentials: false,
+      auth: { token: localStorage.getItem('token') },
       extraHeaders: {
         'ngrok-skip-browser-warning': 'true',
       },
@@ -315,7 +316,6 @@ export default {
 
     leaveQueueSync(meta = {}) {
       const payload = {
-        discordId: this.discordId, // set this in mounted()
         game: 'connect4',
         ...meta,
       }
@@ -323,19 +323,17 @@ export default {
       // 1) Fire-and-forget HTTP that survives page close
       if (!this.inQueue) return
       const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
+      const token = localStorage.getItem('token')
       try {
-        if (navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-          navigator.sendBeacon(url, blob)
-        } else {
-          // Fallback for older browsers
-          fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            keepalive: true, // critical
-          }).catch(() => {})
-        }
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(() => {})
       } catch (e) {
         console.error('flAPI error:', e)
       }

@@ -424,6 +424,7 @@ export default {
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -517,7 +518,7 @@ export default {
     async handleRestart() {
       await this.getRankings()
       try {
-        const response = await api.startNewGame(this.userId, this.userSeed, this.hardMode)
+        const response = await api.startNewGame(this.userSeed, this.hardMode)
         this.gameState = response.data.gameState
       } catch (error) {
         console.error('Failed to start new game:', error)
@@ -527,7 +528,7 @@ export default {
     async handleRestartSotd() {
       await this.getRankings()
       try {
-        const response = await api.startSOTD(this.userId)
+        const response = await api.startSOTD()
         this.gameState = response.data.gameState
       } catch (error) {
         console.error('Failed to start new game:', error)
@@ -537,7 +538,7 @@ export default {
     async handleReset() {
       await this.getRankings()
       try {
-        await api.resetGame(this.userId)
+        await api.resetGame()
         this.gameState = null
       } catch (error) {
         console.error('Failed to reset game:', error)
@@ -616,7 +617,7 @@ export default {
       this.performLocalMove(movePayload)
 
       try {
-        const response = await api.moveCard({ userId: this.userId, ...movePayload })
+        const response = await api.moveCard(movePayload)
         this.gameState.score = response.data.gameState.score
         this.gameState.moves = response.data.gameState.moves
         // On success, our optimistic state is correct. We do nothing.
@@ -637,7 +638,7 @@ export default {
       const oldState = JSON.parse(JSON.stringify(this.gameState))
 
       try {
-        const response = await api.undoMove(this.userId)
+        const response = await api.undoMove()
         this.gameState = { ...response.data.gameState }
         this.isLoading = false
       } catch (error) {
@@ -690,7 +691,7 @@ export default {
 
       try {
         this.isLoading = true
-        const response = await api.drawCard(this.userId)
+        const response = await api.drawCard()
         this.gameState = { ...response.data.gameState }
         this.isLoading = false
         await this.fetchGameState()

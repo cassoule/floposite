@@ -94,9 +94,8 @@ export default {
       this.loading = true
       const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/open-case'
       try {
-        const userId = localStorage.getItem('discordId') || ''
         this.selectedCaseType = caseType
-        const response = await axios.post(fetchUrl, { userId, caseType })
+        const response = await axios.post(fetchUrl, { caseType })
         try {
           const response = await axios.get(
             import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId,

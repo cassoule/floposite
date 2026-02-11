@@ -117,6 +117,7 @@ export default {
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -206,7 +207,7 @@ export default {
     async joinRoom() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/join'
       try {
-        await axios.post(url, { userId: this.discordId, roomId: this.room_id })
+        await axios.post(url, { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -227,7 +228,7 @@ export default {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/leave'
       try {
         this.$router.push('/poker')
-        await axios.post(url, { userId: this.discordId, roomId: this.room_id })
+        await axios.post(url, { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -238,7 +239,6 @@ export default {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/kick'
       try {
         await axios.post(url, {
-          commandUserId: this.discordId,
           userId: id,
           roomId: this.room.id,
         })
@@ -266,7 +266,7 @@ export default {
     async handleFold() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/fold'
       try {
-        await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
+        await axios.post(url, { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -276,7 +276,7 @@ export default {
     async handleCheck() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/check'
       try {
-        await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
+        await axios.post(url, { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -286,7 +286,7 @@ export default {
     async handleCall() {
       const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/call'
       try {
-        await axios.post(url, { roomId: this.room_id, playerId: this.discordId })
+        await axios.post(url, { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -298,7 +298,6 @@ export default {
       try {
         await axios.post(url, {
           roomId: this.room_id,
-          playerId: this.discordId,
           amount: this.raiseValue,
         })
       } catch (e) {

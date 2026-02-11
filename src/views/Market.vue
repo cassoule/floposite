@@ -107,6 +107,7 @@ export default {
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -247,7 +248,6 @@ export default {
         '/place-bid'
       try {
         const response = await axios.post(url, {
-          buyer_id: localStorage.getItem('discordId'),
           bid_amount: this.bidAmount,
           timestamp: Date.now(),
         })
@@ -266,7 +266,6 @@ export default {
     async handleCreateOffer(skin_uuid) {
       const url = import.meta.env.VITE_FLAPI_URL + '/market-place/place-offer'
       const payload = {
-        seller_id: localStorage.getItem('discordId'),
         skin_uuid: skin_uuid,
         starting_price: this.createOffer.price,
         delay: this.createOffer.delay,

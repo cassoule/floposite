@@ -22,7 +22,7 @@ import Privacy from '../views/Privacy.vue'
 const routes = [
   { path: '/', component: Home },
   { path: '/dashboard', component: Dashboard },
-  { path: '/callback', component: Callback },
+  { path: '/auth/callback', component: Callback },
   { path: '/tic-tac-toe', component: TicTacToe },
   { path: '/monke-game', component: MonkeGame },
   { path: '/connect-4', component: Connect4 },

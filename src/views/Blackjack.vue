@@ -542,15 +542,12 @@ export default {
     if (this._timer) clearInterval(this._timer)
     if (this._onVis) document.removeEventListener('visibilitychange', this._onVis)
     if (this.isInRoom) {
-      await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave', {
-        userId: this.discordId,
-      })
+      await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave')
     }
   },
 
   created() {
-    const userId = localStorage.getItem('discordId')
-    this._boundHandleUnload = () => this.handleUnload(userId)
+    this._boundHandleUnload = () => this.handleUnload()
 
     window.addEventListener('beforeunload', this._boundHandleUnload)
     window.addEventListener('pagehide', this._boundHandleUnload)
@@ -565,25 +562,20 @@ export default {
         target.scrollTop = target.scrollHeight
       })
     },
-    handleUnload(userId) {
-      // Use the userId passed from created() or fallback to local data
-      const targetId = userId || this.discordId
-
-      // Safety check
-      if (!targetId || !this.isInRoom) return
+    handleUnload() {
+      if (!this.isInRoom) return
 
       const url = (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave'
+      const token = localStorage.getItem('token')
 
-      // Use fetch with keepalive instead of sendBeacon
       fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ userId: targetId }),
-        keepalive: true, // <--- Keeps request alive after tab close
+        keepalive: true,
       }).catch((err) => {
-        // Optional: log error (though you won't see it if the tab is closed)
         console.error('Leave room failed:', err)
       })
     },
@@ -594,6 +586,7 @@ export default {
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -698,9 +691,7 @@ export default {
 
     async join() {
       try {
-        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/join', {
-          userId: this.discordId,
-        })
+        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/join')
         await this.getRoom()
         this.toast('Tu as rejoint la table')
       } catch (e) {
@@ -711,9 +702,7 @@ export default {
 
     async leave() {
       try {
-        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave', {
-          userId: this.discordId,
-        })
+        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave')
         await this.getRoom()
         this.toast('Tu as quitté la table')
       } catch (e) {
@@ -725,7 +714,6 @@ export default {
     async placeBet() {
       try {
         const r = await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/bet', {
-          userId: this.discordId,
           amount: this.bet,
         })
         if (r.status === 200) this.toast('Mise acceptée')
@@ -743,7 +731,6 @@ export default {
         const r = await axios.post(
           (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/action/' + action,
           {
-            userId: this.discordId,
             handIndex: handIndex,
           },
         )

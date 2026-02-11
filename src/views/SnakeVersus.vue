@@ -335,6 +335,7 @@ export default {
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -491,24 +492,24 @@ export default {
 
     leaveQueueSync(meta = {}) {
       const payload = {
-        discordId: this.discordId,
         game: 'snake',
         ...meta,
       }
 
-      // Don't send if we never initialized (no discordId)
       if (!this.discordId) return
 
       const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
+      const token = localStorage.getItem('token')
       try {
         fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(payload),
           keepalive: true,
-        }).catch(() => {
-          // Ignore errors during page unload
-        })
+        }).catch(() => {})
       } catch {
         // Ignore errors during page unload
       }
