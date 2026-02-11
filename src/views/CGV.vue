@@ -3,7 +3,7 @@
     <v-main class="w-100 text-white">
       <div class="cgv-content pa-6">
         <h1 class="font-weight-bold">Conditions Générales de Vente</h1>
-        <p><em>Dernière mise à jour : 10 février 2026</em></p>
+        <p><em>Dernière mise à jour : 11 février 2026</em></p>
 
         <h2 class="font-weight-bold">1. Identification du vendeur</h2>
         <ul>
@@ -147,9 +147,7 @@
 
         <h2 class="font-weight-bold">10. Propriété intellectuelle</h2>
         <p>
-          FlopoBot, FlopoSite et FlopoCoins sont des créations originales de Milo Gourvest. Les
-          skins Valorant référencés dans la Plateforme sont la propriété de Riot Games et sont
-          utilisés à titre purement fictif et communautaire, sans lien commercial avec Riot Games.
+          FlopoBot, FlopoSite et FlopoCoins sont des créations originales de Milo Gourvest.
         </p>
 
         <h2 class="font-weight-bold">11. Modification des CGV</h2>

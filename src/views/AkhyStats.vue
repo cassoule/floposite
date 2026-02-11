@@ -1386,8 +1386,9 @@ export default {
         </v-list>
 
         <v-list
+          disabled
           width="100%"
-          class="mt-10 py-0 position-relative"
+          class="mt-10 py-0 position-relative disabled-inventory"
           rounded="xl"
           bg-color="#181818"
           variant="tonal"
@@ -2337,7 +2338,7 @@ export default {
 }
 
 .vct-skin-card .skin-card-bg {
-  display: none; /* Hide default tier color, use image instead */
+  display: none; 
 }
 
 /* --- 3. CHAMPIONS EFFECTS (Golden Flow) --- */
@@ -2355,6 +2356,21 @@ export default {
   );
   background-size: 200% 200%;
   animation: gold-flow 15s ease infinite;
+}
+
+.disabled-inventory::after {
+  content: 'Actuellement indisponible';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ddd;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 3;
 }
 
 .champions-skin-card .skin-bg {

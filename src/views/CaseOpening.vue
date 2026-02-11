@@ -92,7 +92,7 @@ export default {
   methods: {
     async fetchCase(caseType = 'standard') {
       this.loading = true
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/open-case'
+      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/open-case'
       try {
         const userId = localStorage.getItem('discordId') || ''
         this.selectedCaseType = caseType
@@ -130,7 +130,7 @@ export default {
       return level?.displayIcon || skinInfo.displayIcon || skinInfo.chromas[0].fullRender
     },
     async getSkinData(skin) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
+      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
       try {
         const response = await axios.get(fetchUrl)
         this.skinsData[skin.uuid] = response.data
@@ -142,7 +142,7 @@ export default {
       this.selectedCase = caseType
       this.caseContent = null
       this.caseContentDialog = true
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/case-content/' + caseType
+      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/case-content/' + caseType
       try {
         const response = await axios.get(fetchUrl)
         this.caseContent = response.data.skins
@@ -194,7 +194,6 @@ export default {
     },
 
     async playResultAnimations() {
-      // 1. Reset values
       this.displayLevel = 0
       this.displayPrice = 0
 
@@ -203,12 +202,10 @@ export default {
       // NOTE: Replace 'value' with the actual property name for price/flopos from your API
       const targetPrice = this.skins.updatedSkin.currentPrice || 0
 
-      // 2. Wait a split second for the modal to render (matches the pop-in animation)
       await this.sleep(300)
 
-      // 3. Animate the numbers
-      this.animateNumber('displayLevel', 0, targetLevel, 1500) // 1.5s duration
-      this.animateNumber('displayPrice', 0, targetPrice, 2000) // 2s duration
+      this.animateNumber('displayLevel', 0, targetLevel, 1500)
+      this.animateNumber('displayPrice', 0, targetPrice, 2000)
     },
 
     animateNumber(property, start, end, duration) {
@@ -253,7 +250,7 @@ export default {
       class="d-flex justify-center flex-wrap flex-md-nowrap pt-16"
       style="place-items: start; place-content: start; gap: 2em"
     >
-      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <v-img
             src="cases/standard-png.png"
@@ -286,7 +283,7 @@ export default {
         </v-card-item>
       </v-card>
 
-      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <v-img
             src="cases/premium-png.png"
@@ -319,7 +316,7 @@ export default {
         </v-card-item>
       </v-card>
 
-      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <v-img
             src="cases/ultra-png.png"
@@ -352,7 +349,7 @@ export default {
         </v-card-item>
       </v-card>
 
-      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <div
             style="

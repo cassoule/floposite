@@ -123,9 +123,6 @@ export default {
       class="d-flex"
       style="place-items: center; place-content: center; gap: 2em; flex-wrap: wrap"
     >
-      <div class="mt-8 w-100">
-        <h1 class="text-white" style="position: relative">Monke Game</h1>
-      </div>
       <div
         class="mt-0 w-100 d-flex flex-column align-center"
         style="
@@ -136,9 +133,9 @@ export default {
           scrollbar-width: auto;
         "
       >
-        <div v-if="!userGamePath || userGamePath.length === 0">
-          <v-card class="modals-card text-white" variant="tonal" rounded="xl">
-            <v-card-title>Nouvelle partie</v-card-title>
+        <div v-if="!userGamePath || userGamePath.length === 0" class="w-100" style="max-width: 400px;">
+          <v-card class="modals-card text-white w-100" variant="tonal" rounded="xl">
+            <v-card-title>Monke Game</v-card-title>
             <v-card-text class="mt-2 mb-0 pb-3">
               <v-number-input
                 v-model="betAmount"

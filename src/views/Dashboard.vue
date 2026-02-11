@@ -127,7 +127,8 @@
           padding-right: 1em;
         "
       >
-        <v-btn-toggle
+        <!-- <v-btn-toggle
+          disabled
           rounded="lg"
           base-color="primary"
           variant="flat"
@@ -145,7 +146,7 @@
               <v-icon class="mdi mdi-treasure-chest-outline mt-1"></v-icon>
             </template>
           </v-btn>
-        </v-btn-toggle>
+        </v-btn-toggle> -->
 
         <v-btn
           v-if="!user.dailyQueried"
@@ -2746,7 +2747,7 @@ button:disabled {
 }
 
 .actions-container {
-  height: 500px !important;
+  height: 590px !important;
   overflow-y: scroll;
   border-radius: 0 0 15px 0;
 }
