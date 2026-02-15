@@ -29,7 +29,7 @@ export default {
       user: null,
       sparkline: null,
       elo: null,
-      elo_graph: null,
+      eloGraph: null,
       user_inventory: null,
       skinsVideoUrls: {},
       skinsData: {},
@@ -754,9 +754,9 @@ export default {
                   </h2>
                   <h3 v-if="elo">
                     {{ elo }}
-                    <span style="color: rgba(255, 255, 255, 0.3)"
-                      >{{ Math.max(...elo_graph) }} PB</span
-                    >
+                    <span style="color: rgba(255, 255, 255, 0.3)">
+                      {{ Math.max(...eloGraph) }} PB
+                    </span>
                   </h3>
                   <h3 v-else>-</h3>
                 </div>
