@@ -1110,13 +1110,12 @@
           <template #label>
             <p class="text-left">
               J'ai lu et j'accepte les
-              <a href="/cgv" target="_blank" style="color: #5865f2; text-decoration: none">
-                Conditions Générales de Vente</a
-              >, ainsi que la
-              <a href="/privacy" target="_blank" style="color: #5865f2; text-decoration: none">
+              <a href="/cgv" target="_blank" style="color: #5865f2 !important; text-decoration: none; font-size: 1em;">
+                Conditions Générales de Vente
+              </a>, ainsi que la
+              <a href="/privacy" target="_blank" style="color: #5865f2 !important; text-decoration: none; font-size: 1em ">
                 Politique de Confidentialité
-              </a>
-              et je renonce expressément à mon droit de rétractation.
+              </a>et je renonce expressément à mon droit de rétractation.
             </p>
           </template>
         </v-checkbox>

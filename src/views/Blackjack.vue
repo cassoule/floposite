@@ -197,8 +197,7 @@
                   @click="doAction('double', index)"
                   >Double</v-btn
                 >
-                <!--Disabled for now-->
-                <!--                <v-btn
+                <v-btn
                   class="text-none"
                   color="secondary"
                   variant="outlined"
@@ -206,8 +205,9 @@
                   append-icon="mdi-call-split"
                   @click="doAction('split', index)"
                   :disabled="!canSplit(hand)"
-                  >Split</v-btn
-                >-->
+                >
+                  Split
+                </v-btn>
               </div>
             </div>
           </v-card>
