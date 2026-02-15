@@ -134,7 +134,7 @@ export default {
       const id = this.$route.params.id
       //this.sparkline = await this.getSparkline(id)
       this.elo = await this.getElo(id)
-      this.elo_graph = await this.getEloGraph(id)
+      this.eloGraph = await this.getEloGraph(id)
       await this.getActiveSlowmodes()
       await this.isTimedOut()
       await this.getGames()
@@ -755,7 +755,7 @@ export default {
                   <h3 v-if="elo">
                     {{ elo }}
                     <span style="color: rgba(255, 255, 255, 0.3)">
-                      {{ Math.max(...eloGraph) }} PB
+                      {{ Math.max(...(eloGraph ?? [])) }} PB
                     </span>
                   </h3>
                   <h3 v-else>-</h3>
