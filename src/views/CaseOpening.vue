@@ -1,32 +1,11 @@
 <script>
-import { InfiniteCarousel, InfiniteCarouselItem } from 'vue-infinite-carousel'
-import 'vue-infinite-carousel/dist/vue-infinite-carousel.css'
-import 'swiper/css'
+/* global localStorage, setTimeout */
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   components: {
     CoinsCounter,
-    InfiniteCarousel,
-    InfiniteCarouselItem,
-  },
-  async mounted() {
-    // Fetch user data from localStorage or an API
-    const discordId = localStorage.getItem('discordId')
-    if (!discordId) this.$router.push('/')
-    this.discordId = discordId
-    try {
-      const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId)
-      this.user = response.data.user
-    } catch (e) {
-      console.log(e)
-      this.$router.push('/')
-    }
-    window.addEventListener('resize', this.updatePosition)
-  },
-  beforeUnmount() {
-    window.removeEventListener('resize', this.updatePosition)
   },
   data() {
     return {
@@ -93,14 +72,30 @@ export default {
       }
     },
   },
+  async mounted() {
+    // Fetch user data from localStorage or an API
+    const discordId = localStorage.getItem('discordId')
+    if (!discordId) this.$router.push('/')
+    this.discordId = discordId
+    try {
+      const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId)
+      this.user = response.data.user
+    } catch (e) {
+      console.log(e)
+      this.$router.push('/')
+    }
+    window.addEventListener('resize', this.updatePosition)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.updatePosition)
+  },
   methods: {
     async fetchCase(caseType = 'standard') {
       this.loading = true
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/open-case'
+      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/open-case'
       try {
-        const userId = localStorage.getItem('discordId') || ''
         this.selectedCaseType = caseType
-        const response = await axios.post(fetchUrl, { userId, caseType })
+        const response = await axios.post(fetchUrl, { caseType })
         try {
           const response = await axios.get(
             import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId,
@@ -134,7 +129,7 @@ export default {
       return level?.displayIcon || skinInfo.displayIcon || skinInfo.chromas[0].fullRender
     },
     async getSkinData(skin) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
+      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
       try {
         const response = await axios.get(fetchUrl)
         this.skinsData[skin.uuid] = response.data
@@ -146,7 +141,7 @@ export default {
       this.selectedCase = caseType
       this.caseContent = null
       this.caseContentDialog = true
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/case-content/' + caseType
+      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/case-content/' + caseType
       try {
         const response = await axios.get(fetchUrl)
         this.caseContent = response.data.skins
@@ -198,7 +193,6 @@ export default {
     },
 
     async playResultAnimations() {
-      // 1. Reset values
       this.displayLevel = 0
       this.displayPrice = 0
 
@@ -207,12 +201,10 @@ export default {
       // NOTE: Replace 'value' with the actual property name for price/flopos from your API
       const targetPrice = this.skins.updatedSkin.currentPrice || 0
 
-      // 2. Wait a split second for the modal to render (matches the pop-in animation)
       await this.sleep(300)
 
-      // 3. Animate the numbers
-      this.animateNumber('displayLevel', 0, targetLevel, 1500) // 1.5s duration
-      this.animateNumber('displayPrice', 0, targetPrice, 2000) // 2s duration
+      this.animateNumber('displayLevel', 0, targetLevel, 1500)
+      this.animateNumber('displayPrice', 0, targetPrice, 2000)
     },
 
     animateNumber(property, start, end, duration) {
@@ -257,7 +249,7 @@ export default {
       class="d-flex justify-center flex-wrap flex-md-nowrap pt-16"
       style="place-items: start; place-content: start; gap: 2em"
     >
-      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <v-img
             src="cases/standard-png.png"
@@ -290,7 +282,7 @@ export default {
         </v-card-item>
       </v-card>
 
-      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <v-img
             src="cases/premium-png.png"
@@ -323,7 +315,7 @@ export default {
         </v-card-item>
       </v-card>
 
-      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <v-img
             src="cases/ultra-png.png"
@@ -356,7 +348,7 @@ export default {
         </v-card-item>
       </v-card>
 
-      <v-card color="#1A1A1A" rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
         <v-card-item class="px-4 py-4">
           <div
             style="
@@ -490,7 +482,7 @@ export default {
       :style="`box-shadow: inset 0 0 10px 2px ${caseColor};`"
     >
       <v-card-item class="px-0">
-        <div class="roulette-container" ref="rouletteContainer">
+        <div ref="rouletteContainer" class="roulette-container">
           <div
             class="selector-line"
             :style="`background: ${caseColor}; box-shadow: 0 0 10px 1px ${caseColor}99;`"
@@ -507,6 +499,7 @@ export default {
             <div
               v-for="(skin, index) in doubledSkins"
               :key="skin.uuid + '_pos_' + index"
+              ref="skinCards"
               class="skin-card"
               :class="{
                 'melee-skin-card': skin.isMelee,
@@ -522,7 +515,6 @@ export default {
               `
                   : ``
               "
-              ref="skinCards"
             >
               <v-img
                 :src="getImageUrl(skin)"
@@ -640,12 +632,12 @@ export default {
             >
               <v-img
                 v-if="chroma.swatch"
+                v-motion
                 :src="chroma.swatch"
                 class="rounded-lg"
                 width="40px"
                 height="40px"
                 :style="`${index + 1 === skins.updatedSkin.currentChroma ? 'border: 3px solid #' + skins.updatedSkin.tierColor : ''}`"
-                v-motion
                 :initial="{ opacity: 0, y: 20 }"
                 :enter="{
                   opacity: 1,

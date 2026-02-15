@@ -7,19 +7,20 @@
             <h2 class="text-white mb-4" style="text-align: start">Snake Game</h2>
           </v-card-title>
           <v-card-text>
-            <p style="font-size: 1.1em;">
+            <p style="font-size: 1.1em">
               Gagne un FlopoCoin par pomme en solo et mesure toi
-              <br> à d'autres joueurs en 1v1.
+              <br />
+              à d'autres joueurs en 1v1.
             </p>
           </v-card-text>
-          <v-card-actions class="d-flex pa-4 pt-3">
+          <v-card-item class="pa-4 pt-3">
             <v-btn
-              class="game-mode-btn"
-              style="flex-grow: 1"
+              class="game-mode-btn mb-2"
               variant="flat"
               color="#5862f2"
               rounded="lg"
               size="large"
+              block
               :disabled="isScreenTooSmall"
               @click="$router.push('/snake/solo')"
             >
@@ -31,11 +32,11 @@
 
             <v-btn
               class="game-mode-btn"
-              style="flex-grow: 1"
               variant="flat"
               color="#5862f2"
               rounded="lg"
               size="large"
+              block
               :disabled="isScreenTooSmall"
               @click="$router.push('/snake/versus')"
             >
@@ -47,7 +48,7 @@
                 </v-chip>
               </div>
             </v-btn>
-          </v-card-actions>
+          </v-card-item>
         </v-card>
       </div>
     </v-main>
@@ -63,6 +64,7 @@
 </template>
 
 <script>
+/* global localStorage */
 export default {
   name: 'SnakeMenu',
 

@@ -1,3 +1,4 @@
+/* global setTimeout, clearTimeout */
 import { defineStore } from 'pinia'
 
 export const useToastStore = defineStore('toast', {

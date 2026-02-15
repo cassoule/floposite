@@ -1,24 +1,53 @@
 <script>
+/* global localStorage, setInterval, clearInterval */
 import axios from 'axios'
+import { io } from 'socket.io-client'
 
 export default {
   emits: ['update-coins'],
+  data() {
+    return {
+      displayCoins: 0,
+      socket: null,
+    }
+  },
   async mounted() {
+    this.initSocket()
     await this.fetchUserCoins()
     this._timer = setInterval(async () => {
       this.nowTick = Date.now()
       await this.fetchUserCoins()
-    }, 2500)
+    }, 1000 * 60)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     clearInterval(this._timer)
   },
-  data() {
-    return {
-      displayCoins: 0,
-    }
-  },
   methods: {
+    initSocket() {
+      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
+        withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
+        extraHeaders: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      })
+
+      this.socket.on('connect', () => {
+        console.log('Connected to WebSocket server')
+      })
+
+      this.socket.on('disconnect', () => {
+        console.log('Disconnected from WebSocket server')
+      })
+
+      this.socket.on('data-updated', (data) => {
+        if (data.userId === localStorage.getItem('discordId') && data.newCoins !== undefined) {
+          const initialCoins = this.displayCoins
+          this.$emit('update-coins', data.newCoins)
+          this.animateNumber('displayCoins', initialCoins, data.newCoins, 800)
+        }
+      })
+    },
     async fetchUserCoins() {
       const discordId = localStorage.getItem('discordId')
       if (!discordId) return
@@ -55,8 +84,8 @@ export default {
 
 <template>
   <div
-    class="coins-counter"
     v-motion
+    class="coins-counter"
     :initial="{ opacity: 0 }"
     :enter="{ opacity: 1, transition: { delay: 0, duration: 400 } }"
   >

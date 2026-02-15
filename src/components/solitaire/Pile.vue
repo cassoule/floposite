@@ -11,15 +11,16 @@
       :card-index="index"
       :style="cardStyle(index)"
       class="card-in-pile"
+      :is-hidden="dragStartIndex !== null && index >= dragStartIndex && card.faceUp"
       @card-drag-started="handleCardDrag"
       @card-drag-ended="handleCardDragEnd"
       @card-clicked="handleCardClick"
-      :is-hidden="dragStartIndex !== null && index >= dragStartIndex && card.faceUp"
     />
   </div>
 </template>
 
 <script>
+/* global setTimeout */
 import Card from './Card.vue'
 
 const CARD_WIDTH = 100
@@ -45,6 +46,7 @@ export default {
       default: null,
     },
   },
+  emits: ['drag-start-from-pile', 'drop-on-pile', 'stock-pile-clicked', 'auto-move-triggered'],
   data() {
     return {
       dragStartIndex: null,
@@ -55,7 +57,7 @@ export default {
       switch (this.type) {
         case 'tableauPiles':
           return `top: ${index * 25}px`
-        case 'wastePile':
+        case 'wastePile': {
           let leftM = 0
           if (this.pile.length === 2) {
             leftM = index >= this.pile.length - 2 ? (index - this.pile.length + 2) * 10 : 0
@@ -63,6 +65,7 @@ export default {
             leftM = index >= this.pile.length - 3 ? (index - this.pile.length + 3) * 10 : 0
           }
           return `left: ${leftM}px`
+        }
         default:
           return `top: 0px`
       }

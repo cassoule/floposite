@@ -1,4 +1,5 @@
 <script>
+/* global localStorage, setTimeout */
 import axios from 'axios'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
 import Toast from '../components/Toast.vue'
@@ -67,26 +68,6 @@ export default {
     }
   },
 
-  async mounted() {
-    this.users = await this.getUsers()
-    this.user = this.users.find((u) => u.id === this.$route.params.id)
-    if (this.user) {
-      const id = this.$route.params.id
-      //this.sparkline = await this.getSparkline(id)
-      this.elo = await this.getElo(id)
-      this.eloGraph = await this.getEloGraph(id)
-      await this.getActiveSlowmodes()
-      await this.isTimedOut()
-      await this.getGames()
-    }
-    this.loading = false
-    if (this.user) {
-      this.loadingInventory = true
-      await this.getInventory()
-      await this.fetchSkinsVideoUrls()
-    }
-  },
-
   computed: {
     inventoryValue() {
       if (!this.user_inventory) return null
@@ -144,6 +125,26 @@ export default {
     formattedDisplayPrice() {
       return this.displayPrice.toFixed(0)
     },
+  },
+
+  async mounted() {
+    this.users = await this.getUsers()
+    this.user = this.users.find((u) => u.id === this.$route.params.id)
+    if (this.user) {
+      const id = this.$route.params.id
+      //this.sparkline = await this.getSparkline(id)
+      this.elo = await this.getElo(id)
+      this.elo_graph = await this.getEloGraph(id)
+      await this.getActiveSlowmodes()
+      await this.isTimedOut()
+      await this.getGames()
+    }
+    this.loading = false
+    if (this.user) {
+      this.loadingInventory = true
+      await this.getInventory()
+      await this.fetchSkinsVideoUrls()
+    }
   },
 
   methods: {
@@ -299,9 +300,7 @@ export default {
 
     async isTimedOut() {
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout', {
-          userId: this.$route.params.id,
-        })
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout')
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
         console.log(e)
@@ -555,7 +554,7 @@ export default {
       const url =
         import.meta.env.VITE_FLAPI_URL + '/skin/' + this.selectedSkin.uuid + '/instant-sell'
       try {
-        const response = await axios.post(url, { userId: discordId })
+        await axios.post(url)
         await this.getInventory()
         this.users = await this.getUsers()
         this.user = this.users.find((u) => u.id === this.$route.params.id)
@@ -587,6 +586,7 @@ export default {
         this.upgradeCost = response.data.upgradePrice
         console.log(response.data)
       } catch (e) {
+        console.error('flAPI error:', e)
         this.skinDetailsDialog = false
       }
       this.fetchingSkinStats = false
@@ -599,7 +599,7 @@ export default {
 
       try {
         const url = import.meta.env.VITE_FLAPI_URL + '/skin-upgrade/' + this.selectedSkin.uuid
-        const response = await axios.post(url, { userId: this.user.id })
+        const response = await axios.post(url)
         this.users = await this.getUsers()
         this.user = this.users.find((u) => u.id === this.$route.params.id)
         const winningSegmentId = response.data.wonId
@@ -897,6 +897,7 @@ export default {
                   ></div>
                   <div
                     v-for="akhy in users"
+                    :key="akhy.id"
                     class="cursor-pointer user-rank-point"
                     :style="`position: absolute;
                       left: ${playerPositoin(akhy?.elo)}px;
@@ -1173,7 +1174,7 @@ export default {
               </span>
             </h2>
           </v-list-item>
-          <v-list-item v-if="games.length > 0" v-for="game in games" class="pb-3 px-2">
+          <v-list-item v-for="game in games" :key="game.id || game.date" class="pb-3 px-2">
             <v-card :class="cardClass(game)" variant="tonal" color="secondary" rounded="xl">
               <v-card-text v-if="game.type !== 'SOTD'" class="pb-0">
                 <div class="d-flex justify-space-between" style="place-items: center">
@@ -1377,14 +1378,15 @@ export default {
               >
             </v-card>
           </v-list-item>
-          <v-list-item v-else>
+          <v-list-item v-if="games.length === 0">
             <p class="text-center pt-12 pb-16">Aucune partie classée</p>
           </v-list-item>
         </v-list>
 
         <v-list
+          disabled
           width="100%"
-          class="mt-10 py-0 position-relative"
+          class="mt-10 py-0 position-relative disabled-inventory"
           rounded="xl"
           bg-color="#181818"
           variant="tonal"
@@ -1528,7 +1530,10 @@ export default {
                     >
                       <v-spacer></v-spacer>
                       <div class="d-flex" style="gap: 1em">
-                        <div v-for="(chroma, index) in skinsData[skin.uuid].chromas">
+                        <div
+                          v-for="(chroma, index) in skinsData[skin.uuid].chromas"
+                          :key="chroma.uuid || index"
+                        >
                           <v-img
                             v-if="chroma.swatch"
                             :src="chroma.swatch"
@@ -1663,6 +1668,7 @@ export default {
         <v-list bg-color="transparent" class="text-white px-0">
           <v-list-item
             v-for="offer in selectedSkin.offers"
+            :key="offer.uuid || offer.id"
             variant="tonal"
             rounded="xl"
             class="mb-2"
@@ -1708,6 +1714,7 @@ export default {
               </v-list-item>
               <v-list-item
                 v-for="bid in offer.bids"
+                :key="bid.id || bid.offeredAt"
                 class="mb-1 w-100"
                 rounded="lg"
                 style="background: #343434"
@@ -1733,7 +1740,7 @@ export default {
                     {{ bid.bidder.username }}
                   </p>
                   <v-spacer></v-spacer>
-                  <p>{{ bid.offer_amount }}</p>
+                  <p>{{ bid.offerAmount }}</p>
                 </div>
               </v-list-item>
             </v-list>
@@ -1870,7 +1877,10 @@ export default {
               >
                 <v-spacer></v-spacer>
                 <div class="d-flex" style="gap: 1em">
-                  <div v-for="(chroma, index) in skinsData[selectedSkin.uuid].chromas">
+                  <div
+                    v-for="(chroma, index) in skinsData[selectedSkin.uuid].chromas"
+                    :key="chroma.uuid || index"
+                  >
                     <v-img
                       v-if="chroma.swatch"
                       :src="chroma.swatch"
@@ -2003,7 +2013,7 @@ export default {
 
                   <!-- Glowing Segments -->
                   <circle
-                    v-for="(segment, index) in computedSegments"
+                    v-for="segment in computedSegments"
                     :key="segment.id"
                     cx="50"
                     cy="50"
@@ -2326,7 +2336,7 @@ export default {
 }
 
 .vct-skin-card .skin-card-bg {
-  display: none; /* Hide default tier color, use image instead */
+  display: none; 
 }
 
 /* --- 3. CHAMPIONS EFFECTS (Golden Flow) --- */
@@ -2344,6 +2354,21 @@ export default {
   );
   background-size: 200% 200%;
   animation: gold-flow 15s ease infinite;
+}
+
+.disabled-inventory::after {
+  content: 'Actuellement indisponible';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ddd;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 3;
 }
 
 .champions-skin-card .skin-bg {

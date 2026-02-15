@@ -1,17 +1,11 @@
 <script>
+/* global localStorage, setTimeout */
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   components: {
     CoinsCounter,
-  },
-
-  async mounted() {
-    this.discordId = localStorage.getItem('discordId')
-    if (!this.discordId) this.$router.push('/')
-
-    this.userGamePath = await this.getUserGamePathArray()
   },
 
   data() {
@@ -51,6 +45,13 @@ export default {
       let gains = this.currentWithdrawValue - this.initialBet
       return gains
     },
+  },
+
+  async mounted() {
+    this.discordId = localStorage.getItem('discordId')
+    if (!this.discordId) this.$router.push('/')
+
+    this.userGamePath = await this.getUserGamePathArray()
   },
 
   methods: {
@@ -122,9 +123,6 @@ export default {
       class="d-flex"
       style="place-items: center; place-content: center; gap: 2em; flex-wrap: wrap"
     >
-      <div class="mt-8 w-100">
-        <h1 class="text-white" style="position: relative">Monke Game</h1>
-      </div>
       <div
         class="mt-0 w-100 d-flex flex-column align-center"
         style="
@@ -135,9 +133,9 @@ export default {
           scrollbar-width: auto;
         "
       >
-        <div v-if="!userGamePath || userGamePath.length === 0">
-          <v-card class="modals-card text-white" variant="tonal" rounded="xl">
-            <v-card-title>Nouvelle partie</v-card-title>
+        <div v-if="!userGamePath || userGamePath.length === 0" class="w-100" style="max-width: 400px;">
+          <v-card class="modals-card text-white w-100" variant="tonal" rounded="xl">
+            <v-card-title>Monke Game</v-card-title>
             <v-card-text class="mt-2 mb-0 pb-3">
               <v-number-input
                 v-model="betAmount"
@@ -168,18 +166,19 @@ export default {
         </div>
         <div
           v-for="step in userGamePath"
+          :key="step.round"
           class="w-100 d-flex ga-2 align-center justify-center mb-2"
         >
           <span class="mr-2 text-center" style="width: 25px">{{ step.round + 1 }}</span>
           <v-btn
             v-for="key in [0, 1, 2]"
+            :key="'btn' + key"
             class="game-btn"
             :class="{ 'wrong-btn': step.result === key, 'chosen-btn': step.choice === key }"
             style="position: relative"
             :color="step.result === key ? 'error' : 'primary'"
             rounded="lg"
             :disabled="step.round < userGamePath?.length - 1"
-            :key="'btn' + key"
             @click="handleClick(step, key)"
           ></v-btn>
         </div>
@@ -219,7 +218,7 @@ export default {
               <v-icon class="mt-1" color="white" icon="mdi-cash-plus"></v-icon>
             </template>
           </v-btn>
-          <template v-slot:actions="{ expanded }">
+          <template #actions="{ expanded }">
             <v-icon color="white" :icon="expanded ? 'mdi-menu-up' : 'mdi-menu-down'"></v-icon>
           </template>
         </v-expansion-panel-title>

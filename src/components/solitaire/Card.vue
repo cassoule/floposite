@@ -19,8 +19,6 @@
 </template>
 
 <script>
-import { getCardImagePath } from '@/utils/cardImages.js'
-
 export default {
   name: 'Card',
   props: {
@@ -37,6 +35,7 @@ export default {
       default: false,
     },
   },
+  emits: ['card-drag-started', 'card-drag-ended', 'card-clicked'],
   methods: {
     // When a drag starts, emit the card and its index up to the pile
     onDragStart(event) {

@@ -29,7 +29,7 @@
           @click="joinQueue"
         />
         <p v-if="!foundLobby && queue.length > 0" class="mb-3">
-          {{ !foundLobby && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
+          {{ !foundLobby && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp;' }}
           <span v-for="(p, index) in queue" :key="p">
             {{ index > 1 ? ',' : '' }}
             {{ p }}
@@ -132,11 +132,16 @@
 </template>
 
 <script>
+/* global localStorage, setInterval, clearInterval, setTimeout, location, fetch, Blob */
 import { io } from 'socket.io-client'
 import axios from 'axios'
 
 export default {
   name: 'Connect4',
+  beforeRouteLeave(to, from, next) {
+    this.leaveQueueSync({ reason: 'route-leave' })
+    next()
+  },
   data() {
     return {
       socket: null,
@@ -192,7 +197,12 @@ export default {
         Math.floor((((this.now - (this.foundLobby?.lastmove || this.now)) / 1000) * 100) / 60),
         100,
       )
-      if (tl === 100) {
+      return tl
+    },
+  },
+  watch: {
+    timeLeft(newVal) {
+      if (newVal === 100 && !this.endGameDialog) {
         let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2 : this.foundLobby.p1
         let loser =
           this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1.name : this.foundLobby.p2.name
@@ -202,16 +212,103 @@ export default {
         this.socket.emit('connect4NoTime', { playerId: this.discordId, winner: winner.id })
         this.endGameDialog = true
         clearInterval(this.interval)
-        tl = 0
       }
-      return tl
     },
+  },
+  created() {
+    this._boundHandleUnload = () => this.handleUnload()
+
+    window.addEventListener('beforeunload', this._boundHandleUnload)
+    window.addEventListener('pagehide', this._boundHandleUnload)
+
+    if (this.socket) {
+      this.socket.disconnect()
+    }
+
+    this.interval = setInterval(() => {
+      this.now = Date.now()
+    }, 1000)
+  },
+  beforeUnmount() {
+    window.removeEventListener('beforeunload', this._boundHandleUnload)
+    window.removeEventListener('pagehide', this._boundHandleUnload)
+
+    this.leaveQueueSync({ reason: 'component-destroy' })
+
+    clearInterval(this.interval)
+  },
+  async mounted() {
+    this.discordId = localStorage.getItem('discordId')
+    if (!this.discordId) this.$router.push('/')
+    // Make sure to replace with your actual API URL
+    this.elo = await this.getElo(this.discordId)
+    this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
+      withCredentials: false,
+      auth: { token: localStorage.getItem('token') },
+      extraHeaders: {
+        'ngrok-skip-browser-warning': 'true',
+      },
+    })
+
+    this.socket.on('connect', () => {
+      console.log('Connected to server with socket ID:', this.socket.id)
+    })
+
+    this.socket.on('connect4queue', async (data) => {
+      this.queue = data.queue
+      const myLobby = data.allPlayers.find(
+        (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId,
+      )
+      if (myLobby) {
+        this.oppElo = await this.getElo(
+          myLobby.p1.id === this.discordId ? myLobby.p2.id : myLobby.p1.id,
+        )
+        this.inQueue = false
+        this.foundLobby = myLobby
+        this.board = myLobby.board
+      }
+    })
+
+    this.socket.on('connect4playing', (data) => {
+      const myLobby = data.allPlayers.find(
+        (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId,
+      )
+      if (myLobby) {
+        this.foundLobby = myLobby
+        this.board = myLobby.board
+      }
+    })
+
+    this.socket.on('connect4gameOver', async (data) => {
+      if (this.foundLobby && this.foundLobby.msgId === data.game.msgId) {
+        this.gameOver = true
+        this.winner = data.winner
+        this.foundLobby.winningPieces = data.game.winningPieces // Get winning pieces
+        this.title =
+          this.winner === 'draw'
+            ? 'Égalité'
+            : this.winner === this.discordId
+              ? 'Victoire'
+              : 'Défaite'
+        this.message =
+          this.winner === 'draw'
+            ? 'Personne ne gagne'
+            : this.foundLobby.p1.id === this.winner
+              ? `Victoire de ${this.foundLobby.p1.name}`
+              : `Victoire de ${this.foundLobby.p2.name}`
+        setTimeout(() => {
+          this.endGameDialog = true
+        }, 250)
+      }
+    })
+
+    this.socket.emit('connect4connection', { id: this.discordId })
   },
   methods: {
     reload() {
       location.reload()
     },
-    handleUnload(evt) {
+    handleUnload() {
       //try { evt.preventDefault?.(); } catch {}
 
       this.leaveQueueSync({ reason: 'unload' })
@@ -219,7 +316,6 @@ export default {
 
     leaveQueueSync(meta = {}) {
       const payload = {
-        discordId: this.discordId, // set this in mounted()
         game: 'connect4',
         ...meta,
       }
@@ -227,26 +323,28 @@ export default {
       // 1) Fire-and-forget HTTP that survives page close
       if (!this.inQueue) return
       const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
+      const token = localStorage.getItem('token')
       try {
-        if (navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-          navigator.sendBeacon(url, blob)
-        } else {
-          // Fallback for older browsers
-          fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            keepalive: true, // critical
-          }).catch(() => {})
-        }
-      } catch {}
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(() => {})
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
 
       // 2) Best-effort socket emit (may not flush on unload, but fine as a bonus)
       if (this.socket?.connected) {
         try {
           this.socket.emit('connect4:queue:leave', payload)
-        } catch {}
+        } catch (e) {
+          console.error('Socket emit error:', e)
+        }
       }
     },
     joinQueue() {
@@ -358,99 +456,6 @@ export default {
         return ''
       }
     },
-  },
-  beforeRouteLeave(to, from, next) {
-    this.leaveQueueSync({ reason: 'route-leave' })
-    next()
-  },
-  created() {
-    this._boundHandleUnload = (e) => this.handleUnload(e)
-
-    window.addEventListener('beforeunload', this._boundHandleUnload)
-    window.addEventListener('pagehide', this._boundHandleUnload)
-
-    this.interval = setInterval(() => {
-      this.now = Date.now()
-    }, 1000)
-  },
-  beforeDestroy() {
-    window.removeEventListener('beforeunload', this._boundHandleUnload)
-    window.removeEventListener('pagehide', this._boundHandleUnload)
-
-    this.leaveQueueSync({ reason: 'component-destroy' })
-
-    clearInterval(this.interval)
-  },
-  async mounted() {
-    this.discordId = localStorage.getItem('discordId')
-    if (!this.discordId) this.$router.push('/')
-    // Make sure to replace with your actual API URL
-    this.elo = await this.getElo(this.discordId)
-    this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
-      withCredentials: false,
-      extraHeaders: {
-        'ngrok-skip-browser-warning': 'true',
-      },
-    })
-
-    this.socket.on('connect', () => {
-      console.log('Connected to server with socket ID:', this.socket.id)
-    })
-
-    this.socket.on('connect4queue', async (data) => {
-      this.queue = data.queue
-      const myLobby = data.allPlayers.find(
-        (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId,
-      )
-      if (myLobby) {
-        this.oppElo = await this.getElo(
-          myLobby.p1.id === this.discordId ? myLobby.p2.id : myLobby.p1.id,
-        )
-        this.inQueue = false
-        this.foundLobby = myLobby
-        this.board = myLobby.board
-      }
-    })
-
-    this.socket.on('connect4playing', (data) => {
-      const myLobby = data.allPlayers.find(
-        (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId,
-      )
-      if (myLobby) {
-        this.foundLobby = myLobby
-        this.board = myLobby.board
-      }
-    })
-
-    this.socket.on('connect4gameOver', async (data) => {
-      if (this.foundLobby && this.foundLobby.msgId === data.game.msgId) {
-        this.gameOver = true
-        this.winner = data.winner
-        this.foundLobby.winningPieces = data.game.winningPieces // Get winning pieces
-        this.title =
-          this.winner === 'draw'
-            ? 'Égalité'
-            : this.winner === this.discordId
-              ? 'Victoire'
-              : 'Défaite'
-        this.message =
-          this.winner === 'draw'
-            ? 'Personne ne gagne'
-            : this.foundLobby.p1.id === this.winner
-              ? `Victoire de ${this.foundLobby.p1.name}`
-              : `Victoire de ${this.foundLobby.p2.name}`
-        setTimeout(() => {
-          this.endGameDialog = true
-        }, 250)
-      }
-    })
-
-    this.socket.emit('connect4connection', { id: this.discordId })
-  },
-  beforeUnmount() {
-    if (this.socket) {
-      this.socket.disconnect()
-    }
   },
 }
 </script>

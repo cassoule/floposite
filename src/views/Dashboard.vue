@@ -1,6 +1,4 @@
 <template>
-  <!--  <CoinsCounter/>-->
-
   <div v-if="user" class="user-tab">
     <div style="position: relative; margin-top: 1rem">
       <v-sparkline
@@ -75,26 +73,43 @@
       >
         timed out
       </span>
-      <span class="bubble-text" style="opacity: 0" />
-      <p class="d-flex mt-2" style="place-items: baseline">
-        {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}
-        <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
-      </p>
-
-      <div v-if="elos[discordId]" class="mt-3 d-flex ga-2" style="place-items: center">
-        <div style="display: flex; place-items: center">
-          <v-img :src="rankIcon(user?.elo)" width="22" height="30">
-            <div
-              :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
-            >
-              <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
-            </div>
-          </v-img>
+      <span class="bubble-text" style="opacity: 0"></span>
+      <div class="d-flex flex-wrap mt-2 justify-space-between" style="column-gap: 2em">
+        <p class="d-flex" style="place-items: baseline">
+          <span class="font-weight-bold">{{
+            user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+          }}</span>
+          &nbsp;FlopoCoins&nbsp;
+          <v-btn
+            text="Acheter"
+            append-icon=""
+            class="text-none buy-btn ml-2"
+            color="white"
+            variant="tonal"
+            size="small"
+            rounded="lg"
+            @click="coinsModal = true"
+          >
+            <template #append>
+              <v-img src="star.svg" width="12px" height="12px" />
+            </template>
+          </v-btn>
+        </p>
+        <div v-if="elos[discordId]" class="d-flex ga-2" style="place-items: center">
+          <div style="display: flex; place-items: center">
+            <v-img :src="rankIcon(user?.elo)" width="22" height="30">
+              <div
+                :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+              >
+                <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
+              </div>
+            </v-img>
+          </div>
+          {{ elos[discordId] }} FlopoElo
+          <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
+            'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
+          }}</span>
         </div>
-        {{ elos[discordId] }} FlopoElo
-        <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
-          'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
-        }}</span>
       </div>
     </div>
 
@@ -112,7 +127,14 @@
           padding-right: 1em;
         "
       >
-        <v-btn-toggle rounded="lg" base-color="primary" variant="flat" density="compact">
+        <!-- <v-btn-toggle
+          disabled
+          rounded="lg"
+          base-color="primary"
+          variant="flat"
+          density="compact"
+          style="border-radius: 10px !important"
+        >
           <v-btn
             class="text-capitalize"
             text="Market"
@@ -124,28 +146,15 @@
               <v-icon class="mdi mdi-treasure-chest-outline mt-1"></v-icon>
             </template>
           </v-btn>
-        </v-btn-toggle>
+        </v-btn-toggle> -->
 
-        <!--        <v-btn
-          text="Acheter"
-          append-icon=""
-          class="text-none buy-btn"
-          color="white"
-          variant="tonal"
-          rounded="lg"
-          @click="coinsModal = true"
-        >
-          <template #append>
-            <v-img src="star.svg" width="12px" height="12px" />
-          </template>
-        </v-btn>-->
         <v-btn
           v-if="!user.dailyQueried"
+          :key="Date.now() + '-daily-reward'"
           color="primary"
           variant="tonal"
           rounded="lg"
           style="border: 1px solid #5865f2"
-          :key="Date.now() + '-daily-reward'"
           @click="handleDailyQuery"
         >
           <v-icon
@@ -740,6 +749,7 @@
         "
       >
         <div
+          v-if="akhy"
           style="
             display: flex;
             place-content: space-between;
@@ -747,7 +757,6 @@
             width: 100%;
             padding: 0.5em 1em;
           "
-          v-if="akhy"
         >
           <span style="color: #ddd; display: flex; place-items: center; gap: 0.7rem">
             <v-img
@@ -870,6 +879,7 @@
     <div class="leaderboard">
       <v-skeleton-loader
         v-for="n in 19"
+        :key="n"
         type="text"
         color="transparent"
         style="min-width: 300px"
@@ -911,8 +921,8 @@
           color="error"
           variant="flat"
           rounded="lg"
-          @click="logout"
           :disabled="loading"
+          @click="logout"
         >
           Quitter
         </v-btn>
@@ -922,13 +932,27 @@
           color="primary"
           variant="flat"
           rounded="lg"
+          :disabled="loading"
           @click="handleRegister"
           @click.stop="isRegistered = false"
-          :disabled="loading"
         >
           +5000 FlopoCoins
         </v-btn>
       </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="loading" style="backdrop-filter: blur(10px) contrast(0.5)">
+    <v-card class="px-6 py-4" variant="text" elevation="0">
+      <v-card-text class="d-flex justify-center">
+        <v-progress-circular
+          :size="70"
+          :width="10"
+          color="primary"
+          indeterminate
+        ></v-progress-circular>
+      </v-card-text>
+      <v-card-subtitle class="text-center">Traitement de votre demande en cours...</v-card-subtitle>
     </v-card>
   </v-dialog>
 
@@ -938,6 +962,11 @@
     :max-width="coinsModalMaxWidth"
     scroll-strategy="reposition"
     scrollable
+    @update:model-value="
+      () => {
+        acceptedCGV = false
+      }
+    "
   >
     <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
       <v-card-title class="pt-4"> Achat de FlopoCoins </v-card-title>
@@ -945,7 +974,7 @@
         <p>Recharge tes FlopoCoins !</p>
       </v-card-subtitle>
       <v-card-text
-        class="d-flex px-4 py-16"
+        class="d-flex px-4 pt-16"
         style="gap: 1em; place-content: start; flex-wrap: wrap; height: fit-content"
       >
         <v-card
@@ -955,9 +984,16 @@
           :disabled="paymentModal"
         >
           <v-card-item>
-            <v-img src="100Kbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
+            <v-img
+              src="5k.svg"
+              min-height="200px"
+              min-width="200"
+              width="100%"
+              cover
+              rounded="lg"
+            ></v-img>
           </v-card-item>
-          <v-card-subtitle> +100 000 FlopoCoins </v-card-subtitle>
+          <v-card-subtitle> +5 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
             <v-btn
               class="text-none"
@@ -965,9 +1001,8 @@
               variant="flat"
               rounded="lg"
               block
-              @click="buyCoinsForm = { price: 99, coins: 100000 }"
-              @click.stop="paymentModal = true"
-              :disabled="loading"
+              :disabled="loading || !acceptedCGV"
+              @click="(buyCoins('offer_5000'), (coinsModal = false))"
             >
               0.99€
             </v-btn>
@@ -980,9 +1015,16 @@
           :disabled="paymentModal"
         >
           <v-card-item>
-            <v-img src="1Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
+            <v-img
+              src="20k.svg"
+              min-height="200px"
+              min-width="200"
+              width="100%"
+              cover
+              rounded="lg"
+            ></v-img>
           </v-card-item>
-          <v-card-subtitle> +1 000 000 FlopoCoins </v-card-subtitle>
+          <v-card-subtitle> +20 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
             <v-btn
               class="text-none"
@@ -990,9 +1032,39 @@
               variant="flat"
               rounded="lg"
               block
-              @click="buyCoinsForm = { price: 499, coins: 1000000 }"
-              @click.stop="paymentModal = true"
-              :disabled="loading"
+              :disabled="loading || !acceptedCGV"
+              @click="(buyCoins('offer_20000'), (coinsModal = false))"
+            >
+              2.99€
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+        <v-card
+          class="article-card"
+          color="transparent"
+          style="border-radius: 12px"
+          :disabled="paymentModal"
+        >
+          <v-card-item>
+            <v-img
+              src="40k.svg"
+              min-height="200px"
+              min-width="200"
+              width="100%"
+              cover
+              rounded="lg"
+            ></v-img>
+          </v-card-item>
+          <v-card-subtitle> +40 000 FlopoCoins </v-card-subtitle>
+          <v-card-actions>
+            <v-btn
+              class="text-none"
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              block
+              :disabled="loading || !acceptedCGV"
+              @click="(buyCoins('offer_40000'), (coinsModal = false))"
             >
               4.99€
             </v-btn>
@@ -1005,9 +1077,16 @@
           :disabled="paymentModal"
         >
           <v-card-item>
-            <v-img src="10Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
+            <v-img
+              src="100k.svg"
+              min-height="200px"
+              min-width="200"
+              width="100%"
+              cover
+              rounded="lg"
+            ></v-img>
           </v-card-item>
-          <v-card-subtitle> +10 000 000 FlopoCoins </v-card-subtitle>
+          <v-card-subtitle> +100 000 FlopoCoins </v-card-subtitle>
           <v-card-actions>
             <v-btn
               class="text-none"
@@ -1015,36 +1094,10 @@
               variant="flat"
               rounded="lg"
               block
-              @click="buyCoinsForm = { price: 2499, coins: 10000000 }"
-              @click.stop="paymentModal = true"
-              :disabled="loading"
+              :disabled="loading || !acceptedCGV"
+              @click="(buyCoins('offer_100000'), (coinsModal = false))"
             >
-              24.99€
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card
-          class="article-card"
-          color="transparent"
-          style="border-radius: 12px"
-          :disabled="paymentModal"
-        >
-          <v-card-item>
-            <v-img src="100Mbg.png" min-height="200px" min-width="200" width="100%" contain></v-img>
-          </v-card-item>
-          <v-card-subtitle> +100 000 000 FlopoCoins </v-card-subtitle>
-          <v-card-actions>
-            <v-btn
-              class="text-none"
-              color="primary"
-              variant="flat"
-              rounded="lg"
-              block
-              @click="buyCoinsForm = { price: 12499, coins: 100000000 }"
-              @click.stop="paymentModal = true"
-              :disabled="loading"
-            >
-              124.99€
+              9.99€
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -1053,33 +1106,20 @@
         class="pt-1 pb-4 px-5"
         style="color: #ddddddaa; text-align: right; overflow: hidden"
       >
-        Non remboursable
+        <v-checkbox v-model="acceptedCGV" class="pt-0 mt-0" color="white" hide-details>
+          <template #label>
+            <p class="text-left">
+              J'ai lu et j'accepte les
+              <a href="/cgv" target="_blank" style="color: #5865f2 !important; text-decoration: none; font-size: 1em;">
+                Conditions Générales de Vente
+              </a>, ainsi que la
+              <a href="/privacy" target="_blank" style="color: #5865f2 !important; text-decoration: none; font-size: 1em ">
+                Politique de Confidentialité
+              </a>et je renonce expressément à mon droit de rétractation.
+            </p>
+          </template>
+        </v-checkbox>
       </v-card-text>
-
-      <v-dialog
-        v-model="paymentModal"
-        max-width="600"
-        style="
-          backdrop-filter: blur(100px);
-          background: radial-gradient(circle at -100% 50%, #5865f2, transparent 100%);
-        "
-        scrollable
-      >
-        <v-card color="white" style="border-radius: 20px">
-          <v-card-title class="pt-4"
-            >Achat de {{ formatAmount(buyCoinsForm.coins) }} FlopoCoins ({{
-              buyCoinsForm.price / 100
-            }}€)</v-card-title
-          >
-          <v-card-subtitle
-            >Les FlopoCoins seront crédités instantanément une fois le paiement
-            effectué</v-card-subtitle
-          >
-          <v-card-item class="px-4 pt-6 pb-4">
-            <StripePaymentForm :amount="buyCoinsForm.price" @payment-success="handleSuccess" />
-          </v-card-item>
-        </v-card>
-      </v-dialog>
     </v-card>
   </v-dialog>
 
@@ -1126,7 +1166,7 @@
           rounded="lg"
           density="comfortable"
           class="text-white w-100"
-          maxLength="20"
+          max-length="20"
           :hint="!nicknameForm.nickname ? 'Nom par défaut' : ''"
           persistent-hint
         />
@@ -1166,7 +1206,7 @@
           rounded="lg"
           density="comfortable"
         >
-          <template #item="{ props, item }" style="background: transparent !important">
+          <template #item="{ props, item }">
             <v-list-item v-bind="props" rounded="lg" color="primary">
               <template #title>
                 <div style="display: flex; place-items: center; place-content: start; gap: 1em">
@@ -1219,7 +1259,7 @@
           hint="Tu peux retirer ton slowmode en te mettant toi-même"
           persistent-hint
         >
-          <template #item="{ props, item }" style="background: transparent !important">
+          <template #item="{ props, item }">
             <v-list-item v-bind="props" rounded="lg" color="primary">
               <template #title>
                 <div style="display: flex; place-items: center; place-content: start; gap: 1em">
@@ -1272,7 +1312,7 @@
           hint="Tu peux retirer ton time-out en te mettant toi-même"
           persistent-hint
         >
-          <template #item="{ props, item }" style="background: transparent !important">
+          <template #item="{ props, item }">
             <v-list-item v-bind="props" rounded="lg" color="primary">
               <template #title>
                 <div style="display: flex; place-items: center; place-content: start; gap: 1em">
@@ -1366,7 +1406,7 @@
         <v-text-field
           v-model="prediForm.label"
           label="Titre de la prédi"
-          maxLength="64"
+          max-length="64"
           clearable
           variant="outlined"
           class="text-white w-50"
@@ -1379,7 +1419,7 @@
         <v-text-field
           v-model="prediForm.options[0]"
           label="Option 1"
-          maxLength="32"
+          max-length="32"
           clearable
           variant="outlined"
           class="text-white w-50"
@@ -1389,7 +1429,7 @@
         <v-text-field
           v-model="prediForm.options[1]"
           label="Option 2"
-          maxLength="32"
+          max-length="32"
           clearable
           variant="outlined"
           class="text-white w-50"
@@ -1420,7 +1460,7 @@
     scroll-strategy="reposition"
     scrollable
   >
-    <v-card v-if="selectedPredi" class="modal-card" variant="tonal" :key="Date.now()">
+    <v-card v-if="selectedPredi" :key="Date.now()" class="modal-card" variant="tonal">
       <v-card-title>{{ selectedPredi.label }}</v-card-title>
       <v-card-subtitle>
         <p>Choisis un montant à parier</p>
@@ -1679,21 +1719,16 @@
 </template>
 
 <script>
+/* global localStorage */
 import axios from 'axios'
 import { io } from 'socket.io-client'
 import Toast from '../components/Toast.vue'
 import { useToastStore } from '../stores/toastStore.js'
-import { computed, watch } from 'vue'
-import { loadStripe } from '@stripe/stripe-js'
-import StripePaymentForm from '../components/StripePaymentForm.vue'
 import 'animate.css'
-import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   components: {
-    StripePaymentForm,
     Toast,
-    CoinsCounter,
   },
 
   setup() {
@@ -1732,64 +1767,6 @@ export default {
       showSuccessOrWarningToast,
       showErrorToast,
     }
-  },
-
-  computed: {
-    user() {
-      const filtered = this.users?.filter((u) => u.id === this.discordId)
-      if (filtered?.length < 1) return null
-      return this.users?.filter((u) => u.id === this.discordId)[0]
-    },
-    inventoryValue() {
-      if (!this.user_inventory) return 0
-      let sum = 0
-      this.user_inventory.forEach((s) => {
-        sum += s.currentPrice
-      })
-      return sum
-    },
-    devId() {
-      return import.meta.env.VITE_DEV_ID
-    },
-    unseenActivePoll() {
-      return (
-        Object.values(this.active_polls)?.filter((p) => {
-          return !p.voters.includes(this.discordId)
-        })?.length > 0
-      )
-    },
-    coinsModalMaxWidth() {
-      if (this.windowWidth <= 850) {
-        return 350
-      } else if (this.windowWidth <= 1200) {
-        return 511
-      } else {
-        return 1005
-      }
-    },
-    percentages() {
-      if (!this.selectedPredi) return
-      let res1 = 0
-      let res2 = 0
-      if (
-        this.selectedPredi.options[0].votes.length === 0 &&
-        this.selectedPredi.options[1].votes.length === 0
-      )
-        return {
-          res1,
-          res2,
-        }
-
-      res1 =
-        this.selectedPredi.options[1].votes.length === 0
-          ? 100
-          : (this.prediOptionStats(this.selectedPredi.options[0].votes, 'amount') /
-              this.prediOptionStats(this.selectedPredi.options[1].votes, 'amount')) *
-            100
-      res2 = 100 - res1
-
-      return { res1, res2 }
-    },
   },
 
   data() {
@@ -1865,7 +1842,74 @@ export default {
       stripePromise: null,
 
       gameCardsFilter: null,
+
+      acceptedCGV: false,
     }
+  },
+
+  computed: {
+    user() {
+      const filtered = this.users?.filter((u) => u.id === this.discordId)
+      if (filtered?.length < 1) return null
+      return this.users?.filter((u) => u.id === this.discordId)[0]
+    },
+    inventoryValue() {
+      if (!this.user_inventory) return 0
+      let sum = 0
+      this.user_inventory.forEach((s) => {
+        sum += s.currentPrice
+      })
+      return sum
+    },
+    devId() {
+      return import.meta.env.VITE_DEV_ID
+    },
+    unseenActivePoll() {
+      return (
+        Object.values(this.active_polls)?.filter((p) => {
+          return !p.voters.includes(this.discordId)
+        })?.length > 0
+      )
+    },
+    coinsModalMaxWidth() {
+      if (this.windowWidth <= 850) {
+        return 350
+      } else if (this.windowWidth <= 1200) {
+        return 511
+      } else {
+        return 1005
+      }
+    },
+    percentages() {
+      if (!this.selectedPredi) return
+      let res1 = 0
+      let res2 = 0
+      if (
+        this.selectedPredi.options[0].votes.length === 0 &&
+        this.selectedPredi.options[1].votes.length === 0
+      )
+        return {
+          res1,
+          res2,
+        }
+
+      res1 =
+        this.selectedPredi.options[1].votes.length === 0
+          ? 100
+          : (this.prediOptionStats(this.selectedPredi.options[0].votes, 'amount') /
+              this.prediOptionStats(this.selectedPredi.options[1].votes, 'amount')) *
+            100
+      res2 = 100 - res1
+
+      return { res1, res2 }
+    },
+  },
+
+  watch: {
+    prediVoteModal(newValue) {
+      this.selectedOption = !newValue ? null : this.selectedOption
+      this.getActivePredis()
+    },
   },
 
   async mounted() {
@@ -1894,11 +1938,11 @@ export default {
     window.addEventListener('resize', this.updateWindowWidth)
   },
 
-  watch: {
-    prediVoteModal(newValue) {
-      this.selectedOption = !newValue ? null : this.selectedOption
-      this.getActivePredis()
-    },
+  beforeUnmount() {
+    // Clean up socket connection when component is destroyed
+    if (this.socket) {
+      this.socket.disconnect()
+    }
   },
 
   methods: {
@@ -1916,16 +1960,44 @@ export default {
       this.leaderboardUsers = this.leaderboardType === 'coins' ? this.users : this.usersByElo
     },
 
+    updateUserCoinsLocally(userId, newCoins) {
+      // Update coins in the users array (sorted by coins)
+      if (this.users) {
+        const userIndex = this.users.findIndex((u) => u.id === userId)
+        if (userIndex !== -1) {
+          this.users[userIndex].coins = newCoins
+          // Re-sort the array by coins (descending)
+          this.users.sort((a, b) => b.coins - a.coins)
+        }
+      }
+
+      // Update coins in the usersByElo array as well
+      if (this.usersByElo) {
+        const userEloIndex = this.usersByElo.findIndex((u) => u.id === userId)
+        if (userEloIndex !== -1) {
+          this.usersByElo[userEloIndex].coins = newCoins
+          // Keep the ELO sorting intact, only update the coins value
+        }
+      }
+
+      // Trigger reactivity by reassigning the current leaderboard
+      // This will cause the TransitionGroup to animate the position changes
+      if (this.leaderboardType === 'coins') {
+        this.leaderboardUsers = [...this.users]
+      } else {
+        this.leaderboardUsers = [...this.usersByElo]
+      }
+    },
+
     initSocket() {
       // Connect to your bot's Socket.IO server
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
       })
-
-      this.socket.emit('user-connected', this.discordId)
 
       // Handle connection events
       this.socket.on('connect', () => {
@@ -1934,9 +2006,15 @@ export default {
 
       // Listen for data updates
       this.socket.on('data-updated', (data) => {
-        console.log('Database updated:', data)
-        this.getUsers() // Refresh data when updates occur
-        this.fetchSparklines()
+        // If we have userId and newCoins, update locally with animation
+        if (data.userId && data.newCoins !== undefined) {
+          this.updateUserCoinsLocally(data.userId, data.newCoins)
+          this.sparklines[data.userId] = this.getSparkline(data.userId)
+        } else {
+          // Fallback to full refresh if data format is unexpected
+          this.getUsers()
+          this.fetchSparklines()
+        }
       })
 
       this.socket.on('new-poll', (data) => {
@@ -1970,9 +2048,7 @@ export default {
     async handleRegister() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/register-user'
       try {
-        const response = await axios.post(fetchUrl, {
-          discordUserId: this.discordId,
-        })
+        const response = await axios.post(fetchUrl)
         this.showSuccessOrWarningToast(response.data.message, false)
         await this.getUsers()
         this.avatar = await this.getAvatar(this.discordId)
@@ -2033,6 +2109,7 @@ export default {
 
     logout() {
       localStorage.removeItem('discordId')
+      localStorage.removeItem('token')
       this.showLogoutToast()
       this.$router.push('/')
     },
@@ -2166,7 +2243,6 @@ export default {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/change-nickname', {
           userId: this.nicknameForm.id,
           nickname: this.nicknameForm.nickname,
-          commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
@@ -2179,7 +2255,6 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/spam-ping', {
           userId: this.spamPingForm.id,
-          commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
@@ -2191,7 +2266,6 @@ export default {
       this.showCommandToast('Envoi du vote...')
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout/vote', {
-          commandUserId: this.discordId,
           voteKey: voteKey,
           voteFor: voteFor,
         })
@@ -2206,7 +2280,6 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/slowmode', {
           userId: this.slowmodeForm.id,
-          commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
@@ -2219,7 +2292,6 @@ export default {
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout', {
           userId: this.timeoutForm.id,
-          commandUserId: this.discordId,
         })
         this.showSuccessOrWarningToast(response.data.message, false)
       } catch (e) {
@@ -2231,7 +2303,6 @@ export default {
       this.showCommandToast('Création de la prédiction...')
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/start-predi', {
-          commandUserId: this.discordId,
           label: this.prediForm.label,
           options: this.prediForm.options,
           closingTime: this.prediForm.closingTime,
@@ -2262,7 +2333,6 @@ export default {
       this.showCommandToast('Prise en compte du vote...')
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/vote-predi', {
-          commandUserId: this.discordId,
           predi: this.selectedPrediKey,
           amount: this.prediVoteForm.amount,
           option: this.selectedOption,
@@ -2281,7 +2351,6 @@ export default {
       }
       try {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/end-predi', {
-          commandUserId: this.discordId,
           predi: this.selectedPrediKey,
           confirm: confirm,
           winningOption: winningOption,
@@ -2296,30 +2365,39 @@ export default {
 
     async addCoins() {
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins', {
-          commandUserId: this.discordId,
-        })
+        await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins')
       } catch (e) {
         console.log(e)
       }
     },
 
-    async buyCoins() {
+    async buyCoins(offerId) {
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/buy-coins', {
-          commandUserId: this.discordId,
-          coins: this.buyCoinsForm.coins,
-        })
+        this.loading = true
+
+        // Call the new checkout session endpoint
+        const response = await axios.post(
+          import.meta.env.VITE_FLAPI_URL + '/create-checkout-session',
+          {
+            offerId: offerId,
+          },
+        )
+
+        const { url } = response.data
+
+        // Redirect to Stripe Checkout (Stripe.js v8 method)
+        window.location.href = url
       } catch (e) {
-        console.log(e)
+        console.error('Error creating checkout session:', e)
+        this.showErrorToast('Erreur lors de la création de la session de paiement')
+      } finally {
+        // this.loading = false will be handled on the success page after redirection
       }
     },
 
     async handleDailyQuery() {
       try {
-        const response = await axios.get(
-          import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily',
-        )
+        await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily')
         this.user.dailyQueried = true
       } catch (e) {
         console.log(e)
@@ -2359,10 +2437,7 @@ export default {
 
     async isTimedOut() {
       try {
-        const id = this.discordId
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout', {
-          userId: id,
-        })
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout')
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
         console.log(e)
@@ -2476,13 +2551,6 @@ export default {
       }
     },
   },
-
-  beforeUnmount() {
-    // Clean up socket connection when component is destroyed
-    if (this.socket) {
-      this.socket.disconnect()
-    }
-  },
 }
 </script>
 
@@ -2532,7 +2600,7 @@ button:disabled {
 }
 .buy-btn {
   z-index: 1;
-  border-radius: 10px !important;
+  /*border-radius: 10px !important;*/
   background:
     radial-gradient(
       ellipse farthest-corner at right bottom,
@@ -2662,7 +2730,7 @@ button:disabled {
 }
 
 .actions-container {
-  height: 500px !important;
+  height: 590px !important;
   overflow-y: scroll;
   border-radius: 0 0 15px 0;
 }

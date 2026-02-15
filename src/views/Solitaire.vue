@@ -52,7 +52,7 @@
           <div>Seed : {{ gameState.seed }}</div>
         </div>
 
-        <div v-if="gameState" class="solitaire-board pb-16" :key="Date.now()">
+        <div v-if="gameState" :key="Date.now()" class="solitaire-board pb-16">
           <div class="top-section">
             <div class="stock-and-waste">
               <Pile type="stock" :pile="gameState.stockPile" @stock-pile-clicked="handleDrawCard" />
@@ -185,7 +185,7 @@
                 </v-row>
 
                 <v-row
-                  v-for="(stats, index) in rankings"
+                  v-for="stats in rankings"
                   :key="stats.id"
                   class="text-white font-weight-bolder"
                   style="border-radius: 10px"
@@ -207,14 +207,14 @@
                       gap: 0.7em;
                       align-items: center;
                     "
-                    :title="'@' + stats.globalName"
+                    :title="'@' + stats.user.globalName"
                   >
                     <v-img
-                      :src="avatars[stats.id]"
+                      :src="stats.user.avatarUrl"
                       color="transparent"
                       style="border-radius: 50%; min-width: 30px; max-width: 30px; height: 30px"
                     />
-                    <p>@{{ stats.globalName }}</p>
+                    <p>@{{ stats.user.globalName }}</p>
                   </v-col>
                   <v-col cols="12" sm="0" order-sm="12" class="py-0 d-sm-none">
                     <v-divider
@@ -249,7 +249,6 @@
                       text-overflow: ellipsis;
                       text-align: center;
                     "
-                    title="@cassoule"
                   >
                     Personne n'a complété le SOTD aujourd'hui
                   </v-col>
@@ -356,6 +355,7 @@
 </template>
 
 <script>
+/* global localStorage, setInterval, clearInterval, Image */
 import Pile from '../components/solitaire/Pile.vue'
 import api from '../services/api'
 import axios from 'axios'
@@ -424,6 +424,7 @@ export default {
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -517,7 +518,7 @@ export default {
     async handleRestart() {
       await this.getRankings()
       try {
-        const response = await api.startNewGame(this.userId, this.userSeed, this.hardMode)
+        const response = await api.startNewGame(this.userSeed, this.hardMode)
         this.gameState = response.data.gameState
       } catch (error) {
         console.error('Failed to start new game:', error)
@@ -527,7 +528,7 @@ export default {
     async handleRestartSotd() {
       await this.getRankings()
       try {
-        const response = await api.startSOTD(this.userId)
+        const response = await api.startSOTD()
         this.gameState = response.data.gameState
       } catch (error) {
         console.error('Failed to start new game:', error)
@@ -537,7 +538,7 @@ export default {
     async handleReset() {
       await this.getRankings()
       try {
-        const response = await api.resetGame(this.userId)
+        await api.resetGame()
         this.gameState = null
       } catch (error) {
         console.error('Failed to reset game:', error)
@@ -616,7 +617,7 @@ export default {
       this.performLocalMove(movePayload)
 
       try {
-        const response = await api.moveCard({ userId: this.userId, ...movePayload })
+        const response = await api.moveCard(movePayload)
         this.gameState.score = response.data.gameState.score
         this.gameState.moves = response.data.gameState.moves
         // On success, our optimistic state is correct. We do nothing.
@@ -624,7 +625,7 @@ export default {
           this.gameState.endTime = response.data.endTime
           this.winDialog = true
         }
-      } catch (error) {
+      } catch {
         console.warn('Invalid move detected by server. Reverting UI.')
         this.gameState = oldState // Roll back on error
       } finally {
@@ -637,7 +638,7 @@ export default {
       const oldState = JSON.parse(JSON.stringify(this.gameState))
 
       try {
-        const response = await api.undoMove(this.userId)
+        const response = await api.undoMove()
         this.gameState = { ...response.data.gameState }
         this.isLoading = false
       } catch (error) {
@@ -690,7 +691,7 @@ export default {
 
       try {
         this.isLoading = true
-        const response = await api.drawCard(this.userId)
+        const response = await api.drawCard()
         this.gameState = { ...response.data.gameState }
         this.isLoading = false
         await this.fetchGameState()
@@ -781,7 +782,7 @@ export default {
     async preloadImages() {
       const imagePaths = getAllCardImagePaths()
       const promises = imagePaths.map((imagePath) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           const img = new Image()
           img.src = imagePath
           img.onload = () => resolve()

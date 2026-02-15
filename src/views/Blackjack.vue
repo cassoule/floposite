@@ -1,6 +1,6 @@
 <template>
   <v-layout class="w-100">
-    <v-main class="text-secondary w-100" :key="Date.now()">
+    <v-main :key="Date.now()" class="text-secondary w-100">
       <!-- Header -->
       <v-row class="align-center mt-12 mb-8" no-gutters>
         <v-col
@@ -116,7 +116,7 @@
                   :src="'/cards/webp/' + c + '.webp'"
                   max-width="70px"
                 ></v-img>
-                <div class="hand-total ml-3" v-if="hand.total !== null && hand.total > 0">
+                <div v-if="hand.total !== null && hand.total > 0" class="hand-total ml-3">
                   {{ hand.total }}{{ hand.soft ? ' (soft)' : '' }}
                 </div>
               </div>
@@ -173,8 +173,8 @@
                   variant="flat"
                   rounded="lg"
                   append-icon="mdi-plus"
-                  @click="doAction('hit', index)"
                   :disabled="!canHit(hand)"
+                  @click="doAction('hit', index)"
                   >Hit</v-btn
                 >
                 <v-btn
@@ -183,8 +183,8 @@
                   variant="flat"
                   rounded="lg"
                   append-icon="mdi-hand-back-right-outline"
-                  @click="doAction('stand', index)"
                   :disabled="!canStand(hand)"
+                  @click="doAction('stand', index)"
                   >Hold</v-btn
                 >
                 <v-btn
@@ -193,12 +193,11 @@
                   variant="flat"
                   rounded="lg"
                   append-icon="mdi-cash-multiple"
-                  @click="doAction('double', index)"
                   :disabled="!canDouble(hand)"
+                  @click="doAction('double', index)"
                   >Double</v-btn
                 >
-                <!--Disabled for now-->
-                <!--                <v-btn
+                <v-btn
                   class="text-none"
                   color="secondary"
                   variant="outlined"
@@ -206,8 +205,9 @@
                   append-icon="mdi-call-split"
                   @click="doAction('split', index)"
                   :disabled="!canSplit(hand)"
-                  >Split</v-btn
-                >-->
+                >
+                  Split
+                </v-btn>
               </div>
             </div>
           </v-card>
@@ -237,7 +237,7 @@
                   <div class="meta">
                     {{ formatAmount(p.bank) }} • Mise: {{ formatAmount(p.currentBet) }}
                   </div>
-                  <div class="cards-mini" v-if="p.hands && p.hands[0]">
+                  <div v-if="p.hands && p.hands[0]" class="cards-mini">
                     <!-- Display cards for all hands in the sidebar if needed, here just first hand -->
                     <div
                       v-for="(hand, hIdx) in p.hands"
@@ -246,13 +246,13 @@
                     >
                       <v-img
                         v-for="(c, idx) in hand.cards"
-                        class="mr-1"
                         :key="p.id + '-' + hIdx + '-' + idx"
+                        class="mr-1"
                         :src="'/cards/webp/' + c + '.webp'"
                         min-width="40px"
                         max-width="40px"
                       ></v-img>
-                      <span class="total ml-1" v-if="hand.cards.length && hand.total !== null">{{
+                      <span v-if="hand.cards.length && hand.total !== null" class="total ml-1">{{
                         hand.total
                       }}</span>
                     </div>
@@ -281,12 +281,35 @@
       </v-snackbar>
 
       <!-- Chat Box -->
-      <v-card class="w-50" variant="tonal" style="position: fixed; bottom: 20px; min-width: 200px; max-width: 330px; left: 20px; backdrop-filter: blur(20px);" rounded="xl">
-        <v-card-text class="py-3 mb-0 d-flex flex-row align-center cursor-pointer"  @click="openChat = !openChat, chatNotifs = 0">
+      <v-card
+        class="w-50"
+        variant="tonal"
+        style="
+          position: fixed;
+          bottom: 20px;
+          min-width: 200px;
+          max-width: 330px;
+          left: 20px;
+          backdrop-filter: blur(20px);
+        "
+        rounded="xl"
+      >
+        <v-card-text
+          class="py-3 mb-0 d-flex flex-row align-center cursor-pointer"
+          @click="((openChat = !openChat), (chatNotifs = 0))"
+        >
           <p class="mr-2">Chat</p>
-          <p v-if="chatNotifs > 0" class="bg-error d-flex align-center justify-center font-weight-black" style="font-size: .7em; border-radius: 20px; height: 17px; min-width: 17px !important;">{{  chatNotifs }}</p>
-          <v-spacer/>
-          <v-icon class="cursor-pointer">{{ openChat ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+          <p
+            v-if="chatNotifs > 0"
+            class="bg-error d-flex align-center justify-center font-weight-black"
+            style="font-size: 0.7em; border-radius: 20px; height: 17px; min-width: 17px !important"
+          >
+            {{ chatNotifs }}
+          </p>
+          <v-spacer />
+          <v-icon class="cursor-pointer">{{
+            openChat ? 'mdi-chevron-up' : 'mdi-chevron-down'
+          }}</v-icon>
         </v-card-text>
         <v-card-item
           ref="chatScroll"
@@ -294,32 +317,59 @@
           style="overflow-y: scroll"
           :style="{ maxHeight: openChat ? '300px' : '0px', transition: 'max-height 0.3s ease' }"
         >
-          <div v-for="msg in chatMsgs" :key="msg.timestamp + (msg.user?.id || msg.id)" :style="{ background: !msg.user ? '' : msg.user?.id === me?.id ? '#5862f255' : '#dddddd22', padding: '5px 10px', borderRadius: '10px', marginBottom: '5px' }" >
+          <div
+            v-for="msg in chatMsgs"
+            :key="msg.timestamp + (msg.user?.id || msg.id)"
+            :style="{
+              background: !msg.user ? '' : msg.user?.id === me?.id ? '#5862f255' : '#dddddd22',
+              padding: '5px 10px',
+              borderRadius: '10px',
+              marginBottom: '5px',
+            }"
+          >
             <div v-if="msg.user" class="d-flex align-center w-100">
-              <v-img :src="msg.user.avatar" class="mr-2" max-width="20" min-width="20" rounded="circle"></v-img>
-              <p style="font-size: .9em; opacity: .9; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{ msg.user.name }}</p>
-              <v-spacer/> 
-              <span class="mt-1" style="font-size: .7em; opacity: .5;">{{ new Date(msg.timestamp).toLocaleTimeString() }}</span>
-            </div> 
+              <v-img
+                :src="msg.user.avatar"
+                class="mr-2"
+                max-width="20"
+                min-width="20"
+                rounded="circle"
+              ></v-img>
+              <p
+                style="
+                  font-size: 0.9em;
+                  opacity: 0.9;
+                  overflow: hidden;
+                  white-space: nowrap;
+                  text-overflow: ellipsis;
+                "
+              >
+                {{ msg.user.name }}
+              </p>
+              <v-spacer />
+              <span class="mt-1" style="font-size: 0.7em; opacity: 0.5">{{
+                new Date(msg.timestamp).toLocaleTimeString()
+              }}</span>
+            </div>
             <p class="mt-1">{{ msg.msg }}</p>
           </div>
         </v-card-item>
         <v-card-item v-if="openChat" class="pa-4 pt-3">
-          <v-text-field 
-            v-model="textMsg" 
-            maxLength="100" 
-            :disabled="!isInRoom" 
-            variant="outlined" 
-            rounded="lg" 
-            hide-details 
-            density="compact" 
-            placeholder="Envoyer un message" 
+          <v-text-field
+            v-model="textMsg"
+            max-length="100"
+            :disabled="!isInRoom"
+            variant="outlined"
+            rounded="lg"
+            hide-details
+            density="compact"
+            placeholder="Envoyer un message"
             @keyup.enter="handleMessageSend"
           >
             <template #append-inner>
-              <v-icon 
-                :color="textMsg.trim().length > 0 && isInRoom ? 'white' : 'grey'" 
-                class="cursor-pointer" 
+              <v-icon
+                :color="textMsg.trim().length > 0 && isInRoom ? 'white' : 'grey'"
+                class="cursor-pointer"
                 :disabled="textMsg.trim().length === 0 || !isInRoom"
                 @click="handleMessageSend"
               >
@@ -342,9 +392,9 @@
 </template>
 
 <script>
+/* global localStorage, setInterval, clearInterval, fetch */
 import axios from 'axios'
 import { io } from 'socket.io-client'
-import { defineComponent } from 'vue'
 
 export default {
   data: () => ({
@@ -360,43 +410,6 @@ export default {
     openChat: true,
     chatNotifs: 0,
   }),
-
-  async mounted() {
-    this.discordId = localStorage.getItem('discordId')
-    if (!this.discordId) return this.$router.push('/')
-
-    this.initSocket()
-    await this.getRoom()
-
-    this._forceCooldown = 0
-    this._timer = setInterval(async () => {
-      this.nowTick = Date.now()
-      const room = this.room
-      if (room?.phase_ends_at) {
-        const left = room.phase_ends_at - this.nowTick
-        if (left <= -250 && this.nowTick - (this._forceCooldown || 0) > 1000) {
-          this._forceCooldown = this.nowTick
-          await this.getRoom()
-        }
-      }
-    }, 500)
-
-    this._onVis = () => {
-      if (document.visibilityState === 'visible') this.getRoom()
-    }
-    document.addEventListener('visibilitychange', this._onVis)
-  },
-
-  async beforeUnmount() {
-    if (this.socket) this.socket.disconnect()
-    if (this._timer) clearInterval(this._timer)
-    if (this._onVis) document.removeEventListener('visibilitychange', this._onVis)
-    if (this.isInRoom) {
-      await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave', {
-        userId: this.discordId,
-      })
-    }
-  },
 
   computed: {
     isInRoom() {
@@ -448,7 +461,7 @@ export default {
       if (newVal) this.scrollChatToBottom()
     },
     myHands: {
-      handler(newHands, oldHands) {
+      handler(newHands) {
         // If the number of hands changes, or if the active hand no longer exists,
         // reset activeHandIndex to 0 or try to find the next valid unfinished hand.
         if (!newHands[this.activeHandIndex]) {
@@ -491,16 +504,50 @@ export default {
       },
       deep: true,
     },
-    'room.status'(newStatus, oldStatus) {
+    'room.status'(newStatus) {
       if (newStatus === 'betting' || newStatus === 'waiting' || newStatus === 'results') {
         this.activeHandIndex = 0
       }
     },
   },
 
+  async mounted() {
+    this.discordId = localStorage.getItem('discordId')
+    if (!this.discordId) return this.$router.push('/')
+
+    this.initSocket()
+    await this.getRoom()
+
+    this._forceCooldown = 0
+    this._timer = setInterval(async () => {
+      this.nowTick = Date.now()
+      const room = this.room
+      if (room?.phase_ends_at) {
+        const left = room.phase_ends_at - this.nowTick
+        if (left <= -250 && this.nowTick - (this._forceCooldown || 0) > 1000) {
+          this._forceCooldown = this.nowTick
+          await this.getRoom()
+        }
+      }
+    }, 500)
+
+    this._onVis = () => {
+      if (document.visibilityState === 'visible') this.getRoom()
+    }
+    document.addEventListener('visibilitychange', this._onVis)
+  },
+
+  async beforeUnmount() {
+    if (this.socket) this.socket.disconnect()
+    if (this._timer) clearInterval(this._timer)
+    if (this._onVis) document.removeEventListener('visibilitychange', this._onVis)
+    if (this.isInRoom) {
+      await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave')
+    }
+  },
+
   created() {
-    const userId = localStorage.getItem('discordId')
-    this._boundHandleUnload = (e) => this.handleUnload(e, userId)
+    this._boundHandleUnload = () => this.handleUnload()
 
     window.addEventListener('beforeunload', this._boundHandleUnload)
     window.addEventListener('pagehide', this._boundHandleUnload)
@@ -515,25 +562,20 @@ export default {
         target.scrollTop = target.scrollHeight
       })
     },
-    handleUnload(event, userId) {
-      // Use the userId passed from created() or fallback to local data
-      const targetId = userId || this.discordId
-
-      // Safety check
-      if (!targetId || !this.isInRoom) return
+    handleUnload() {
+      if (!this.isInRoom) return
 
       const url = (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave'
+      const token = localStorage.getItem('token')
 
-      // Use fetch with keepalive instead of sendBeacon
       fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ userId: targetId }),
-        keepalive: true, // <--- Keeps request alive after tab close
+        keepalive: true,
       }).catch((err) => {
-        // Optional: log error (though you won't see it if the tab is closed)
         console.error('Leave room failed:', err)
       })
     },
@@ -544,6 +586,7 @@ export default {
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -584,13 +627,13 @@ export default {
     handleMessageSend() {
       if (!this.textMsg.trim()) return
       this.socket.emit('blackjack:chat', {
-        msg: this.textMsg, 
-        timestamp: Date.now(), 
+        msg: this.textMsg,
+        timestamp: Date.now(),
         user: {
-          id: this.discordId, 
-          name: this.me?.globalName || 'Anonyme', 
-          avatar: this.me?.avatar || ''
-        }
+          id: this.discordId,
+          name: this.me?.globalName || 'Anonyme',
+          avatar: this.me?.avatar || '',
+        },
       })
       this.textMsg = ''
     },
@@ -648,9 +691,7 @@ export default {
 
     async join() {
       try {
-        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/join', {
-          userId: this.discordId,
-        })
+        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/join')
         await this.getRoom()
         this.toast('Tu as rejoint la table')
       } catch (e) {
@@ -661,9 +702,7 @@ export default {
 
     async leave() {
       try {
-        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave', {
-          userId: this.discordId,
-        })
+        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave')
         await this.getRoom()
         this.toast('Tu as quitté la table')
       } catch (e) {
@@ -675,7 +714,6 @@ export default {
     async placeBet() {
       try {
         const r = await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/bet', {
-          userId: this.discordId,
           amount: this.bet,
         })
         if (r.status === 200) this.toast('Mise acceptée')
@@ -693,7 +731,6 @@ export default {
         const r = await axios.post(
           (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/action/' + action,
           {
-            userId: this.discordId,
             handIndex: handIndex,
           },
         )

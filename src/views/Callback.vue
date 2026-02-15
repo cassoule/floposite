@@ -1,4 +1,5 @@
 <script setup>
+/* global localStorage */
 import axios from 'axios'
 import { useToastStore } from '../stores/toastStore'
 import { onMounted } from 'vue'
@@ -20,15 +21,18 @@ const showSuccessOrWarningToast = (message, warning) => {
 onMounted(async () => {
   showLoginToast()
   try {
-    const code = route.query.code
-    const DEV = import.meta.env.VITE_DEV_ENV ?? false
-    const endpoint = DEV ? import.meta.env.VITE_CLIENT_URI + '/auth' : '/.netlify/functions/auth'
+    const token = route.query.token
 
-    const response = await axios.get(endpoint, {
-      params: { code },
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    if (!token) {
+      throw new Error('No token in URL')
+    }
+
+    // Store the JWT token
+    localStorage.setItem('token', token)
+
+    // Fetch user info using the token
+    const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
     })
 
     if (!response.data.discordId) {
@@ -40,6 +44,8 @@ onMounted(async () => {
     await router.push('/dashboard')
   } catch (error) {
     console.error('Authentication failed:', error.response?.data || error.message)
+    localStorage.removeItem('token')
+    localStorage.removeItem('discordId')
     showSuccessOrWarningToast("Erreur d'authentification", true)
     await router.push('/')
   }

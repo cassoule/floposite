@@ -1,36 +1,12 @@
 <script>
+/* global localStorage, setInterval, clearInterval, Blob, fetch, location */
 import { io } from 'socket.io-client'
 import axios from 'axios'
 
 export default {
-  async mounted() {
-    this.discordId = localStorage.getItem('discordId')
-    if (!this.discordId) this.$router.push('/')
-
-    this.initSocket()
-
-    this.elo = await this.getElo(this.discordId)
-    this.elo_graph = await this.getEloGraph(this.discordId)
-  },
-
-  created() {
-    this._boundHandleUnload = (e) => this.handleUnload(e)
-
-    window.addEventListener('beforeunload', this._boundHandleUnload)
-    window.addEventListener('pagehide', this._boundHandleUnload)
-
-    this.interval = setInterval(() => {
-      this.now = Date.now()
-    }, 1000)
-  },
-
-  beforeDestroy() {
-    window.removeEventListener('beforeunload', this._boundHandleUnload)
-    window.removeEventListener('pagehide', this._boundHandleUnload)
-
-    this.leaveQueueSync({ reason: 'component-destroy' })
-
-    clearInterval(this.interval)
+  beforeRouteLeave(to, from, next) {
+    this.leaveQueueSync({ reason: 'route-leave' })
+    next()
   },
 
   data() {
@@ -65,13 +41,18 @@ export default {
       if (this.endGameDialog) {
         return 0
       }
-      let tl = Math.min(
+      return Math.min(
         Math.floor((((this.now - (this.foundLobby?.lastmove || this.now)) / 1000) * 100) / 60),
         100,
       )
-      if (tl === 100) {
-        let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1 : this.foundLobby.p2
-        let loser =
+    },
+  },
+
+  watch: {
+    timeLeft(newVal) {
+      if (newVal === 100 && !this.endGameDialog) {
+        const winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p1 : this.foundLobby.p2
+        const loser =
           this.foundLobby?.sum % 2 === 0 ? this.foundLobby.p2.name : this.foundLobby.p1.name
 
         this.title = winner.id === this.discordId ? 'Victoire' : 'Défaite'
@@ -79,53 +60,79 @@ export default {
         this.socket.emit('tictactoegameOver', { playerId: this.discordId, winner: winner.id })
         this.endGameDialog = true
       }
-      return tl
     },
+  },
+  async mounted() {
+    this.discordId = localStorage.getItem('discordId')
+    if (!this.discordId) this.$router.push('/')
+
+    this.initSocket()
+
+    this.elo = await this.getElo(this.discordId)
+    this.elo_graph = await this.getEloGraph(this.discordId)
+  },
+
+  created() {
+    this._boundHandleUnload = (e) => this.handleUnload(e)
+
+    window.addEventListener('beforeunload', this._boundHandleUnload)
+    window.addEventListener('pagehide', this._boundHandleUnload)
+
+    this.interval = setInterval(() => {
+      this.now = Date.now()
+    }, 1000)
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('beforeunload', this._boundHandleUnload)
+    window.removeEventListener('pagehide', this._boundHandleUnload)
+
+    this.leaveQueueSync({ reason: 'component-destroy' })
+
+    clearInterval(this.interval)
   },
 
   methods: {
-    handleUnload(evt) {
-      //try { evt.preventDefault?.(); } catch {}
-
+    handleUnload() {
       this.leaveQueueSync({ reason: 'unload' })
     },
 
     leaveQueueSync(meta = {}) {
       const payload = {
-        discordId: this.discordId, // set this in mounted()
         game: 'tictactoe',
         ...meta,
       }
 
-      // 1) Fire-and-forget HTTP that survives page close
       if (!this.inQueue) return
       const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
+      const token = localStorage.getItem('token')
       try {
-        if (navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-          navigator.sendBeacon(url, blob)
-        } else {
-          // Fallback for older browsers
-          fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            keepalive: true, // critical
-          }).catch(() => {})
-        }
-      } catch {}
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        }).catch(() => {})
+      } catch {
+        // Ignore errors during page unload
+      }
 
-      // 2) Best-effort socket emit (may not flush on unload, but fine as a bonus)
       if (this.socket?.connected) {
         try {
           this.socket.emit('tictactoe:queue:leave', payload)
-        } catch {}
+        } catch {
+          // Ignore errors during page unload
+        }
       }
     },
 
     initSocket() {
       this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
         withCredentials: false,
+        auth: { token: localStorage.getItem('token') },
         extraHeaders: {
           'ngrok-skip-browser-warning': 'true',
         },
@@ -216,7 +223,7 @@ export default {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo-graph'
       try {
         const response = await axios.get(fetchUrl)
-        return response.data.elo_graph
+        return response.data.eloGraph
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -245,7 +252,7 @@ export default {
       }
     },
 
-    check(name, sum) {
+    check() {
       let b1 =
         document.getElementById(`btn1`).innerText === ''
           ? 'a'
@@ -386,11 +393,6 @@ export default {
       }
     },
   },
-
-  beforeRouteLeave(to, from, next) {
-    this.leaveQueueSync({ reason: 'route-leave' })
-    next()
-  },
 }
 </script>
 
@@ -415,7 +417,7 @@ export default {
           @click="findPlayer"
         />
         <p v-if="!oppName" class="mb-3">
-          {{ !oppName && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp' }}
+          {{ !oppName && queue.length > 0 ? `Dans la file d'attente :` : '&nbsp;' }}
           <span v-for="(p, index) in queue" :key="p">
             {{ index > 1 ? ',' : '' }}
             {{ p }}
@@ -427,6 +429,7 @@ export default {
             <v-btn
               v-for="i in 9"
               :id="'btn' + i"
+              :key="i"
               class="btn text-black"
               :color="oppName ? 'primary' : '#ddd'"
               :disabled="!oppName"
@@ -440,14 +443,14 @@ export default {
           class="mb-3"
           style="display: flex; justify-content: start; align-items: center; gap: 1em"
         >
-          <v-img v-if="this.elo" :src="rankIcon(this.elo)" max-width="20" height="20">
+          <v-img v-if="elo" :src="rankIcon(elo)" max-width="20" height="20">
             <div
               :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
             >
-              <p style="font-weight: 400">{{ rankDiv(this.elo) }}</p>
+              <p style="font-weight: 400">{{ rankDiv(elo) }}</p>
             </div>
           </v-img>
-          {{ this.elo ? this.elo + ' Elo' : 'Non Classé' }}
+          {{ elo ? elo + ' Elo' : 'Non Classé' }}
         </p>
         <div>
           <p v-if="oppName" id="oppNameCont" class="d-flex" style="place-items: end">
@@ -482,8 +485,8 @@ export default {
         </p>
         <p v-if="oppName" id="whosTurn" class="pt-6">
           {{
-            (this.foundLobby?.p2.id === this.discordId && this.foundLobby?.sum % 2 === 0) ||
-            (this.foundLobby?.p1.id === this.discordId && this.foundLobby?.sum % 2 === 1)
+            (foundLobby?.p2.id === discordId && foundLobby?.sum % 2 === 0) ||
+            (foundLobby?.p1.id === discordId && foundLobby?.sum % 2 === 1)
               ? "C'est ton tour"
               : `C'est au tour de ${oppName}`
           }}
