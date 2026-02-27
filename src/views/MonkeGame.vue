@@ -133,7 +133,11 @@ export default {
           scrollbar-width: auto;
         "
       >
-        <div v-if="!userGamePath || userGamePath.length === 0" class="w-100" style="max-width: 400px;">
+        <div
+          v-if="!userGamePath || userGamePath.length === 0"
+          class="w-100"
+          style="max-width: 400px"
+        >
           <v-card class="modals-card text-white w-100" variant="tonal" rounded="xl">
             <v-card-title>Monke Game</v-card-title>
             <v-card-text class="mt-2 mb-0 pb-3">

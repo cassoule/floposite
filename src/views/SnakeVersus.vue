@@ -468,9 +468,9 @@ export default {
         this.drawOppGame()
 
         // Check for match end
-        if ((this.myGameOver || this.myWin) && (this.oppGameOver || this.oppWin)) {
+        /*if ((this.myGameOver || this.myWin) && (this.oppGameOver || this.oppWin)) {
           this.handleMatchEnd()
-        }
+        }*/
       })
 
       this.socket.on('snakegameOver', (e) => {
@@ -753,9 +753,9 @@ export default {
 
         // Increase speed
         //if (this.myScore % 5 === 0 && this.gameSpeed > 50) {
-        this.gameSpeed -= 1
-        this.stopGameLoop()
-        this.startGameLoop()
+        //this.gameSpeed -= 1
+        //this.stopGameLoop()
+        //this.startGameLoop()
         //}
       } else {
         this.mySnake.pop()
@@ -813,7 +813,6 @@ export default {
           this.myScore === (this.canvasWidth / this.gridSize) ** 2 - 3
             ? 'Tu as rempli la grille en premier !'
             : `${this.oppName} a abandonné !`
-        this.socket.emit('snakegameOver', { playerId: this.discordId, winner: this.discordId })
       } else if (this.oppWin && !this.myWin) {
         this.title = 'Défaite'
         this.message =
@@ -822,34 +821,28 @@ export default {
             : `Tu as abandonné !`
         const winnerId =
           this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
-        this.socket.emit('snakegameOver', { playerId: this.discordId, winner: winnerId })
       } else if (this.myGameOver && this.oppGameOver) {
         // Both lost, higher score wins
         if (this.myScore > this.oppScore) {
           this.title = 'Victoire'
           this.message = `Tu as marqué plus de points ! (${this.myScore} pts)`
-          this.socket.emit('snakegameOver', { playerId: this.discordId, winner: this.discordId })
         } else if (this.oppScore > this.myScore) {
           this.title = 'Défaite'
           this.message = `${this.oppName} a marqué plus de points (${this.oppScore} pts)`
           const winnerId =
             this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
-          this.socket.emit('snakegameOver', { playerId: this.discordId, winner: winnerId })
         } else {
           this.title = 'Égalité'
           this.message = `Même score ! (${this.myScore})`
-          this.socket.emit('snakegameOver', { playerId: this.discordId, winner: null })
         }
       } else if (this.myGameOver && !this.oppGameOver) {
         this.title = 'Défaite'
         this.message = 'Tu as perdu !'
         const winnerId =
           this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
-        this.socket.emit('snakegameOver', { playerId: this.discordId, winner: winnerId })
       } else if (this.oppGameOver && !this.myGameOver) {
         this.title = 'Victoire'
         this.message = `${this.oppName} a perdu !`
-        this.socket.emit('snakegameOver', { playerId: this.discordId, winner: this.discordId })
       }
 
       this.endGameDialog = true

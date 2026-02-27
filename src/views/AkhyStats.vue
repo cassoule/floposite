@@ -2336,7 +2336,7 @@ export default {
 }
 
 .vct-skin-card .skin-card-bg {
-  display: none; 
+  display: none;
 }
 
 /* --- 3. CHAMPIONS EFFECTS (Golden Flow) --- */

@@ -327,9 +327,9 @@ export default {
 
         // Increase speed slightly every 5 foods
         //if (this.score % 5 === 0 && this.gameSpeed > 50) {
-        this.gameSpeed -= 1
-        this.stopGameLoop()
-        this.startGameLoop()
+        //this.gameSpeed -= 1
+        //this.stopGameLoop()
+        //this.startGameLoop()
         //}
       } else {
         // Remove tail if no food eaten
