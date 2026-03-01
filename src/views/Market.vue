@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toastStore.js'
 import Toast from '@/components/Toast.vue'
 import { io } from 'socket.io-client'
 import CoinsCounter from '@/components/CoinsCounter.vue'
+import { getRarityColor } from '@/utils/csRarity.js'
 
 export default {
   name: 'Market',
@@ -76,7 +77,7 @@ export default {
       ],
 
       createOffer: {
-        skin_uuid: null,
+        cs_skin_id: null,
         price: null,
         delay: null,
         duration: null,
@@ -89,7 +90,11 @@ export default {
   async mounted() {
     this.loading = true
     await this.fetchMarketOffers()
-    await this.fetchSkinsVideosUrls(this.marketOffers)
+    // Only fetch skin data for Valorant offers
+    const valorantOffers = this.marketOffers.filter((o) => o.skin)
+    if (valorantOffers.length > 0) {
+      await this.fetchSkinsVideosUrls(valorantOffers)
+    }
     this.loading = false
     this.initSocket()
 
@@ -134,13 +139,12 @@ export default {
         import.meta.env.VITE_FLAPI_URL + '/user/' + localStorage.getItem('discordId') + '/inventory'
       try {
         const response = await axios.get(fetchUrl)
-        this.userInventory = response.data.inventory.filter((offer) => {
+        this.userInventory = (response.data.csInventory || []).filter((skin) => {
           return !this.marketOffers.some(
             (marketOffer) =>
-              marketOffer.skin.uuid === offer.uuid && marketOffer.status !== 'closed',
+              marketOffer.csSkin?.id === skin.id && marketOffer.status !== 'closed',
           )
         })
-        await this.fetchSkinsVideosUrls(this.userInventory)
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -222,7 +226,7 @@ export default {
         const query = normalize(this.searchQuery)
 
         searched = this.marketOffers.filter((offer) => {
-          const name = normalize(offer.skin.displayName)
+          const name = normalize(this.getOfferSkinName(offer))
           const seller = normalize(offer.seller.username)
 
           return name.includes(query) || seller.includes(query)
@@ -263,10 +267,30 @@ export default {
       }
     },
     async confirmPurchase() {},
-    async handleCreateOffer(skin_uuid) {
+    getRarityColor,
+    getOfferSkinName(offer) {
+      if (offer.csSkin) return offer.csSkin.displayName
+      return offer.skin?.displayName || '?'
+    },
+    getOfferSkinImage(offer) {
+      if (offer.csSkin) return offer.csSkin.imageUrl
+      if (offer.skin && this.skinsData[offer.skin.uuid]) {
+        return this.getImageUrl(offer.skin, this.skinsData[offer.skin.uuid])
+      }
+      return offer.skin?.displayIcon
+    },
+    getOfferSkinColor(offer) {
+      if (offer.csSkin) return getRarityColor(offer.csSkin.rarity)
+      return offer.skin ? '#' + offer.skin.tierColor : '#333'
+    },
+    getOfferSkinPrice(offer) {
+      if (offer.csSkin) return offer.csSkin.price
+      return offer.skin?.currentPrice || 0
+    },
+    async handleCreateOffer(skinId) {
       const url = import.meta.env.VITE_FLAPI_URL + '/market-place/place-offer'
       const payload = {
-        skin_uuid: skin_uuid,
+        cs_skin_id: skinId,
         starting_price: this.createOffer.price,
         delay: this.createOffer.delay,
         duration: this.createOffer.duration,
@@ -374,12 +398,12 @@ export default {
             <v-card
               class="text-white offer-card-card mb-2"
               color="transparent"
-              :style="`border: 0px solid #${offer.skin.tierColor}; background: radial-gradient(circle at -100% -50%, #${offer.skin.tierColor}, #18181855)`"
+              :style="`border: 0; background: radial-gradient(circle at -100% -50%, ${getOfferSkinColor(offer)}, #18181855)`"
               variant="flat"
               rounded="xl"
             >
               <v-card-title>
-                <span>{{ offer.skin.displayName }}</span>
+                <span>{{ getOfferSkinName(offer) }}</span>
                 <div class="d-flex align-center cursor-pointer" @click="goToUser(offer.seller.id)">
                   <v-img
                     :src="offer.seller.avatarUrl"
@@ -395,8 +419,8 @@ export default {
               <v-card-item>
                 <div class="d-flex flex-row" style="gap: 1em; justify-content: space-between">
                   <v-img
-                    :src="getImageUrl(offer?.skin, skinsData[offer.skin.uuid])"
-                    :alt="offer.skin.displayName"
+                    :src="getOfferSkinImage(offer)"
+                    :alt="getOfferSkinName(offer)"
                     max-width="300"
                     height="100"
                     contain
@@ -409,9 +433,9 @@ export default {
                       v-if="offer.status !== 'closed'"
                       class="mb-2 font-weight-bold px-3 rounded-xl"
                       :style="`
-                        background: #${offer.skin.tierColor}22;
+                        background: ${getOfferSkinColor(offer)}22;
                         backdrop-filter: blur(10px);
-                        border: 1px solid #${offer.skin.tierColor}
+                        border: 1px solid ${getOfferSkinColor(offer)}
                       `"
                     >
                       {{ getOfferLastPrice(offer) }}
@@ -421,9 +445,9 @@ export default {
                       v-if="offer.status !== 'closed'"
                       v-bind="props"
                       :color="
-                        offer.startingPrice / offer.skin.currentPrice > 1.1
+                        offer.startingPrice / getOfferSkinPrice(offer) > 1.1
                           ? 'red'
-                          : offer.startingPrice / offer.skin.currentPrice < 0.9
+                          : offer.startingPrice / getOfferSkinPrice(offer) < 0.9
                             ? 'green'
                             : ''
                       "
@@ -432,10 +456,10 @@ export default {
                       class="px-2"
                     >
                       <span class="font-weight-bold"
-                        >{{ getOfferLastPrice(offer) / offer.skin.currentPrice > 1 ? '+' : ''
+                        >{{ getOfferLastPrice(offer) / getOfferSkinPrice(offer) > 1 ? '+' : ''
                         }}{{
                           (
-                            (getOfferLastPrice(offer) / offer.skin.currentPrice) * 100 -
+                            (getOfferLastPrice(offer) / getOfferSkinPrice(offer)) * 100 -
                             100
                           ).toFixed(1)
                         }}%</span
@@ -466,19 +490,35 @@ export default {
                                 place-items: center;
                                 gap: 0.7rem;
                               "
-                              >{{ offer.skin.displayName }}</v-list-item-title
+                              >{{ getOfferSkinName(offer) }}</v-list-item-title
                             >
                             <h4>Skin</h4>
-                            <p class="d-flex text-grey">
-                              Base <v-spacer /> {{ offer.skin.basePrice }}
-                            </p>
-                            <p class="d-flex text-grey align-center">
-                              Actuel <v-spacer /> {{ offer.skin.currentPrice }}
-                            </p>
-                            <p class="d-flex text-grey">
-                              Maximum <v-spacer /> {{ offer.skin.maxPrice }}
-                            </p>
-                            <p class="d-flex text-grey">Dernière vente <v-spacer /> -</p>
+                            <template v-if="offer.csSkin">
+                              <p class="d-flex text-grey">
+                                Rareté <v-spacer /> <span :style="`color: ${getRarityColor(offer.csSkin.rarity)}`">{{ offer.csSkin.rarity }}</span>
+                              </p>
+                              <p class="d-flex text-grey">
+                                Usure <v-spacer /> {{ offer.csSkin.wearState }}
+                              </p>
+                              <p class="d-flex text-grey">
+                                Float <v-spacer /> {{ offer.csSkin.float?.toFixed(4) }}
+                              </p>
+                              <p class="d-flex text-grey">
+                                Valeur <v-spacer /> {{ offer.csSkin.price }}
+                              </p>
+                            </template>
+                            <template v-else>
+                              <p class="d-flex text-grey">
+                                Base <v-spacer /> {{ offer.skin.basePrice }}
+                              </p>
+                              <p class="d-flex text-grey align-center">
+                                Actuel <v-spacer /> {{ offer.skin.currentPrice }}
+                              </p>
+                              <p class="d-flex text-grey">
+                                Maximum <v-spacer /> {{ offer.skin.maxPrice }}
+                              </p>
+                              <p class="d-flex text-grey">Dernière vente <v-spacer /> -</p>
+                            </template>
                           </v-list-item>
                           <v-list-item class="pb-3">
                             <h4>Enchère</h4>
@@ -587,7 +627,7 @@ export default {
   >
     <v-card v-if="selectedOffer" class="modal-card" color="primary" variant="flat">
       <v-card-title>
-        <span style="text-wrap: wrap">{{ selectedOffer.skin.displayName }}</span>
+        <span style="text-wrap: wrap">{{ getOfferSkinName(selectedOffer) }}</span>
         <span
           v-if="selectedOffer.status !== 'closed'"
           class="position-absolute right-0 top-0 mt-2 mr-2 px-2 rounded-xl"
@@ -620,11 +660,12 @@ export default {
           rounded="xl"
         >
           <v-img
-            :src="getImageUrl(selectedOffer.skin, skinsData[selectedOffer.skin.uuid])"
+            :src="getOfferSkinImage(selectedOffer)"
             max-width="512"
             height="250"
           ></v-img>
-          <div class="d-flex position-absolute top-1 right-0 mr-4" style="gap: 1em">
+          <!-- Valorant chromas (legacy) -->
+          <div v-if="selectedOffer.skin && skinsData[selectedOffer.skin.uuid]" class="d-flex position-absolute top-1 right-0 mr-4" style="gap: 1em">
             <div
               v-for="(chroma, index) in skinsData[selectedOffer.skin.uuid].chromas"
               :key="chroma.uuid || index"
@@ -642,6 +683,11 @@ export default {
               </span>
             </div>
           </div>
+          <!-- CS2 badges -->
+          <div v-if="selectedOffer.csSkin" class="d-flex position-absolute top-1 right-0 mr-4 ga-1">
+            <v-chip v-if="selectedOffer.csSkin.isStattrak" color="orange" size="x-small" variant="flat">StatTrak</v-chip>
+            <v-chip v-if="selectedOffer.csSkin.isSouvenir" color="#ffd700" size="x-small" variant="flat">Souvenir</v-chip>
+          </div>
           <v-card
             variant="flat"
             color="#343434"
@@ -650,7 +696,25 @@ export default {
             rounded="xl"
           >
             <v-card-text class="px-4 pt-5 pb-4">
-              <v-row>
+              <v-row v-if="selectedOffer.csSkin">
+                <v-col class="py-0">
+                  <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                    Rareté :
+                    <strong :style="`color: ${getRarityColor(selectedOffer.csSkin.rarity)}`">{{ selectedOffer.csSkin.rarity }}</strong>
+                  </p>
+                </v-col>
+                <v-col class="py-0">
+                  <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                    Usure : <strong>{{ selectedOffer.csSkin.wearState }}</strong>
+                  </p>
+                </v-col>
+                <v-col class="py-0">
+                  <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                    Float : <strong>{{ selectedOffer.csSkin.float?.toFixed(4) }}</strong>
+                  </p>
+                </v-col>
+              </v-row>
+              <v-row v-else-if="selectedOffer.skin">
                 <v-col class="py-0">
                   <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
                     Rareté :
@@ -664,13 +728,13 @@ export default {
                 <v-col class="py-0">
                   <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
                     Niveau : <strong>{{ selectedOffer.skin.currentLvl ?? '-' }}</strong
-                    >/{{ skinsData[selectedOffer.skin.uuid].levels?.length }}
+                    >/{{ skinsData[selectedOffer.skin.uuid]?.levels?.length }}
                   </p>
                 </v-col>
                 <v-col class="py-0">
                   <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
                     Chroma : <strong>{{ selectedOffer.skin.currentChroma ?? '-' }}</strong
-                    >/{{ skinsData[selectedOffer.skin.uuid].chromas?.length }}
+                    >/{{ skinsData[selectedOffer.skin.uuid]?.chromas?.length }}
                   </p>
                 </v-col>
               </v-row>
@@ -841,13 +905,13 @@ export default {
           variant="default"
           elevation="0"
         >
-          <v-expansion-panel v-for="skin in userInventory" :key="'inv-' + skin.uuid">
+          <v-expansion-panel v-for="skin in userInventory" :key="'inv-' + skin.id">
             <v-expansion-panel-title
               class="d-flex ga-3"
-              @click="createOffer.price = skin.currentPrice * 0.75"
+              @click="createOffer.price = Math.floor(skin.price * 0.75)"
             >
               <v-img
-                :src="getImageUrl(skin, skinsData[skin.uuid])"
+                :src="skin.imageUrl"
                 height="30"
                 min-width="50"
                 max-width="50"
@@ -862,38 +926,30 @@ export default {
               >
                 {{ skin.displayName }}
               </p>
+              <v-chip v-if="skin.isStattrak" size="x-small" color="orange" variant="flat" class="ml-1">ST</v-chip>
+              <v-chip v-if="skin.isSouvenir" size="x-small" color="#ffd700" variant="flat" class="ml-1">S</v-chip>
               <v-spacer></v-spacer>
-              <p>{{ skin.currentPrice }}&nbsp;Flopos</p>
+              <p>{{ skin.price }}&nbsp;Flopos</p>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <h3 class="mt-3">Infos</h3>
               <v-divider class="mt-1 mb-5"></v-divider>
               <v-row>
-                <v-col cols="3"> Base&nbsp;: </v-col>
-                <v-col cols="5">
-                  <strong>{{ skin.basePrice }} Flopos</strong>
-                </v-col>
-                <v-col> Niveau&nbsp;: </v-col>
-                <v-col>
-                  <strong>{{ skin.currentLvl }}/{{ skinsData[skin.uuid]?.levels.length }}</strong>
+                <v-col cols="4">Rareté :</v-col>
+                <v-col cols="8">
+                  <strong :style="`color: ${getRarityColor(skin.rarity)}`">{{ skin.rarity }}</strong>
                 </v-col>
               </v-row>
               <v-row>
-                <v-col cols="3"> Actuel&nbsp;: </v-col>
-                <v-col cols="5">
-                  <strong>{{ skin.currentPrice }} Flopos</strong>
-                </v-col>
-                <v-col> Chroma&nbsp;: </v-col>
-                <v-col>
-                  <strong
-                    >{{ skin.currentChroma }}/{{ skinsData[skin.uuid]?.chromas.length }}</strong
-                  >
+                <v-col cols="4">Usure :</v-col>
+                <v-col cols="8">
+                  <strong>{{ skin.wearState }} ({{ skin.float?.toFixed(4) }})</strong>
                 </v-col>
               </v-row>
               <v-row>
-                <v-col cols="3"> Max&nbsp;: </v-col>
-                <v-col cols="9">
-                  <strong>{{ skin.maxPrice }} Flopos</strong>
+                <v-col cols="4">Valeur :</v-col>
+                <v-col cols="8">
+                  <strong>{{ skin.price }} Flopos</strong>
                 </v-col>
               </v-row>
 
@@ -901,19 +957,19 @@ export default {
               <v-divider class="mt-1 mb-5"></v-divider>
               <div class="w-100 d-flex flex-wrap">
                 <v-number-input
-                  :key="'COP-' + skin.uuid"
+                  :key="'COP-' + skin.id"
                   v-model="createOffer.price"
                   variant="outlined"
                   rounded="lg"
                   density="comfortable"
-                  :min="skin.currentPrice * 0.75"
-                  :placeholder="'Min : ' + (skin.currentPrice * 0.75).toFixed() + ' (75%)'"
+                  :min="Math.floor(skin.price * 0.75)"
+                  :placeholder="'Min : ' + Math.floor(skin.price * 0.75) + ' (75%)'"
                   label="Prix de départ"
                 ></v-number-input>
               </div>
               <div class="w-100 d-sm-flex ga-3">
                 <v-select
-                  :key="'CODL-' + skin.uuid"
+                  :key="'CODL-' + skin.id"
                   v-model="createOffer.delay"
                   variant="outlined"
                   rounded="lg"
@@ -923,7 +979,7 @@ export default {
                   style="flex-grow: 1; flex-shrink: 1; flex-basis: 50%"
                 ></v-select>
                 <v-select
-                  :key="'CODU-' + skin.uuid"
+                  :key="'CODU-' + skin.id"
                   v-model="createOffer.duration"
                   variant="outlined"
                   rounded="lg"
@@ -942,7 +998,7 @@ export default {
                   createOffer.delay === null ||
                   createOffer.duration === null
                 "
-                @click="handleCreateOffer(skin.uuid)"
+                @click="handleCreateOffer(skin.id)"
               ></v-btn>
             </v-expansion-panel-text>
           </v-expansion-panel>

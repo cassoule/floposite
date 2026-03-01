@@ -3,12 +3,14 @@
 import axios from 'axios'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
 import Toast from '../components/Toast.vue'
+import CsSkinCard from '@/components/CsSkinCard.vue'
 import { useToastStore } from '../stores/toastStore.js'
+import { getRarityColor } from '@/utils/csRarity.js'
 
 export default {
   name: 'AkhyStats',
 
-  components: { Toast },
+  components: { Toast, CsSkinCard },
 
   setup() {
     const toastStore = useToastStore()
@@ -31,6 +33,7 @@ export default {
       elo: null,
       eloGraph: null,
       user_inventory: null,
+      cs_inventory: null,
       skinsVideoUrls: {},
       skinsData: {},
       active_slowmodes: null,
@@ -45,6 +48,9 @@ export default {
       selectedSkin: null,
 
       instantSellProcessing: false,
+      csSkinDetailsDialog: false,
+      selectedCsSkin: null,
+      csSellProcessing: false,
 
       flopoRankDialog: false,
 
@@ -76,6 +82,14 @@ export default {
         sum += s.currentPrice
       })
       return sum
+    },
+    csInventoryValue() {
+      if (!this.cs_inventory) return 0
+      return this.cs_inventory.reduce((sum, s) => sum + (s.price || 0), 0)
+    },
+    isOwnProfile() {
+      const discordId = localStorage.getItem('discordId')
+      return discordId && this.user && discordId === this.user.id
     },
     devId() {
       return import.meta.env.VITE_DEV_ID
@@ -224,6 +238,7 @@ export default {
           withCredentials: false,
         })
         this.user_inventory = response.data.inventory
+        this.cs_inventory = response.data.csInventory || []
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -567,6 +582,34 @@ export default {
         this.showErrorToast(e.response?.data?.error || 'Erreur lors de la vente.')
         setTimeout(() => {
           this.instantSellProcessing = false
+        }, 500)
+      }
+    },
+    getRarityColor,
+    openCsSkinDetails(skin) {
+      this.selectedCsSkin = skin
+      this.csSkinDetailsDialog = true
+    },
+    async handleCsInstantSell() {
+      const discordId = localStorage.getItem('discordId')
+      if (!discordId || !this.user || discordId !== this.user.id) return
+      this.csSellProcessing = true
+      try {
+        await axios.post(
+          import.meta.env.VITE_FLAPI_URL + '/cs-skin/' + this.selectedCsSkin.id + '/instant-sell',
+        )
+        await this.getInventory()
+        this.users = await this.getUsers()
+        this.user = this.users.find((u) => u.id === this.$route.params.id)
+        setTimeout(() => {
+          this.csSkinDetailsDialog = false
+          this.csSellProcessing = false
+        }, 500)
+      } catch (e) {
+        console.log(e)
+        this.showErrorToast(e.response?.data?.error || 'Erreur lors de la vente.')
+        setTimeout(() => {
+          this.csSellProcessing = false
         }, 500)
       }
     },
@@ -1384,7 +1427,6 @@ export default {
         </v-list>
 
         <v-list
-          disabled
           width="100%"
           class="mt-10 py-0 position-relative disabled-inventory"
           rounded="xl"
@@ -1585,6 +1627,77 @@ export default {
           </v-list-item>
           <v-list-item v-else>
             <p class="text-center pt-12 pb-16">Aucun skin dans l'inventaire</p>
+          </v-list-item>
+        </v-list>
+
+        <!-- CS2 Inventory -->
+        <v-list
+          width="100%"
+          class="mt-10 py-0 position-relative"
+          rounded="xl"
+          bg-color="#181818"
+          variant="tonal"
+          style="border: 2px solid #ffffff55; max-height: 570px"
+        >
+          <v-list-item
+            class="pt-4 position-sticky top-0 w-100"
+            rounded="0"
+            style="backdrop-filter: blur(5px); z-index: 2"
+          >
+            <div class="d-flex w-100 justify-space-between flex-wrap ga-3">
+              <h2 style="width: fit-content; white-space: nowrap">
+                Inventaire CS2
+                <span class="ml-4" style="font-size: 0.8em"
+                  >{{ cs_inventory?.length || 0 }} skins</span
+                >
+                <span
+                  v-if="csInventoryValue"
+                  class="ml-4"
+                  style="font-size: 0.7em; color: rgba(255, 255, 255, 0.4)"
+                >
+                  {{ csInventoryValue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;') }}
+                  Flopos
+                </span>
+              </h2>
+              <div class="d-flex ga-2">
+                <v-btn
+                  color="primary"
+                  rounded="lg"
+                  class="text-none"
+                  @click="$router.push('/cases')"
+                >
+                  Caisses
+                </v-btn>
+                <v-btn
+                  color="secondary"
+                  rounded="lg"
+                  class="text-none"
+                  @click="$router.push('/trade-up')"
+                >
+                  Trade Up
+                </v-btn>
+              </div>
+            </div>
+          </v-list-item>
+          <v-list-item
+            v-if="cs_inventory?.length > 0"
+            class="pb-3 px-0"
+            style="z-index: 1; user-select: none"
+          >
+            <div class="inventory px-4">
+              <div class="inventory-grid">
+                <CsSkinCard
+                  v-for="skin in cs_inventory"
+                  :key="'cs-' + skin.id"
+                  :skin="skin"
+                  size="md"
+                  @click="openCsSkinDetails(skin)"
+                />
+              </div>
+            </div>
+          </v-list-item>
+          <v-list-item v-else>
+            <p class="text-center pt-12 pb-16">Aucun skin CS2 dans l'inventaire</p>
           </v-list-item>
         </v-list>
       </div>
@@ -2123,6 +2236,89 @@ export default {
       </v-card-text>
     </v-card>
   </v-dialog>
+
+  <!-- CS2 Skin Detail Dialog -->
+  <v-dialog v-model="csSkinDetailsDialog" class="modals" max-width="450" scrim="#181818">
+    <v-card v-if="selectedCsSkin" color="#1A1A1A" rounded="xl" class="overflow-hidden" style="position: relative">
+      <div
+        class="glow-bg"
+        :style="`background: radial-gradient(circle, ${getRarityColor(selectedCsSkin.rarity)} 0%, transparent 100%);`"
+      ></div>
+
+      <v-card-item class="px-6 pt-6 pb-2">
+        <div class="d-flex justify-center">
+          <v-img
+            :src="selectedCsSkin.imageUrl"
+            width="100%"
+            height="150px"
+            style="filter: drop-shadow(0 0 5px #333)"
+          />
+        </div>
+      </v-card-item>
+
+      <v-card-item class="text-center pb-4" style="z-index: 2">
+        <h2 class="text-h6 font-weight-bold text-white mb-1">{{ selectedCsSkin.displayName }}</h2>
+        <p v-if="selectedCsSkin.weaponType" class="text-grey" style="font-size: 0.85em">{{ selectedCsSkin.weaponType }}</p>
+
+        <div class="d-flex justify-center ga-2 mt-2">
+          <v-chip v-if="selectedCsSkin.isStattrak" color="orange" size="small" variant="flat">StatTrak</v-chip>
+          <v-chip v-if="selectedCsSkin.isSouvenir" color="#ffd700" size="small" variant="flat">Souvenir</v-chip>
+          <v-chip :color="getRarityColor(selectedCsSkin.rarity)" size="small" variant="flat">{{ selectedCsSkin.rarity }}</v-chip>
+        </div>
+
+        <v-row class="w-100 mt-4">
+          <v-col cols="4" class="text-center border-e border-grey-darken-3">
+            <p class="text-caption text-uppercase text-grey">Usure</p>
+            <p class="text-body-2 font-weight-bold">{{ selectedCsSkin.wearState }}</p>
+          </v-col>
+          <v-col cols="4" class="text-center border-e border-grey-darken-3">
+            <p class="text-caption text-uppercase text-grey">Float</p>
+            <p class="text-body-2 font-weight-bold">{{ selectedCsSkin.float?.toFixed(4) }}</p>
+          </v-col>
+          <v-col cols="4" class="text-center">
+            <p class="text-caption text-uppercase text-grey">Valeur</p>
+            <p class="text-body-2 font-weight-bold">{{ selectedCsSkin.price }}&nbsp;<span style="opacity: 0.4; font-size: 0.8em">Flopos</span></p>
+          </v-col>
+        </v-row>
+
+        <!-- Float bar -->
+        <div v-if="selectedCsSkin.float != null" class="w-100 mt-3 px-2">
+          <div class="cs-float-bar-track">
+            <div class="cs-float-bar-marker" :style="{ left: `${selectedCsSkin.float * 100}%` }"></div>
+          </div>
+        </div>
+      </v-card-item>
+
+      <v-divider></v-divider>
+
+      <v-card-actions v-if="isOwnProfile" class="pa-4 d-flex ga-2">
+        <v-btn
+          variant="tonal"
+          color="error"
+          rounded="lg"
+          class="text-none flex-grow-1"
+          :loading="csSellProcessing"
+          @click="handleCsInstantSell"
+        >
+          Vendre ({{ selectedCsSkin.price }} Flopos)
+        </v-btn>
+        <v-btn
+          variant="tonal"
+          color="primary"
+          rounded="lg"
+          class="text-none flex-grow-1"
+          @click="csSkinDetailsDialog = false; $router.push('/market')"
+        >
+          FlopoMarket
+        </v-btn>
+      </v-card-actions>
+      <v-card-actions v-else class="pa-4">
+        <v-spacer />
+        <v-btn variant="tonal" color="secondary" rounded="lg" @click="csSkinDetailsDialog = false">Fermer</v-btn>
+        <v-spacer />
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>
@@ -2356,7 +2552,7 @@ export default {
   animation: gold-flow 15s ease infinite;
 }
 
-.disabled-inventory::after {
+/* .disabled-inventory::after {
   content: 'Actuellement indisponible';
   position: absolute;
   top: 0;
@@ -2369,7 +2565,7 @@ export default {
   color: #ddd;
   background: rgba(0, 0, 0, 0.9);
   z-index: 3;
-}
+} */
 
 .champions-skin-card .skin-bg {
   display: none; /* Hide default tier color */
@@ -2477,5 +2673,39 @@ export default {
 /* Price Highlight transition */
 .price-text {
   transition: color 0.3s ease;
+}
+
+/* CS2 Float bar */
+.cs-float-bar-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #4caf50, #8bc34a, #cddc39, #ffeb3b, #ff9800, #f44336);
+  position: relative;
+}
+
+.cs-float-bar-marker {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 12px;
+  background: white;
+  border-radius: 1px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+}
+
+.glow-bg {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  opacity: 0.3;
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
 }
 </style>
