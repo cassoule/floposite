@@ -141,8 +141,7 @@ export default {
         const response = await axios.get(fetchUrl)
         this.userInventory = (response.data.csInventory || []).filter((skin) => {
           return !this.marketOffers.some(
-            (marketOffer) =>
-              marketOffer.csSkin?.id === skin.id && marketOffer.status !== 'closed',
+            (marketOffer) => marketOffer.csSkin?.id === skin.id && marketOffer.status !== 'closed',
           )
         })
       } catch (e) {
@@ -495,7 +494,10 @@ export default {
                             <h4>Skin</h4>
                             <template v-if="offer.csSkin">
                               <p class="d-flex text-grey">
-                                Rareté <v-spacer /> <span :style="`color: ${getRarityColor(offer.csSkin.rarity)}`">{{ offer.csSkin.rarity }}</span>
+                                Rareté <v-spacer />
+                                <span :style="`color: ${getRarityColor(offer.csSkin.rarity)}`">{{
+                                  offer.csSkin.rarity
+                                }}</span>
                               </p>
                               <p class="d-flex text-grey">
                                 Usure <v-spacer /> {{ offer.csSkin.wearState }}
@@ -659,13 +661,13 @@ export default {
           variant="flat"
           rounded="xl"
         >
-          <v-img
-            :src="getOfferSkinImage(selectedOffer)"
-            max-width="512"
-            height="250"
-          ></v-img>
+          <v-img :src="getOfferSkinImage(selectedOffer)" max-width="512" height="250"></v-img>
           <!-- Valorant chromas (legacy) -->
-          <div v-if="selectedOffer.skin && skinsData[selectedOffer.skin.uuid]" class="d-flex position-absolute top-1 right-0 mr-4" style="gap: 1em">
+          <div
+            v-if="selectedOffer.skin && skinsData[selectedOffer.skin.uuid]"
+            class="d-flex position-absolute top-1 right-0 mr-4"
+            style="gap: 1em"
+          >
             <div
               v-for="(chroma, index) in skinsData[selectedOffer.skin.uuid].chromas"
               :key="chroma.uuid || index"
@@ -685,8 +687,20 @@ export default {
           </div>
           <!-- CS2 badges -->
           <div v-if="selectedOffer.csSkin" class="d-flex position-absolute top-1 right-0 mr-4 ga-1">
-            <v-chip v-if="selectedOffer.csSkin.isStattrak" color="orange" size="x-small" variant="flat">StatTrak</v-chip>
-            <v-chip v-if="selectedOffer.csSkin.isSouvenir" color="#ffd700" size="x-small" variant="flat">Souvenir</v-chip>
+            <v-chip
+              v-if="selectedOffer.csSkin.isStattrak"
+              color="orange"
+              size="x-small"
+              variant="flat"
+              >StatTrak</v-chip
+            >
+            <v-chip
+              v-if="selectedOffer.csSkin.isSouvenir"
+              color="#ffd700"
+              size="x-small"
+              variant="flat"
+              >Souvenir</v-chip
+            >
           </div>
           <v-card
             variant="flat"
@@ -700,7 +714,9 @@ export default {
                 <v-col class="py-0">
                   <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
                     Rareté :
-                    <strong :style="`color: ${getRarityColor(selectedOffer.csSkin.rarity)}`">{{ selectedOffer.csSkin.rarity }}</strong>
+                    <strong :style="`color: ${getRarityColor(selectedOffer.csSkin.rarity)}`">{{
+                      selectedOffer.csSkin.rarity
+                    }}</strong>
                   </p>
                 </v-col>
                 <v-col class="py-0">
@@ -910,12 +926,7 @@ export default {
               class="d-flex ga-3"
               @click="createOffer.price = Math.floor(skin.price * 0.75)"
             >
-              <v-img
-                :src="skin.imageUrl"
-                height="30"
-                min-width="50"
-                max-width="50"
-              ></v-img>
+              <v-img :src="skin.imageUrl" height="30" min-width="50" max-width="50"></v-img>
               <p
                 style="
                   font-weight: bold;
@@ -926,8 +937,22 @@ export default {
               >
                 {{ skin.displayName }}
               </p>
-              <v-chip v-if="skin.isStattrak" size="x-small" color="orange" variant="flat" class="ml-1">ST</v-chip>
-              <v-chip v-if="skin.isSouvenir" size="x-small" color="#ffd700" variant="flat" class="ml-1">S</v-chip>
+              <v-chip
+                v-if="skin.isStattrak"
+                size="x-small"
+                color="orange"
+                variant="flat"
+                class="ml-1"
+                >ST</v-chip
+              >
+              <v-chip
+                v-if="skin.isSouvenir"
+                size="x-small"
+                color="#ffd700"
+                variant="flat"
+                class="ml-1"
+                >S</v-chip
+              >
               <v-spacer></v-spacer>
               <p>{{ skin.price }}&nbsp;Flopos</p>
             </v-expansion-panel-title>
@@ -937,7 +962,9 @@ export default {
               <v-row>
                 <v-col cols="4">Rareté :</v-col>
                 <v-col cols="8">
-                  <strong :style="`color: ${getRarityColor(skin.rarity)}`">{{ skin.rarity }}</strong>
+                  <strong :style="`color: ${getRarityColor(skin.rarity)}`">{{
+                    skin.rarity
+                  }}</strong>
                 </v-col>
               </v-row>
               <v-row>

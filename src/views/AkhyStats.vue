@@ -1426,210 +1426,6 @@ export default {
           </v-list-item>
         </v-list>
 
-        <v-list
-          width="100%"
-          class="mt-10 py-0 position-relative disabled-inventory"
-          rounded="xl"
-          bg-color="#181818"
-          variant="tonal"
-          style="border: 2px solid #ffffff55; max-height: 570px"
-        >
-          <v-list-item
-            class="pt-4 position-sticky top-0 w-100"
-            rounded="0"
-            style="backdrop-filter: blur(5px); z-index: 2"
-          >
-            <div class="d-flex w-100 justify-space-between flex-wrap ga-3">
-              <h2 style="width: fit-content; white-space: nowrap">
-                Inventaire
-                <span class="ml-4" style="font-size: 0.8em"
-                  >{{ user_inventory?.length }} skins</span
-                >
-              </h2>
-              <v-btn color="primary" rounded="lg" class="text-none" @click="$router.push('/cases')">
-                Caisses
-              </v-btn>
-            </div>
-          </v-list-item>
-          <v-list-item v-if="loadingInventory" class="d-flex" style="justify-content: center">
-            <v-progress-circular
-              class="pt-12 pb-16"
-              :size="50"
-              width="10"
-              color="primary"
-              indeterminate
-            ></v-progress-circular>
-          </v-list-item>
-          <v-list-item
-            v-else-if="user_inventory?.length > 0"
-            class="pb-3 px-0"
-            style="z-index: 1; user-select: none"
-          >
-            <div class="inventory px-4">
-              <div class="inventory-grid">
-                <div
-                  v-for="skin in user_inventory"
-                  :key="skin.id"
-                  class="inventory-item cursor-pointer"
-                  :class="{
-                    'melee-skin-card': skin.isMelee,
-                    'vct-skin-card': skin.isVCT,
-                    'champions-skin-card': skin.isChampions,
-                  }"
-                  style="border-radius: 10px"
-                  :style="
-                    skin.isVCT
-                      ? `
-                    box-shadow: inset 0 0 50px 5px ${getRegionColor(skin.vctRegion)}55;
-                  `
-                      : ``
-                  "
-                  @click="handleSkinDetailsOpen(skin)"
-                >
-                  <div
-                    style="
-                      display: flex;
-                      flex-direction: column;
-                      place-content: space-between;
-                      width: 400px;
-                      padding: 0.5em 1em;
-                      gap: 1rem;
-                    "
-                  >
-                    <div style="display: flex; place-content: space-between; gap: 1em">
-                      <span
-                        style="
-                          font-weight: bold;
-                          color: #ddd;
-                          overflow: hidden;
-                          white-space: nowrap;
-                          text-overflow: ellipsis;
-                          display: flex;
-                          place-items: baseline;
-                        "
-                      >
-                        <v-icon
-                          v-if="
-                            skin.currentLvl === skinsData[skin.uuid].levels.length &&
-                            skin.currentChroma === skinsData[skin.uuid].chromas.length
-                          "
-                          class="mdi mdi-star-outline mr-1"
-                          color="white"
-                          style="text-shadow: 0 0 3px #181818"
-                          size="15"
-                          title="Max"
-                        ></v-icon>
-                        {{ skin.displayName }}
-                      </span>
-                      <span
-                        >{{
-                          skin.currentPrice?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;')
-                        }}&nbsp;<span style="color: rgba(255, 255, 255, 0.3)">Flopos</span></span
-                      >
-                    </div>
-
-                    <div
-                      style="
-                        display: flex;
-                        place-content: space-between;
-                        place-items: center;
-                        width: 100%;
-                        gap: 1em;
-                      "
-                    >
-                      <v-img
-                        :src="getImageUrl(skin, skinsData[skin.uuid])"
-                        class="skin-img"
-                        height="25"
-                        min-width="70"
-                        max-width="70"
-                        style="filter: drop-shadow(0 0 5px #333)"
-                      />
-                      <div class="d-flex ga-2">
-                        <v-icon
-                          v-if="skin.offers.length > 0"
-                          class="mdi mdi-history"
-                          @click="skinHistoryDialog = true"
-                          @click.stop="selectedSkin = skin"
-                        ></v-icon>
-                        <v-icon
-                          v-if="skinsVideoUrls[skin.uuid] !== null"
-                          class="mdi mdi-television"
-                          @click="skinVideoDialog = true"
-                          @click.stop="selectedSkin = skin"
-                        ></v-icon>
-                      </div>
-                    </div>
-
-                    <div
-                      style="
-                        display: flex;
-                        place-content: space-between;
-                        place-items: center;
-                        width: 100%;
-                        gap: 1em;
-                      "
-                    >
-                      <v-spacer></v-spacer>
-                      <div class="d-flex" style="gap: 1em">
-                        <div
-                          v-for="(chroma, index) in skinsData[skin.uuid].chromas"
-                          :key="chroma.uuid || index"
-                        >
-                          <v-img
-                            v-if="chroma.swatch"
-                            :src="chroma.swatch"
-                            class="rounded-lg"
-                            width="30px"
-                            height="30px"
-                            :style="`${index + 1 === skin.currentChroma ? 'border: 2px solid #' + skin.tierColor : ''}`"
-                          />
-                          <span v-if="!chroma.swatch" class="font-weight-bold"
-                            >{{ getChromaName(skin, skinsData[skin.uuid]) }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      style="
-                        display: flex;
-                        place-content: space-between;
-                        place-items: center;
-                        width: 100%;
-                        gap: 1em;
-                      "
-                    >
-                      <v-progress-linear
-                        :model-value="(skin.currentLvl / skinsData[skin.uuid].levels.length) * 100"
-                        :color="skin.isVCT ? getRegionColor(skin.vctRegion) : '#' + skin.tierColor"
-                        style="box-shadow: 0 0 20px 1px #181818"
-                      ></v-progress-linear>
-                      <p>
-                        Lvl&nbsp;<span class="font-weight-bold">{{ skin.currentLvl }}</span
-                        >/{{ skinsData[skin.uuid].levels.length }}
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    v-if="!skin.isVCT"
-                    class="skin-bg"
-                    :style="`background: radial-gradient(circle at -50% 0%, #${skin.tierColor}, transparent 80%)`"
-                  ></div>
-                  <div v-else>
-                    <v-img
-                      :src="'/vct_logos/' + skin.vctRegion + '.png'"
-                      style="position: absolute; width: 30px; top: 35px; right: 10px"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </v-list-item>
-          <v-list-item v-else>
-            <p class="text-center pt-12 pb-16">Aucun skin dans l'inventaire</p>
-          </v-list-item>
-        </v-list>
-
         <!-- CS2 Inventory -->
         <v-list
           width="100%"
@@ -1646,7 +1442,7 @@ export default {
           >
             <div class="d-flex w-100 justify-space-between flex-wrap ga-3">
               <h2 style="width: fit-content; white-space: nowrap">
-                Inventaire CS2
+                Inventaire
                 <span class="ml-4" style="font-size: 0.8em"
                   >{{ cs_inventory?.length || 0 }} skins</span
                 >
@@ -1664,14 +1460,16 @@ export default {
                   color="primary"
                   rounded="lg"
                   class="text-none"
+                  prepend-icon="mdi-gift-open-outline"
                   @click="$router.push('/cases')"
                 >
                   Caisses
                 </v-btn>
                 <v-btn
-                  color="secondary"
+                  color="primary"
                   rounded="lg"
                   class="text-none"
+                  prepend-icon="mdi-swap-vertical"
                   @click="$router.push('/trade-up')"
                 >
                   Trade Up
@@ -2239,7 +2037,13 @@ export default {
 
   <!-- CS2 Skin Detail Dialog -->
   <v-dialog v-model="csSkinDetailsDialog" class="modals" max-width="450" scrim="#181818">
-    <v-card v-if="selectedCsSkin" color="#1A1A1A" rounded="xl" class="overflow-hidden" style="position: relative">
+    <v-card
+      v-if="selectedCsSkin"
+      color="#1A1A1A"
+      rounded="xl"
+      class="overflow-hidden"
+      style="position: relative"
+    >
       <div
         class="glow-bg"
         :style="`background: radial-gradient(circle, ${getRarityColor(selectedCsSkin.rarity)} 0%, transparent 100%);`"
@@ -2258,12 +2062,20 @@ export default {
 
       <v-card-item class="text-center pb-4" style="z-index: 2">
         <h2 class="text-h6 font-weight-bold text-white mb-1">{{ selectedCsSkin.displayName }}</h2>
-        <p v-if="selectedCsSkin.weaponType" class="text-grey" style="font-size: 0.85em">{{ selectedCsSkin.weaponType }}</p>
+        <p v-if="selectedCsSkin.weaponType" class="text-grey" style="font-size: 0.85em">
+          {{ selectedCsSkin.weaponType }}
+        </p>
 
         <div class="d-flex justify-center ga-2 mt-2">
-          <v-chip v-if="selectedCsSkin.isStattrak" color="orange" size="small" variant="flat">StatTrak</v-chip>
-          <v-chip v-if="selectedCsSkin.isSouvenir" color="#ffd700" size="small" variant="flat">Souvenir</v-chip>
-          <v-chip :color="getRarityColor(selectedCsSkin.rarity)" size="small" variant="flat">{{ selectedCsSkin.rarity }}</v-chip>
+          <v-chip v-if="selectedCsSkin.isStattrak" color="orange" size="small" variant="flat"
+            >StatTrak</v-chip
+          >
+          <v-chip v-if="selectedCsSkin.isSouvenir" color="#ffd700" size="small" variant="flat"
+            >Souvenir</v-chip
+          >
+          <v-chip :color="getRarityColor(selectedCsSkin.rarity)" size="small" variant="flat">{{
+            selectedCsSkin.rarity
+          }}</v-chip>
         </div>
 
         <v-row class="w-100 mt-4">
@@ -2277,14 +2089,21 @@ export default {
           </v-col>
           <v-col cols="4" class="text-center">
             <p class="text-caption text-uppercase text-grey">Valeur</p>
-            <p class="text-body-2 font-weight-bold">{{ selectedCsSkin.price }}&nbsp;<span style="opacity: 0.4; font-size: 0.8em">Flopos</span></p>
+            <p class="text-body-2 font-weight-bold">
+              {{ selectedCsSkin.price }}&nbsp;<span style="opacity: 0.4; font-size: 0.8em"
+                >Flopos</span
+              >
+            </p>
           </v-col>
         </v-row>
 
         <!-- Float bar -->
         <div v-if="selectedCsSkin.float != null" class="w-100 mt-3 px-2">
           <div class="cs-float-bar-track">
-            <div class="cs-float-bar-marker" :style="{ left: `${selectedCsSkin.float * 100}%` }"></div>
+            <div
+              class="cs-float-bar-marker"
+              :style="{ left: `${selectedCsSkin.float * 100}%` }"
+            ></div>
           </div>
         </div>
       </v-card-item>
@@ -2294,7 +2113,7 @@ export default {
       <v-card-actions v-if="isOwnProfile" class="pa-4 d-flex ga-2">
         <v-btn
           variant="tonal"
-          color="error"
+          color="secondary"
           rounded="lg"
           class="text-none flex-grow-1"
           :loading="csSellProcessing"
@@ -2304,17 +2123,19 @@ export default {
         </v-btn>
         <v-btn
           variant="tonal"
-          color="primary"
+          color="secondary"
           rounded="lg"
           class="text-none flex-grow-1"
-          @click="csSkinDetailsDialog = false; $router.push('/market')"
+          @click="((csSkinDetailsDialog = false), $router.push('/market'))"
         >
           FlopoMarket
         </v-btn>
       </v-card-actions>
       <v-card-actions v-else class="pa-4">
         <v-spacer />
-        <v-btn variant="tonal" color="secondary" rounded="lg" @click="csSkinDetailsDialog = false">Fermer</v-btn>
+        <v-btn variant="tonal" color="secondary" rounded="lg" @click="csSkinDetailsDialog = false"
+          >Fermer</v-btn
+        >
         <v-spacer />
       </v-card-actions>
     </v-card>
@@ -2444,7 +2265,7 @@ export default {
   display: grid;
   grid-auto-flow: column;
   grid-template-rows: repeat(2, auto);
-  gap: 0.2em;
+  gap: 0.5em;
 }
 
 .inventory-item {

@@ -93,7 +93,8 @@ export default {
         const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/trade-up', {
           skinIds: this.selectedSkins.map((s) => s.id),
         })
-        this.resultSkin = response.data.result
+        console.log(response)
+        this.resultSkin = response.data.skin
         this.tradeUpResultDialog = true
         this.selectedSkins = []
         await this.fetchInventory()
@@ -112,7 +113,10 @@ export default {
 <template>
   <CoinsCounter />
   <v-layout class="w-100">
-    <v-main class="d-flex flex-column align-center pt-16 px-4" style="max-width: 1200px; margin: 0 auto">
+    <v-main
+      class="d-flex flex-column align-center pt-16 px-4"
+      style="max-width: 1200px; margin: 0 auto"
+    >
       <h1 class="mb-6">Trade Up Contract</h1>
 
       <!-- Rarity Ladder -->
@@ -145,11 +149,7 @@ export default {
           >
             {{ csInventory.filter((s) => s.rarity === rarity).length }}
           </span>
-          <v-icon
-            v-if="index < TRADE_UP_LADDER.length - 1"
-            class="rarity-arrow"
-            size="16"
-          >
+          <v-icon v-if="index < TRADE_UP_LADDER.length - 1" class="rarity-arrow" size="16">
             mdi-chevron-right
           </v-icon>
         </div>
@@ -160,7 +160,12 @@ export default {
         <div class="d-flex justify-space-between align-center mb-3">
           <h3>
             {{ selectedSkins.length }} / 10 skins
-            <span style="opacity: 0.5; font-size: 0.85em">{{ selectedRarity }}</span>
+            <span style="opacity: 0.5; font-size: 0.85em"
+              >{{ selectedRarity }}&nbsp;({{
+                selectedSkins.reduce((sum, s) => sum + s.price, 0)
+              }}
+              Flopos)</span
+            >
           </h3>
           <div v-if="nextRarity" class="d-flex align-center ga-2">
             <v-icon size="18">mdi-arrow-right</v-icon>
@@ -176,16 +181,16 @@ export default {
             :key="'slot-' + i"
             class="trade-slot"
             :style="{
-              borderColor: selectedSkins[i - 1]
-                ? getRarityColor(selectedRarity)
-                : '#333',
+              borderColor: selectedSkins[i - 1] ? getRarityColor(selectedRarity) : '#333',
             }"
           >
             <CsSkinCard
               v-if="selectedSkins[i - 1]"
               :skin="selectedSkins[i - 1]"
+              :show-price="true"
               size="sm"
-              :show-price="false"
+              class="w-100"
+              style="border-left: none !important; border-radius: 15px !important"
               @click="removeSkin(selectedSkins[i - 1])"
             />
             <div v-else class="empty-slot">
@@ -222,6 +227,7 @@ export default {
             :skin="skin"
             size="sm"
             :selectable="true"
+            class="w-100"
             :selected="selectedSkins.some((s) => s.id === skin.id)"
             @click="toggleSkin(skin)"
           />
@@ -261,12 +267,13 @@ export default {
       class="overflow-hidden"
       style="position: relative"
     >
+      <!-- Glow Background -->
       <div
         class="glow-bg"
         :style="`background: radial-gradient(circle, ${getRarityColor(resultSkin.rarity)} 0%, transparent 100%);`"
       ></div>
 
-      <v-card-item class="px-10 pt-8 pb-0">
+      <v-card-item class="w-100 px-10 pt-8 pb-0">
         <div
           v-motion
           :initial="{ opacity: 0, scale: 0.5, y: 50 }"
@@ -276,56 +283,98 @@ export default {
             y: 0,
             transition: { type: 'spring', stiffness: 250, damping: 15, mass: 1 },
           }"
-          class="mb-4 result-float w-100"
+          class="mb-4 relative-container w-100"
           style="display: flex; justify-content: center"
         >
           <v-img
             :src="resultSkin.imageUrl"
             width="100%"
-            height="250px"
+            height="20vh"
+            max-height="250px"
             style="filter: drop-shadow(0 0 5px #333)"
           />
         </div>
       </v-card-item>
 
       <v-card-item
-        class="d-flex flex-column align-center justify-center pt-0 pb-6 text-center"
+        class="result-card-item w-100 d-flex flex-column align-center justify-center pt-0 pb-6 text-center"
         style="z-index: 2"
       >
+        <!-- Title -->
         <div
           v-motion
           :initial="{ opacity: 0, y: 20 }"
           :enter="{ opacity: 1, y: 0, transition: { delay: 300, duration: 500 } }"
+          class="w-100"
         >
-          <h2 class="text-h5 font-weight-bold text-white mb-1">{{ resultSkin.displayName }}</h2>
+          <h2 class="w-100 text-h5 font-weight-bold text-white mb-1">
+            {{ resultSkin.displayName }}
+          </h2>
           <p class="text-grey" style="font-size: 0.9em">{{ resultSkin.weaponType }}</p>
         </div>
 
+        <!-- Badges -->
         <div
           v-motion
           :initial="{ opacity: 0, y: 10 }"
           :enter="{ opacity: 1, y: 0, transition: { delay: 400, duration: 400 } }"
           class="d-flex justify-center ga-2 mt-2"
         >
-          <v-chip v-if="resultSkin.isStattrak" color="orange" size="small" variant="flat">StatTrak</v-chip>
-          <v-chip v-if="resultSkin.isSouvenir" color="#ffd700" size="small" variant="flat">Souvenir</v-chip>
-          <v-chip :color="getRarityColor(resultSkin.rarity)" size="small" variant="flat">{{ resultSkin.rarity }}</v-chip>
+          <v-chip v-if="resultSkin.isStattrak" color="orange" size="small" variant="flat">
+            StatTrak
+          </v-chip>
+          <v-chip v-if="resultSkin.isSouvenir" color="#ffd700" size="small" variant="flat">
+            Souvenir
+          </v-chip>
+          <v-chip :color="getRarityColor(resultSkin.rarity)" size="small" variant="flat">
+            {{ resultSkin.rarity }}
+          </v-chip>
+          <v-chip size="small" variant="flat">
+            {{ resultSkin.wearState }}
+          </v-chip>
         </div>
 
-        <v-row class="w-100 mt-4">
-          <v-col cols="4" class="text-center border-e border-grey-darken-3">
-            <p class="text-caption text-uppercase text-grey">Usure</p>
-            <p class="text-body-2 font-weight-bold">{{ resultSkin.wearState }}</p>
+        <!-- Stats Row -->
+        <v-row class="w-100 mt-1 mx-0">
+          <v-col cols="6" class="text-center">
+            <div
+              v-motion
+              :initial="{ opacity: 0, scale: 0.8 }"
+              :enter="{ opacity: 1, scale: 1, transition: { delay: 600, duration: 400 } }"
+            >
+              <p class="text-caption text-uppercase text-grey">Float</p>
+              <p class="text-h6 font-weight-bold" style="font-size: 1.2em !important">
+                {{ resultSkin.float?.toFixed(4) }}
+              </p>
+            </div>
           </v-col>
-          <v-col cols="4" class="text-center border-e border-grey-darken-3">
-            <p class="text-caption text-uppercase text-grey">Float</p>
-            <p class="text-body-2 font-weight-bold">{{ resultSkin.float?.toFixed(4) }}</p>
-          </v-col>
-          <v-col cols="4" class="text-center">
-            <p class="text-caption text-uppercase text-grey">Valeur</p>
-            <p class="text-body-2 font-weight-bold">{{ resultSkin.price }}&nbsp;<span style="opacity: 0.4; font-size: 0.8em">Flopos</span></p>
+          <v-col cols="6" class="text-center">
+            <div
+              v-motion
+              :initial="{ opacity: 0, scale: 0.8 }"
+              :enter="{ opacity: 1, scale: 1, transition: { delay: 700, duration: 400 } }"
+            >
+              <p class="text-caption text-uppercase text-grey">Valeur</p>
+              <div class="text-h6 font-weight-bold" style="font-size: 1.2em !important">
+                {{ resultSkin.price }}
+                <span class="font-weight-thin" style="font-size: 0.9em">Flopos</span>
+              </div>
+            </div>
           </v-col>
         </v-row>
+
+        <!-- Float Bar -->
+        <div
+          v-if="resultSkin.float != null"
+          v-motion
+          :initial="{ opacity: 0 }"
+          :enter="{ opacity: 1, transition: { delay: 800, duration: 500 } }"
+          class="w-100 mt-3 px-4"
+        >
+          <div class="float-bar-track">
+            <div class="float-bar-marker" :style="{ left: `${resultSkin.float * 100}%` }"></div>
+          </div>
+        </div>
       </v-card-item>
 
       <v-divider></v-divider>
@@ -356,6 +405,30 @@ export default {
 </template>
 
 <style scoped>
+/* Float bar */
+.float-bar-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #4caf50, #8bc34a, #cddc39, #ffeb3b, #ff9800, #f44336);
+  position: relative;
+}
+
+.float-bar-marker {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 12px;
+  background: white;
+  border-radius: 1px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+}
+
+.result-card-item :deep(.v-card-item__content) {
+  width: 100%;
+}
+
 .back-btn {
   position: absolute;
   top: 1rem;
@@ -380,14 +453,6 @@ export default {
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
-}
-
-.rarity-step:hover:not(.disabled) {
-  transform: translateY(-1px);
-}
-
-.rarity-step.active {
-  border-width: 2px;
 }
 
 .rarity-step.next {
@@ -426,7 +491,7 @@ export default {
 .selected-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
+  gap: 0.1rem;
 }
 
 @media (max-width: 800px) {

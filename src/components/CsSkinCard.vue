@@ -58,7 +58,7 @@ export default {
   >
     <!-- Image -->
     <div class="cs-skin-image">
-      <v-img :src="skin.imageUrl" :height="imageHeight" contain style="filter: drop-shadow(0 0 5px #333)" />
+      <v-img :src="skin.imageUrl" :height="imageHeight" contain />
     </div>
 
     <!-- Info -->
@@ -71,9 +71,14 @@ export default {
       </div>
 
       <!-- Badges -->
-      <div v-if="skin.isStattrak || skin.isSouvenir" class="cs-skin-badges">
-        <v-chip v-if="skin.isStattrak" size="x-small" color="orange" variant="flat">StatTrak</v-chip>
-        <v-chip v-if="skin.isSouvenir" size="x-small" color="#ffd700" variant="flat">Souvenir</v-chip>
+      <div class="cs-skin-badges">
+        <v-chip v-if="skin.isStattrak" size="x-small" color="orange" variant="flat">
+          StatTrak
+        </v-chip>
+        <v-chip v-if="skin.isSouvenir" size="x-small" color="#ffd700" variant="flat">
+          Souvenir
+        </v-chip>
+        <v-chip size="x-small" color="transparent" variant="flat"> &nbsp; </v-chip>
       </div>
 
       <!-- Wear + Float bar -->
@@ -88,7 +93,7 @@ export default {
 
       <!-- Compact price for sm -->
       <div v-if="showPrice && size === 'sm'" class="cs-skin-price-sm">
-        {{ formattedPrice }} <span style="opacity: 0.4">F</span>
+        {{ formattedPrice }} <span style="opacity: 0.4">Flopos</span>
       </div>
     </div>
 
@@ -102,19 +107,18 @@ export default {
 <style scoped>
 .cs-skin-card {
   position: relative;
-  border-radius: 10px;
+  border-radius: 0 15px 15px 0;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: 0.15s;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5em 0.8em;
 }
 
-.cs-skin-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+.cs-skin-card:hover .cs-skin-image {
+  filter: drop-shadow(0 0 10px #dddddd33);
 }
 
 .cs-skin-card.selected {
@@ -130,6 +134,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: 0.2s;
 }
 
 .cs-skin-info {

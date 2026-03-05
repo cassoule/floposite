@@ -1,4 +1,5 @@
 <template>
+  <CoinsCounter />
   <v-layout>
     <v-main
       class="d-flex"
@@ -64,9 +65,14 @@
 <script>
 /* global localStorage, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame */
 import axios from 'axios'
+import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   name: 'SnakeSolo',
+
+  components: {
+    CoinsCounter,
+  },
 
   data() {
     return {

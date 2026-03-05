@@ -33,7 +33,9 @@ export default {
       loading: false,
       displayPrice: 0,
 
-      CS_CASE_PRICE: 250,
+      skipAnimation: false, // For testing purposes
+
+      CS_CASE_PRICE: 300,
     }
   },
   computed: {
@@ -88,9 +90,14 @@ export default {
         this.resultSkin = response.data.skin
         this.rouletteSkins = response.data.rouletteSkins
         this.resultIndex = response.data.resultIndex
-        this.caseOpeningDialog = true
-        await this.sleep(500)
-        this.startAnimation()
+
+        if (this.skipAnimation) {
+          this.skinResultDialog = true
+        } else {
+          this.caseOpeningDialog = true
+          await this.sleep(500)
+          this.startAnimation()
+        }
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -169,6 +176,14 @@ export default {
       class="d-flex justify-center flex-wrap pt-16"
       style="place-items: start; place-content: center; gap: 2em"
     >
+      <v-switch
+        v-model="skipAnimation"
+        density="compact"
+        hide-details
+        :label="'Skip Animation : ' + (skipAnimation ? 'ON' : 'OFF')"
+        color="primary"
+        style="position: fixed; bottom: 10px; right: 10px; transform: scale(0.75); width: 200px"
+      ></v-switch>
       <v-card color="#1A1A1A" rounded="xl" class="px-0" style="min-width: 280px; max-width: 400px">
         <v-card-item class="px-4 py-4">
           <div
@@ -222,6 +237,49 @@ export default {
           >
             Ouvrir
           </v-btn>
+        </v-card-item>
+      </v-card>
+
+      <v-card
+        color="#1A1A1A"
+        rounded="xl"
+        variant="tonal"
+        class="px-0"
+        style="min-width: 280px; max-width: 400px"
+      >
+        <v-card-item class="px-4 py-4 text-secondary">
+          <div
+            rounded="lg"
+            style="
+              width: 100%;
+              height: 180px;
+              border-radius: 12px;
+              background: radial-gradient(circle at 50% 120%, #dddddd22 0%, #1a1a1a22 70%);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: relative;
+              overflow: hidden;
+            "
+          >
+            <div
+              style="
+                font-size: 3em;
+                font-weight: 900;
+                opacity: 0.15;
+                letter-spacing: 0.1em;
+                user-select: none;
+              "
+            >
+              ...
+            </div>
+          </div>
+          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
+            <h2 class="mr-4">Bientôt disponible</h2>
+          </div>
+        </v-card-item>
+        <v-card-item class="pb-3">
+          <v-btn disabled block :loading="loading" color="primary" rounded="lg"> ... </v-btn>
         </v-card-item>
       </v-card>
     </v-main>
@@ -297,7 +355,7 @@ export default {
         :style="`background: radial-gradient(circle, ${getRarityColor(resultSkin.rarity)} 0%, transparent 100%);`"
       ></div>
 
-      <v-card-item class="px-10 pt-8 pb-0">
+      <v-card-item class="w-100 px-10 pt-8 pb-0">
         <div
           v-motion
           :initial="{ opacity: 0, scale: 0.5, y: 50 }"
@@ -313,14 +371,15 @@ export default {
           <v-img
             :src="resultSkin.imageUrl"
             width="100%"
-            height="250px"
+            height="20vh"
+            max-height="250px"
             style="filter: drop-shadow(0 0 5px #333)"
           />
         </div>
       </v-card-item>
 
       <v-card-item
-        class="d-flex flex-column align-center justify-center pt-0 pb-6 text-center"
+        class="result-card-item w-100 d-flex flex-column align-center justify-center pt-0 pb-6 text-center"
         style="z-index: 2"
       >
         <!-- Title -->
@@ -328,8 +387,9 @@ export default {
           v-motion
           :initial="{ opacity: 0, y: 20 }"
           :enter="{ opacity: 1, y: 0, transition: { delay: 300, duration: 500 } }"
+          class="w-100"
         >
-          <h2 class="text-h5 font-weight-bold text-white mb-1">
+          <h2 class="w-100 text-h5 font-weight-bold text-white mb-1">
             {{ resultSkin.displayName }}
           </h2>
           <p class="text-grey" style="font-size: 0.9em">{{ resultSkin.weaponType }}</p>
@@ -348,50 +408,39 @@ export default {
           <v-chip v-if="resultSkin.isSouvenir" color="#ffd700" size="small" variant="flat">
             Souvenir
           </v-chip>
-          <v-chip
-            :color="getRarityColor(resultSkin.rarity)"
-            size="small"
-            variant="flat"
-          >
+          <v-chip :color="getRarityColor(resultSkin.rarity)" size="small" variant="flat">
             {{ resultSkin.rarity }}
+          </v-chip>
+          <v-chip size="small" variant="flat">
+            {{ resultSkin.wearState }}
           </v-chip>
         </div>
 
         <!-- Stats Row -->
-        <v-row class="w-100 mt-4 mx-0 ">
-          <v-col cols="4" class="text-center border-e border-grey-darken-3">
-            <div
-              v-motion
-              :initial="{ opacity: 0, scale: 0.8 }"
-              :enter="{ opacity: 1, scale: 1, transition: { delay: 500, duration: 400 } }"
-            >
-              <p class="text-caption text-uppercase text-grey">Usure</p>
-              <p class="text-body-2 font-weight-bold">{{ resultSkin.wearState }}</p>
-            </div>
-          </v-col>
-          <v-col cols="4" class="text-center border-e border-grey-darken-3">
+        <v-row class="w-100 mt-1 mx-0">
+          <v-col cols="6" class="text-center">
             <div
               v-motion
               :initial="{ opacity: 0, scale: 0.8 }"
               :enter="{ opacity: 1, scale: 1, transition: { delay: 600, duration: 400 } }"
             >
               <p class="text-caption text-uppercase text-grey">Float</p>
-              <p class="text-body-2 font-weight-bold">
+              <p class="text-h6 font-weight-bold" style="font-size: 1.2em !important">
                 {{ resultSkin.float?.toFixed(4) }}
               </p>
             </div>
           </v-col>
-          <v-col cols="4" class="text-center">
+          <v-col cols="6" class="text-center">
             <div
               v-motion
               :initial="{ opacity: 0, scale: 0.8 }"
               :enter="{ opacity: 1, scale: 1, transition: { delay: 700, duration: 400 } }"
             >
               <p class="text-caption text-uppercase text-grey">Valeur</p>
-              <div class="text-h6 font-weight-bold">
-                {{ displayPrice }}&nbsp;
+              <div class="text-h6 font-weight-bold" style="font-size: 1.2em !important">
+                {{ displayPrice }}
+                <span class="font-weight-thin" style="font-size: 0.9em">Flopos</span>
               </div>
-              <span class="font-weight-thin" style="font-size: 0.9em">Flopos</span>
             </div>
           </v-col>
         </v-row>
@@ -405,10 +454,7 @@ export default {
           class="w-100 mt-3 px-4"
         >
           <div class="float-bar-track">
-            <div
-              class="float-bar-marker"
-              :style="{ left: `${resultSkin.float * 100}%` }"
-            ></div>
+            <div class="float-bar-marker" :style="{ left: `${resultSkin.float * 100}%` }"></div>
           </div>
         </div>
       </v-card-item>
@@ -441,6 +487,10 @@ export default {
 </template>
 
 <style scoped>
+.result-card-item :deep(.v-card-item__content) {
+  width: 100%;
+}
+
 .back-btn {
   position: absolute;
   top: 1rem;
