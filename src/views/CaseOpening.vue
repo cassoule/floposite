@@ -2,6 +2,7 @@
 /* global localStorage, setTimeout */
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
+import { getRarityColor } from '@/utils/csRarity.js'
 
 export default {
   components: {
@@ -10,9 +11,10 @@ export default {
   data() {
     return {
       discordId: null,
-      skins: null,
-      skinsData: {},
-      crslSpeed: 7, // Duration in seconds
+      rouletteSkins: [],
+      resultSkin: null,
+      resultIndex: 0,
+      crslSpeed: 5, // Duration in seconds
 
       // Animation State
       isSpinning: false,
@@ -26,16 +28,14 @@ export default {
 
       caseOpeningDialog: false,
       skinResultDialog: false,
-      selectedCaseType: null,
 
       user: null,
       loading: false,
-      displayLevel: 0,
       displayPrice: 0,
 
-      caseContentDialog: false,
-      caseContent: null,
-      selectedCase: null,
+      skipAnimation: false, // For testing purposes
+
+      CS_CASE_PRICE: 300,
     }
   },
   computed: {
@@ -43,26 +43,8 @@ export default {
       return this.cardWidth + this.cardGap
     },
     doubledSkins() {
-      if (!this.skins || !this.skins?.selectedSkins) return []
-      return [
-        ...this.skins.selectedSkins,
-        ...this.skins.selectedSkins,
-        ...this.skins.selectedSkins.slice(0, 3),
-      ]
-    },
-    caseColor() {
-      switch (this.selectedCaseType) {
-        case 'standard':
-          return '#5A9FE2'
-        case 'premium':
-          return '#D1548D'
-        case 'ultra':
-          return '#F5955B'
-        case 'esport':
-          return '#FF5862'
-        default:
-          return '#5A9FE2'
-      }
+      if (!this.rouletteSkins || this.rouletteSkins.length === 0) return []
+      return [...this.rouletteSkins, ...this.rouletteSkins, ...this.rouletteSkins.slice(0, 3)]
     },
   },
   watch: {
@@ -73,7 +55,6 @@ export default {
     },
   },
   async mounted() {
-    // Fetch user data from localStorage or an API
     const discordId = localStorage.getItem('discordId')
     if (!discordId) this.$router.push('/')
     this.discordId = discordId
@@ -90,64 +71,37 @@ export default {
     window.removeEventListener('resize', this.updatePosition)
   },
   methods: {
-    async fetchCase(caseType = 'standard') {
+    getRarityColor,
+    async openCase() {
       this.loading = true
-      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/open-case'
       try {
-        this.selectedCaseType = caseType
-        const response = await axios.post(fetchUrl, { caseType })
+        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/open-cs-case')
+        // Refresh user coins
         try {
-          const response = await axios.get(
+          const userResp = await axios.get(
             import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId,
           )
-          this.user = response.data.user
+          this.user = userResp.data.user
         } catch (e) {
           console.log(e)
           this.$router.push('/')
         }
-        this.skins = response.data
-        this.caseOpeningDialog = true
-        await this.getSkinData(this.skins.updatedSkin)
-        await this.sleep(500)
-        this.startAnimation()
+
+        this.resultSkin = response.data.skin
+        this.rouletteSkins = response.data.rouletteSkins
+        this.resultIndex = response.data.resultIndex
+
+        if (this.skipAnimation) {
+          this.skinResultDialog = true
+        } else {
+          this.caseOpeningDialog = true
+          await this.sleep(500)
+          this.startAnimation()
+        }
       } catch (e) {
         console.error('flAPI error:', e)
       }
       this.loading = false
-    },
-    getImageUrl(skin) {
-      const level = skin.levels[skin.currentLvl - 1]
-      return level?.displayIcon || skin.displayIcon || skin.chromas[0].fullRender
-    },
-    getPreciseImageUrl(skin) {
-      let skinInfo = this.skinsData[skin.uuid]
-      if (skin.currentLvl === skinInfo.levels.length) {
-        const chroma = skinInfo.chromas[skin.currentChroma - 1]
-        return chroma?.fullRender || chroma?.displayIcon || skinInfo.displayIcon
-      }
-      const level = skinInfo.levels[skin.currentLvl - 1]
-      return level?.displayIcon || skinInfo.displayIcon || skinInfo.chromas[0].fullRender
-    },
-    async getSkinData(skin) {
-      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
-      try {
-        const response = await axios.get(fetchUrl)
-        this.skinsData[skin.uuid] = response.data
-      } catch (e) {
-        console.error('flAPI error:', e)
-      }
-    },
-    async getCaseContent(caseType) {
-      this.selectedCase = caseType
-      this.caseContent = null
-      this.caseContentDialog = true
-      const fetchUrl = '' // import.meta.env.VITE_FLAPI_URL + '/case-content/' + caseType
-      try {
-        const response = await axios.get(fetchUrl)
-        this.caseContent = response.data.skins
-      } catch (e) {
-        console.error('flAPI error:', e)
-      }
     },
     sleep(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms))
@@ -162,9 +116,8 @@ export default {
       this.$nextTick(() => {
         this.isSpinning = true
 
-        const rawIndex = this.skins.randomSelectedSkinIndex
-        const listLength = this.skins.selectedSkins.length
-        this.targetIndex = rawIndex + listLength
+        const listLength = this.rouletteSkins.length
+        this.targetIndex = this.resultIndex + listLength
 
         const maxRandom = this.cardWidth * 0.45
         const minRandom = -this.cardWidth * 0.45
@@ -193,18 +146,10 @@ export default {
     },
 
     async playResultAnimations() {
-      this.displayLevel = 0
       this.displayPrice = 0
-
-      // Get target values (Add safety checks)
-      const targetLevel = this.skins.updatedSkin.currentLvl || 1
-      // NOTE: Replace 'value' with the actual property name for price/flopos from your API
-      const targetPrice = this.skins.updatedSkin.currentPrice || 0
-
+      const targetPrice = this.resultSkin?.price || 0
       await this.sleep(300)
-
-      this.animateNumber('displayLevel', 0, targetLevel, 1500)
-      this.animateNumber('displayPrice', 0, targetPrice, 2000)
+      this.animateNumber('displayPrice', 0, targetPrice, 1000)
     },
 
     animateNumber(property, start, end, duration) {
@@ -212,31 +157,13 @@ export default {
       const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp
         const progress = Math.min((timestamp - startTimestamp) / duration, 1)
-
-        // Easing function (easeOutExpo) for a "cool" slowing down effect
         const ease = (x) => (x === 1 ? 1 : 1 - Math.pow(2, -10 * x))
-
         this[property] = Math.floor(ease(progress) * (end - start) + start)
-
         if (progress < 1) {
           window.requestAnimationFrame(step)
         }
       }
       window.requestAnimationFrame(step)
-    },
-    getRegionColor(region) {
-      switch (region) {
-        case 'vct-am':
-          return '#FF570C'
-        case 'vct-emea':
-          return '#D5FF1D' // Lime Green
-        case 'vct-pcf':
-          return '#01D2D7' // Orange Red
-        case 'vct-cn':
-          return '#E73056' // Gold
-        default:
-          return '#FFFFFF' // White as fallback
-      }
     },
   },
 }
@@ -246,155 +173,57 @@ export default {
   <CoinsCounter />
   <v-layout class="w-100">
     <v-main
-      class="d-flex justify-center flex-wrap flex-md-nowrap pt-16"
-      style="place-items: start; place-content: start; gap: 2em"
+      class="d-flex justify-center flex-wrap pt-16"
+      style="place-items: start; place-content: center; gap: 2em"
     >
-      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
-        <v-card-item class="px-4 py-4">
-          <v-img
-            src="cases/standard-png.png"
-            rounded="lg"
-            width="100%"
-            height="150px"
-            :style="`background: radial-gradient(circle at 70% 170%, #5A9FE2, transparent 100%)`"
-          />
-          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px">Standard&nbsp;Case</h2>
-            <p class="text-secondary">
-              500&nbsp;Coins&nbsp;&nbsp;<v-icon
-                class="mdi mdi-information-outline"
-                size="20"
-                @click="getCaseContent('standard')"
-              />
-            </p>
-          </div>
-        </v-card-item>
-        <v-card-item class="pb-3">
-          <v-btn
-            block
-            :loading="loading"
-            color="primary"
-            rounded="lg"
-            :disabled="user?.coins < 500 || loading"
-            @click="fetchCase('standard')"
-            >Ouvrir</v-btn
-          >
-        </v-card-item>
-      </v-card>
-
-      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
-        <v-card-item class="px-4 py-4">
-          <v-img
-            src="cases/premium-png.png"
-            rounded="lg"
-            width="100%"
-            height="150px"
-            :style="`background: radial-gradient(circle at 70% 170%, #D1548D, transparent 100%)`"
-          />
-          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px">Premium&nbsp;Case</h2>
-            <p class="text-secondary">
-              750&nbsp;Coins&nbsp;&nbsp;<v-icon
-                class="mdi mdi-information-outline"
-                size="20"
-                @click="getCaseContent('premium')"
-              />
-            </p>
-          </div>
-        </v-card-item>
-        <v-card-item class="pb-3">
-          <v-btn
-            block
-            :loading="loading"
-            color="primary"
-            rounded="lg"
-            :disabled="user?.coins < 750 || loading"
-            @click="fetchCase('premium')"
-            >Ouvrir</v-btn
-          >
-        </v-card-item>
-      </v-card>
-
-      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
-        <v-card-item class="px-4 py-4">
-          <v-img
-            src="cases/ultra-png.png"
-            rounded="lg"
-            width="100%"
-            height="150px"
-            :style="`background: radial-gradient(circle at 70% 170%, #F5955B, transparent 100%)`"
-          />
-          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px">Ultra Case</h2>
-            <p class="text-secondary">
-              1500&nbsp;Coins&nbsp;&nbsp;<v-icon
-                class="mdi mdi-information-outline"
-                size="20"
-                @click="getCaseContent('ultra')"
-              />
-            </p>
-          </div>
-        </v-card-item>
-        <v-card-item class="pb-3">
-          <v-btn
-            block
-            :loading="loading"
-            color="primary"
-            rounded="lg"
-            :disabled="user?.coins < 1500 || loading"
-            @click="fetchCase('ultra')"
-            >Ouvrir</v-btn
-          >
-        </v-card-item>
-      </v-card>
-
-      <v-card color="#1A1A1A" disabled rounded="xl" class="w-33 px-0" style="min-width: 225px">
+      <v-switch
+        v-model="skipAnimation"
+        density="compact"
+        hide-details
+        :label="'Skip Animation : ' + (skipAnimation ? 'ON' : 'OFF')"
+        color="primary"
+        style="position: fixed; bottom: 10px; right: 10px; transform: scale(0.75); width: 200px"
+      ></v-switch>
+      <v-card color="#1A1A1A" rounded="xl" class="px-0" style="min-width: 280px; max-width: 400px">
         <v-card-item class="px-4 py-4">
           <div
+            rounded="lg"
             style="
-              max-height: 150px;
               width: 100%;
+              height: 180px;
               border-radius: 12px;
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              grid-template-rows: repeat(2, 1fr);
+              background: radial-gradient(circle at 50% 120%, #4b69ff 0%, #1a1a1a 70%);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: relative;
               overflow: hidden;
             "
           >
-            <v-img
-              src="vct_logos/vct-emea.png"
-              width="100%"
-              max-height="75px"
-              :style="`background: radial-gradient(circle at -200% -200%, ${getRegionColor('vct-emea')}, transparent 100%);`"
-            />
-            <v-img
-              src="vct_logos/vct-am.png"
-              width="100%"
-              max-height="75px"
-              :style="`background: radial-gradient(circle at 300% -200%, ${getRegionColor('vct-am')}, transparent 100%)`"
-            />
-            <v-img
-              src="vct_logos/vct-pcf.png"
-              width="100%"
-              max-height="75px"
-              :style="`background: radial-gradient(circle at -200% 300%, ${getRegionColor('vct-pcf')}, transparent 100%)`"
-            />
-            <v-img
-              src="vct_logos/vct-cn.png"
-              width="100%"
-              max-height="75px"
-              :style="`background: radial-gradient(circle at 300% 300%, ${getRegionColor('vct-cn')}, transparent 100%)`"
-            />
+            <div
+              style="
+                font-size: 3em;
+                font-weight: 900;
+                opacity: 0.15;
+                letter-spacing: 0.1em;
+                user-select: none;
+              "
+            >
+              CS2
+            </div>
+            <div
+              style="
+                position: absolute;
+                bottom: 10px;
+                width: 60%;
+                height: 2px;
+                background: linear-gradient(to right, transparent, #4b69ff, transparent);
+              "
+            ></div>
           </div>
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4" style="width: 177px">Esport Case</h2>
-            <p class="text-secondary">
-              100&nbsp;Coins&nbsp;&nbsp;<v-icon
-                class="mdi mdi-information-outline"
-                size="20"
-                @click="getCaseContent('esport')"
-              />
-            </p>
+            <h2 class="mr-4">CS2 Case</h2>
+            <p class="text-secondary">{{ CS_CASE_PRICE }}&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -403,10 +232,54 @@ export default {
             :loading="loading"
             color="primary"
             rounded="lg"
-            :disabled="user?.coins < 100 || loading"
-            @click="fetchCase('esport')"
-            >Ouvrir</v-btn
+            :disabled="user?.coins < CS_CASE_PRICE || loading"
+            @click="openCase"
           >
+            Ouvrir
+          </v-btn>
+        </v-card-item>
+      </v-card>
+
+      <v-card
+        color="#1A1A1A"
+        rounded="xl"
+        variant="tonal"
+        class="px-0"
+        style="min-width: 280px; max-width: 400px"
+      >
+        <v-card-item class="px-4 py-4 text-secondary">
+          <div
+            rounded="lg"
+            style="
+              width: 100%;
+              height: 180px;
+              border-radius: 12px;
+              background: radial-gradient(circle at 50% 120%, #dddddd22 0%, #1a1a1a22 70%);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: relative;
+              overflow: hidden;
+            "
+          >
+            <div
+              style="
+                font-size: 3em;
+                font-weight: 900;
+                opacity: 0.15;
+                letter-spacing: 0.1em;
+                user-select: none;
+              "
+            >
+              ...
+            </div>
+          </div>
+          <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
+            <h2 class="mr-4">Bientôt disponible</h2>
+          </div>
+        </v-card-item>
+        <v-card-item class="pb-3">
+          <v-btn disabled block :loading="loading" color="primary" rounded="lg"> ... </v-btn>
         </v-card-item>
       </v-card>
     </v-main>
@@ -420,54 +293,7 @@ export default {
     ></v-btn>
   </v-layout>
 
-  <v-dialog v-model="caseContentDialog" class="modals" width="600" scrim="#181818">
-    <v-card color="#1A1A1A" rounded="xl" style="overflow-y: scroll; scrollbar-width: auto">
-      <v-card-title class="mx-2 pt-4">
-        Contenu de la caisse {{ selectedCase.toUpperCase() }}
-      </v-card-title>
-      <v-card-subtitle class="mx-2">
-        {{ caseContent ? caseContent.length + ' skins disponibles' : '' }}
-      </v-card-subtitle>
-      <v-card-item>
-        <div v-if="caseContent">
-          <div
-            v-for="skin in caseContent"
-            :key="skin.uuid + '-case-content'"
-            class="d-flex align-center"
-            :style="`
-              background: radial-gradient(circle at -50% -50%, ${skin.isVCT ? getRegionColor(skin.vctRegion) : skin.isChampions ? '#ffd700' : skin.isMelee ? '#000' : '#' + skin.tierColor}, transparent 80%);
-              border-radius: 12px; margin-bottom: .5em; padding: .2em 1em;
-              border: 2px solid ${skin.isChampions ? '#ffd700' : skin.isMelee ? '#aaaaaaaa' : 'none'};
-            `"
-          >
-            <v-img
-              :src="skin.displayIcon"
-              min-width="100px"
-              max-width="100px"
-              height="50px"
-              class="ma-2"
-            />
-            <p
-              class="font-weight-bold text-pretty"
-              style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden"
-            >
-              {{ skin.displayName }}
-            </p>
-            <v-spacer></v-spacer>
-            <p>
-              <span class="ml-2 font-weight-bold" style="white-space: nowrap"
-                >{{ skin.basePrice }}&nbsp;-&nbsp;{{ skin.maxPrice }}</span
-              >&nbsp;Flopos
-            </p>
-          </div>
-        </div>
-        <div v-else class="w-100 d-flex justify-center align-center pa-6">
-          <v-progress-circular indeterminate color="primary" class="ma-4" />
-        </div>
-      </v-card-item>
-    </v-card>
-  </v-dialog>
-
+  <!-- Roulette Dialog -->
   <v-dialog
     v-model="caseOpeningDialog"
     persistent
@@ -479,13 +305,13 @@ export default {
       color="#1A1A1A"
       rounded="xl"
       class="w-100 px-0"
-      :style="`box-shadow: inset 0 0 10px 2px ${caseColor};`"
+      style="box-shadow: inset 0 0 10px 2px #4b69ff"
     >
       <v-card-item class="px-0">
         <div ref="rouletteContainer" class="roulette-container">
           <div
             class="selector-line"
-            :style="`background: ${caseColor}; box-shadow: 0 0 10px 1px ${caseColor}99;`"
+            style="background: #4b69ff; box-shadow: 0 0 10px 1px #4b69ff99"
           ></div>
           <div
             class="roulette-rail"
@@ -498,33 +324,14 @@ export default {
           >
             <div
               v-for="(skin, index) in doubledSkins"
-              :key="skin.uuid + '_pos_' + index"
+              :key="'roulette_' + index"
               ref="skinCards"
               class="skin-card"
-              :class="{
-                'melee-skin-card': skin.isMelee,
-                'vct-skin-card': skin.isVCT,
-                'champions-skin-card': skin.isChampions,
-              }"
-              :style="
-                skin.isVCT
-                  ? `
-                background-image: url('vct_logos/${skin.vctRegion}.png');
-                border: 0px solid ${getRegionColor(skin.vctRegion)};
-                box-shadow: inset 0 0 20px 10px ${getRegionColor(skin.vctRegion)}55;
-              `
-                  : ``
-              "
             >
-              <v-img
-                :src="getImageUrl(skin)"
-                :lazy-src="skin.displayIcon"
-                width="100%"
-                max-height="100px"
-              />
+              <v-img :src="skin.imageUrl" width="100%" max-height="100px" />
               <div
                 class="skin-card-bg"
-                :style="`background: radial-gradient(circle at 0% 0%, #${skin.tierColor}, transparent 80%)`"
+                :style="`background: radial-gradient(circle at 0% 0%, ${getRarityColor(skin.rarity)}, transparent 80%)`"
               ></div>
             </div>
           </div>
@@ -533,10 +340,10 @@ export default {
     </v-card>
   </v-dialog>
 
+  <!-- Result Dialog -->
   <v-dialog v-model="skinResultDialog" class="modals" width="500" scrim="#181818" persistent>
-    <!-- v-if ensures we don't render before data exists -->
     <v-card
-      v-if="skins && skins.updatedSkin"
+      v-if="resultSkin"
       color="#1A1A1A"
       rounded="xl"
       class="overflow-hidden"
@@ -545,10 +352,10 @@ export default {
       <!-- Glow Background -->
       <div
         class="glow-bg"
-        :style="`background: radial-gradient(circle, #${skinsData[skins.updatedSkin.uuid]?.tierColor || 'fff'} 0%, transparent 100%);`"
+        :style="`background: radial-gradient(circle, ${getRarityColor(resultSkin.rarity)} 0%, transparent 100%);`"
       ></div>
 
-      <v-card-item class="px-14 pt-10 pb-0">
+      <v-card-item class="w-100 px-10 pt-8 pb-0">
         <div
           v-motion
           :initial="{ opacity: 0, scale: 0.5, y: 50 }"
@@ -558,100 +365,96 @@ export default {
             y: 0,
             transition: { type: 'spring', stiffness: 250, damping: 15, mass: 1 },
           }"
-          class="mb-6 relative-container w-100"
-          style="min-width: 100% !important; display: flex; justify-content: center"
+          class="mb-4 relative-container w-100"
+          style="display: flex; justify-content: center"
         >
           <v-img
-            :src="getPreciseImageUrl(skins.updatedSkin)"
+            :src="resultSkin.imageUrl"
             width="100%"
-            height="250px"
+            height="20vh"
+            max-height="250px"
             style="filter: drop-shadow(0 0 5px #333)"
-          ></v-img>
+          />
         </div>
       </v-card-item>
 
       <v-card-item
-        class="d-flex flex-column align-center justify-center pt-0 pb-6 text-center"
+        class="result-card-item w-100 d-flex flex-column align-center justify-center pt-0 pb-6 text-center"
         style="z-index: 2"
       >
-        <!-- TITLE: Slide Up -->
+        <!-- Title -->
         <div
           v-motion
           :initial="{ opacity: 0, y: 20 }"
           :enter="{ opacity: 1, y: 0, transition: { delay: 300, duration: 500 } }"
+          class="w-100"
         >
-          <h2 class="text-h4 font-weight-bold text-white mb-1 text-pretty" style="min-width: 250px">
-            {{
-              skins.updatedSkin.displayName ||
-              skinsData[skins.updatedSkin.uuid]?.displayName ||
-              'Skin Name'
-            }}
+          <h2 class="w-100 text-h5 font-weight-bold text-white mb-1">
+            {{ resultSkin.displayName }}
           </h2>
+          <p class="text-grey" style="font-size: 0.9em">{{ resultSkin.weaponType }}</p>
         </div>
 
-        <v-row class="w-100 mt-2">
-          <!-- Level Counter -->
-          <v-col cols="6" class="text-center border-e border-grey-darken-3">
-            <div
-              v-motion
-              :initial="{ opacity: 0, scale: 0.8 }"
-              :enter="{ opacity: 1, scale: 1, transition: { delay: 500, duration: 400 } }"
-            >
-              <p class="text-caption text-uppercase text-grey">Level</p>
-              <div class="text-h6 font-weight-black text-primary">
-                {{ displayLevel }}
-                <span class="text-h6 text-grey-darken-1"
-                  >/ {{ skinsData[skins.updatedSkin.uuid]?.levels?.length || '?' }}</span
-                >
-              </div>
-            </div>
-          </v-col>
+        <!-- Badges -->
+        <div
+          v-motion
+          :initial="{ opacity: 0, y: 10 }"
+          :enter="{ opacity: 1, y: 0, transition: { delay: 400, duration: 400 } }"
+          class="d-flex justify-center ga-2 mt-2"
+        >
+          <v-chip v-if="resultSkin.isStattrak" color="orange" size="small" variant="flat">
+            StatTrak
+          </v-chip>
+          <v-chip v-if="resultSkin.isSouvenir" color="#ffd700" size="small" variant="flat">
+            Souvenir
+          </v-chip>
+          <v-chip :color="getRarityColor(resultSkin.rarity)" size="small" variant="flat">
+            {{ resultSkin.rarity }}
+          </v-chip>
+          <v-chip size="small" variant="flat">
+            {{ resultSkin.wearState }}
+          </v-chip>
+        </div>
 
-          <!-- Price/Value Counter -->
+        <!-- Stats Row -->
+        <v-row class="w-100 mt-1 mx-0">
           <v-col cols="6" class="text-center">
             <div
               v-motion
               :initial="{ opacity: 0, scale: 0.8 }"
               :enter="{ opacity: 1, scale: 1, transition: { delay: 600, duration: 400 } }"
             >
+              <p class="text-caption text-uppercase text-grey">Float</p>
+              <p class="text-h6 font-weight-bold" style="font-size: 1.2em !important">
+                {{ resultSkin.float?.toFixed(4) }}
+              </p>
+            </div>
+          </v-col>
+          <v-col cols="6" class="text-center">
+            <div
+              v-motion
+              :initial="{ opacity: 0, scale: 0.8 }"
+              :enter="{ opacity: 1, scale: 1, transition: { delay: 700, duration: 400 } }"
+            >
               <p class="text-caption text-uppercase text-grey">Valeur</p>
-              <div class="text-h6 font-weight-bold">
-                {{ displayPrice }}&nbsp;<span class="font-weight-thin" style="font-size: 0.7em"
-                  >Flopos</span
-                >
+              <div class="text-h6 font-weight-bold" style="font-size: 1.2em !important">
+                {{ displayPrice }}
+                <span class="font-weight-thin" style="font-size: 0.9em">Flopos</span>
               </div>
             </div>
           </v-col>
         </v-row>
-        <div v-if="skinsData[skins.updatedSkin.uuid]?.chromas?.length > 1">
-          <p class="text-caption text-uppercase text-grey mt-4">Chroma</p>
-          <div class="d-flex justify-center mt-2" style="gap: 1em">
-            <div
-              v-for="(chroma, index) in skinsData[skins.updatedSkin.uuid].chromas"
-              :key="chroma.uuid || index"
-            >
-              <v-img
-                v-if="chroma.swatch"
-                v-motion
-                :src="chroma.swatch"
-                class="rounded-lg"
-                width="40px"
-                height="40px"
-                :style="`${index + 1 === skins.updatedSkin.currentChroma ? 'border: 3px solid #' + skins.updatedSkin.tierColor : ''}`"
-                :initial="{ opacity: 0, y: 20 }"
-                :enter="{
-                  opacity: 1,
-                  y: 0,
-                  transition: {
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 20,
-                    // 800ms base delay (waits for main card animations) + 100ms per item
-                    delay: 800 + index * 100,
-                  },
-                }"
-              />
-            </div>
+
+        <!-- Float Bar -->
+        <div
+          v-if="resultSkin.float != null"
+          v-motion
+          :initial="{ opacity: 0 }"
+          :enter="{ opacity: 1, transition: { delay: 800, duration: 500 } }"
+          class="w-100 mt-3 px-4"
+        >
+          <div class="float-bar-track">
+            <div class="float-bar-marker" :style="{ left: `${resultSkin.float * 100}%` }"></div>
           </div>
         </div>
       </v-card-item>
@@ -684,12 +487,10 @@ export default {
 </template>
 
 <style scoped>
-.box {
-  width: 100px !important;
-  height: 100px !important;
-  background-color: #0cdcf7;
-  border-radius: 5px;
+.result-card-item :deep(.v-card-item__content) {
+  width: 100%;
 }
+
 .back-btn {
   position: absolute;
   top: 1rem;
@@ -728,7 +529,6 @@ export default {
   margin-right: 10px;
   flex-shrink: 0;
   border-radius: 20px;
-
   height: 200px;
   padding: 0.5em;
   border: 1px solid #444;
@@ -740,7 +540,7 @@ export default {
   color: white;
   user-select: none;
   pointer-events: none;
-  background-color: #181818; /* Default fallback */
+  background-color: #181818;
   transition: all 0.3s ease;
 }
 
@@ -761,118 +561,6 @@ export default {
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }
 
-.melee-skin-card {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-  background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
-}
-
-/* Hide the default color blob for melee to make it look 'stealthy/premium' */
-.melee-skin-card .skin-card-bg {
-  opacity: 0.2;
-  mix-blend-mode: color-dodge;
-}
-
-/* The sweeping shine animation */
-.melee-skin-card::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    to bottom right,
-    transparent,
-    transparent,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent,
-    transparent,
-    transparent
-  );
-  transform: rotate(45deg) translateY(-100%);
-  animation: shine-sweep 10s infinite cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
-  z-index: 3;
-}
-
-@keyframes shine-sweep {
-  0% {
-    transform: rotate(70deg) translateY(-450px);
-  }
-  20% {
-    transform: rotate(70deg) translateY(250px);
-  } /* Fast sweep */
-  100% {
-    transform: rotate(70deg) translateY(450px);
-  } /* Wait */
-}
-
-/* --- 2. VCT EFFECTS (Custom Image) --- */
-.vct-skin-card {
-  /* Replace with your actual VCT background image path */
-  background-size: 80%;
-  background-position: center;
-}
-
-/* Darken the image so the gun pops */
-.vct-skin-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 25, 35, 0.1); /* VCT Dark Blue overlay */
-  z-index: 1;
-}
-
-.vct-skin-card .skin-card-bg {
-  display: none; /* Hide default tier color, use image instead */
-}
-
-/* --- 3. CHAMPIONS EFFECTS (Golden Flow) --- */
-.champions-skin-card {
-  border: 2px solid #ffd700;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-  /* The animated gradient background */
-  background: linear-gradient(
-    120deg,
-    #2b2005 0%,
-    #634f11 25%,
-    #ffd700 50%,
-    #634f11 75%,
-    #2b2005 100%
-  );
-  background-size: 200% 200%;
-  animation: gold-flow 4s ease infinite;
-}
-
-.champions-skin-card .skin-card-bg {
-  display: none; /* Hide default tier color */
-}
-
-@keyframes gold-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Add some sparkles/dust to champions */
-.champions-skin-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(white 1px, transparent 1px);
-  background-size: 20px 20px;
-  opacity: 0.2;
-  z-index: 1;
-}
-
 .glow-bg {
   position: absolute;
   top: 30%;
@@ -880,7 +568,7 @@ export default {
   transform: translate(-50%, -50%);
   width: 300px;
   height: 300px;
-  opacity: 0.3; /* Increased slightly for visibility */
+  opacity: 0.3;
   filter: blur(50px);
   pointer-events: none;
   z-index: 0;
@@ -888,9 +576,8 @@ export default {
 }
 
 .relative-container {
-  /* Continuous float animation */
   animation: float 4s ease-in-out infinite;
-  animation-delay: 1.2s; /* Wait for enter animation to finish */
+  animation-delay: 1.2s;
 }
 
 @keyframes float {
@@ -905,7 +592,26 @@ export default {
   }
 }
 
-/* Ensure dialog overflow is visible for the glow */
+/* Float bar */
+.float-bar-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #4caf50, #8bc34a, #cddc39, #ffeb3b, #ff9800, #f44336);
+  position: relative;
+}
+
+.float-bar-marker {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 12px;
+  background: white;
+  border-radius: 1px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+}
+
 :deep(.v-overlay__content) {
   overflow: visible !important;
 }

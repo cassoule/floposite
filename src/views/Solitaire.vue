@@ -1,5 +1,6 @@
 <!-- Solitaire.vue -->
 <template>
+  <CoinsCounter />
   <v-layout class="w-100 mt-16">
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="height: 130vh">
       <div class="w-100">
@@ -361,6 +362,7 @@ import api from '../services/api'
 import axios from 'axios'
 import { getAllCardImagePaths } from '../utils/cardImages.js'
 import { io } from 'socket.io-client'
+import CoinsCounter from '../components/CoinsCounter.vue'
 
 function getRankValue(rank) {
   if (rank === 'A') return 1
@@ -379,6 +381,7 @@ export default {
   name: 'Solitaire',
   components: {
     Pile,
+    CoinsCounter,
   },
   data() {
     return {

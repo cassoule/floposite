@@ -18,6 +18,7 @@ import SnakeVersus from '../views/SnakeVersus.vue'
 import PaymentSuccess from '../views/PaymentSuccess.vue'
 import CGV from '../views/CGV.vue'
 import Privacy from '../views/Privacy.vue'
+import TradeUp from '../views/TradeUp.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -31,8 +32,9 @@ const routes = [
   { path: '/solitaire', component: Solitaire },
   { path: '/blackjack', component: Blackjack },
   { path: '/akhy/:id', component: AkhyStats },
-  //{ path: '/market', component: Market },
-  //{ path: '/cases', component: CaseOpening },
+  { path: '/market', component: Market },
+  { path: '/cases', component: CaseOpening },
+  { path: '/trade-up', component: TradeUp },
   { path: '/snake', component: SnakeMenu },
   { path: '/snake/solo', component: SnakeSolo },
   { path: '/snake/versus', component: SnakeVersus },

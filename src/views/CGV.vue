@@ -146,9 +146,7 @@
         </p>
 
         <h2 class="font-weight-bold">10. Propriété intellectuelle</h2>
-        <p>
-          FlopoBot, FlopoSite et FlopoCoins sont des créations originales de Milo Gourvest.
-        </p>
+        <p>FlopoBot, FlopoSite et FlopoCoins sont des créations originales de Milo Gourvest.</p>
 
         <h2 class="font-weight-bold">11. Modification des CGV</h2>
         <p>

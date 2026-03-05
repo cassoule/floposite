@@ -188,6 +188,7 @@
       class="tabs w-100 mt-5"
     >
       <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
+      <v-tab class="new-tab" value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
       <v-tab v-if="user?.isAkhy" value="commandes" icon>
         <i class="mdi mdi-slash-forward-box" />
       </v-tab>
@@ -414,6 +415,75 @@
                 rounded="lg"
                 style="border-radius: 10px !important"
                 @click="$router.push('/snake')"
+              />
+            </v-card-text>
+          </v-card>
+        </div>
+      </v-tabs-window-item>
+
+      <v-tabs-window-item value="skins">
+        <div class="actions-container">
+          <v-card class="game-action-card bg-black" variant="tonal" @click="$router.push('/cases')">
+            <v-card-title> Caisses </v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Ouvre des caisses pour obtenir des skins rares et uniques.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Caisses"
+                class="text-none"
+                append-icon="mdi-gift-open-outline"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/cases')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card
+            class="game-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/market')"
+          >
+            <v-card-title> FlopoMarket </v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Vends tes skins au enchères ou achètes-en de nouveaux pour ta collection.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Market"
+                class="text-none"
+                append-icon="mdi-cart-variant"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/market')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card
+            class="game-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/trade-up')"
+          >
+            <v-card-title> Trade Up </v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Améliore tes skins en les combinant pour obtenir des versions plus rares.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Upgrade"
+                class="text-none"
+                append-icon="mdi-swap-vertical"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/trade-up')"
               />
             </v-card-text>
           </v-card>
@@ -670,12 +740,7 @@
         </div>
       </v-tabs-window-item>
     </v-tabs-window>
-
-    <p v-if="tab === 'skins'" class="d-flex mt-2" style="place-items: center">
-      Valeur totale : {{ formatAmount(inventoryValue?.toFixed(0)) }}
-      <v-img src="star.svg" class="ml-2" min-width="12px" max-width="12px" height="12px" />
-    </p>
-    <p v-else class="d-flex mt-2" style="place-items: center">
+    <p class="d-flex mt-2" style="place-items: center">
       {{ formatAmount(user?.coins) }} Flopos
       <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
     </p>
@@ -1110,12 +1175,20 @@
           <template #label>
             <p class="text-left">
               J'ai lu et j'accepte les
-              <a href="/cgv" target="_blank" style="color: #5865f2 !important; text-decoration: none; font-size: 1em;">
-                Conditions Générales de Vente
-              </a>, ainsi que la
-              <a href="/privacy" target="_blank" style="color: #5865f2 !important; text-decoration: none; font-size: 1em ">
-                Politique de Confidentialité
-              </a>et je renonce expressément à mon droit de rétractation.
+              <a
+                href="/cgv"
+                target="_blank"
+                style="color: #5865f2 !important; text-decoration: none; font-size: 1em"
+              >
+                Conditions Générales de Vente </a
+              >, ainsi que la
+              <a
+                href="/privacy"
+                target="_blank"
+                style="color: #5865f2 !important; text-decoration: none; font-size: 1em"
+              >
+                Politique de Confidentialité </a
+              >et je renonce expressément à mon droit de rétractation.
             </p>
           </template>
         </v-checkbox>
@@ -3021,5 +3094,14 @@ button:disabled {
     background: rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 0 10px 0 #dddddd22 !important;
   }
+}
+
+.new-tab::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #5865f2, transparent 100%);
+  z-index: -1;
 }
 </style>

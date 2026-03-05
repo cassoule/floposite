@@ -1,4 +1,5 @@
 <template>
+  <CoinsCounter />
   <v-layout>
     <v-main
       class="d-flex"
@@ -64,9 +65,14 @@
 <script>
 /* global localStorage, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame */
 import axios from 'axios'
+import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
   name: 'SnakeSolo',
+
+  components: {
+    CoinsCounter,
+  },
 
   data() {
     return {
@@ -327,9 +333,9 @@ export default {
 
         // Increase speed slightly every 5 foods
         //if (this.score % 5 === 0 && this.gameSpeed > 50) {
-        this.gameSpeed -= 1
-        this.stopGameLoop()
-        this.startGameLoop()
+        //this.gameSpeed -= 1
+        //this.stopGameLoop()
+        //this.startGameLoop()
         //}
       } else {
         // Remove tail if no food eaten
