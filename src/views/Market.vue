@@ -871,8 +871,8 @@ export default {
           variant="outlined"
           rounded="xl"
           control-variant="hidden"
-          :min="getOfferLastPrice(selectedOffer) + 10"
-          :hint="'Minimum : ' + (getOfferLastPrice(selectedOffer) + 10) + ' Coins'"
+          :min="getOfferLastPrice(selectedOffer) + 1"
+          :hint="'Minimum : ' + (getOfferLastPrice(selectedOffer) + 1) + ' Coins'"
         >
           <template #append-inner>
             <p>Coins</p>

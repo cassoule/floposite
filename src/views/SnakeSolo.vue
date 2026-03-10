@@ -7,13 +7,50 @@
     >
       <div class="game-container">
         <div class="game-header">
-          <v-card class="score-section" variant="tonal" rounded="xl">
-            <v-card-text>
+          <v-card class="score-section" variant="tonal" rounded="xl" style="min-width: 165px">
+            <v-card-text class="mb-0 pb-0 px-3 d-flex align-baseline justify-space-between">
               <h3 class="text-white">
-                Score : <span class="font-weight-bold">{{ score }}</span>
+                Score: <span class="font-weight-bold">{{ score }}</span>
               </h3>
-              <p class="text-white-50">Meilleur : {{ highScore }}</p>
+              <p class="text-white-50">PB: {{ highScore }}</p>
             </v-card-text>
+            <v-card-actions class="mt-0 pt-2 pb-1 justify-space-between">
+              <p
+                style="
+                  background: #dddddd22;
+                  padding: 0.3em 0.5em;
+                  border-radius: 20px;
+                  display: flex;
+                  justify-content: space-around;
+                "
+              >
+                <v-icon
+                  :class="
+                    gameSettings.speed === 'Slow'
+                      ? 'mdi mdi-tortoise'
+                      : gameSettings.speed === 'Default'
+                        ? 'mdi mdi-snake'
+                        : 'mdi mdi-rabbit'
+                  "
+                ></v-icon>
+                <v-icon :class="'mdi mdi-numeric-' + gameSettings.apples + '-circle'"></v-icon>
+                <v-icon
+                  v-if="gameSettings.cells !== 10"
+                  :class="gameSettings.cells === 7 ? 'mdi mdi-square-small' : 'mdi mdi-square'"
+                ></v-icon>
+                <v-icon v-if="gameSettings.mode === 'Walls'" class="mdi mdi-wall"></v-icon>
+              </p>
+              <v-btn
+                class="text-none"
+                color="white"
+                rounded="xl"
+                variant="tonal"
+                icon="mdi-cog"
+                size="x-small"
+                @click="optionsDialog = true"
+              >
+              </v-btn>
+            </v-card-actions>
           </v-card>
           <div v-if="!gameStarted && !gameOver" class="start-message">
             <p v-if="!isScreenTooSmall" class="text-white">
@@ -22,8 +59,8 @@
             <p v-else class="text-white">Ton écran est trop petit</p>
           </div>
           <div v-if="gameOver" class="game-over-message">
-            <h3 v-if="isWin" class="text-white mb-2" style="font-size: 2em">Victoire !</h3>
-            <h3 v-else class="text-white mb-2">Game Over</h3>
+            <h3 v-if="isWin" class="text-white mb-2" style="font-size: 1.5em">Victoire !</h3>
+            <h3 v-else class="text-white mb-2" style="font-size: 1.5em">Game Over</h3>
             <p class="text-white mb-3" style="font-size: 1.3em">
               <span class="text-secondary">Score :</span>&nbsp;<span class="font-weight-bold">
                 {{ score }}
@@ -43,6 +80,12 @@
             class="bg-canvas"
           ></canvas>
           <canvas
+            ref="itemsCanvas"
+            :width="canvasWidth"
+            :height="canvasHeight"
+            class="items-canvas"
+          ></canvas>
+          <canvas
             ref="gameCanvas"
             :width="canvasWidth"
             :height="canvasHeight"
@@ -52,12 +95,138 @@
       </div>
     </v-main>
 
+    <v-dialog v-model="optionsDialog" class="modals" width="400" persistent>
+      <v-card class="modal-card text-white bg-dark" rounded="xl">
+        <v-card-title class="text-h5">Options</v-card-title>
+        <v-card-item>
+          <v-chip-group v-model="gameSettings.speed" mandatory>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-tortoise"
+              size="large"
+              value="Slow"
+            >
+              Lent
+            </v-chip>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-snake"
+              size="large"
+              value="Default"
+            >
+              Normal
+            </v-chip>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-rabbit"
+              size="large"
+              value="Fast"
+            >
+              Rapide
+            </v-chip>
+          </v-chip-group>
+          <v-chip-group v-model="gameSettings.cells" mandatory>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-square-small"
+              size="large"
+              :value="7"
+            >
+              Petit
+            </v-chip>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-square-medium"
+              size="large"
+              :value="10"
+            >
+              Normal
+            </v-chip>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-square"
+              size="large"
+              :value="16"
+            >
+              Grand
+            </v-chip>
+          </v-chip-group>
+          <v-chip-group v-model="gameSettings.apples" mandatory>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-numeric-1-circle"
+              size="large"
+              :value="1"
+            >
+              pomme
+            </v-chip>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-numeric-2-circle"
+              size="large"
+              :value="2"
+            >
+              pommes
+            </v-chip>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-numeric-3-circle"
+              size="large"
+              :value="3"
+            >
+              pommes
+            </v-chip>
+          </v-chip-group>
+          <v-chip-group v-model="gameSettings.mode" mandatory>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-snake"
+              size="large"
+              value="Classic"
+            >
+              Classique
+            </v-chip>
+            <v-chip
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-wall"
+              size="large"
+              value="Walls"
+            >
+              Murs
+            </v-chip>
+          </v-chip-group>
+        </v-card-item>
+        <v-card-actions>
+          <v-btn
+            color="white"
+            rounded="lg"
+            variant="tonal"
+            @click="resetGame"
+            @click.stop="optionsDialog = false"
+          >
+            Fermer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-btn
       class="back-btn text-none"
       text="Retour"
       variant="tonal"
       color="#ddd"
-      @click="$router.push('/snake')"
+      @click="$router.push('/')"
     ></v-btn>
   </v-layout>
 </template>
@@ -84,7 +253,8 @@ export default {
       prevSnake: [], // Track previous frame for interpolation
       direction: 'RIGHT',
       directionQueue: [],
-      food: null,
+      foods: [],
+      walls: [],
       score: 0,
       highScore: 0,
       gameStarted: false,
@@ -92,11 +262,26 @@ export default {
       isWin: false,
       gameLoop: null,
       renderLoop: null,
-      gameSpeed: 150, // milliseconds per frame
+      gameSpeed: 160, // milliseconds per frame
       lastUpdateTime: 0,
       lastRenderTime: 0,
       targetFps: 60,
       needsRender: true,
+
+      optionsDialog: false,
+
+      gameSettings: {
+        speed: 'Default',
+        apples: 1,
+        cells: 10,
+        mode: 'Classic',
+      },
+
+      speedSettings: {
+        Slow: 190,
+        Default: 160,
+        Fast: 130,
+      },
 
       windowWidth: window.innerWidth,
       windowHeight: window.innerHeight,
@@ -121,6 +306,7 @@ export default {
     this.initGame()
     this.setupKeyboardControls()
     this.drawStaticBackground()
+    this.drawItems()
     this.drawGame()
 
     window.addEventListener('resize', this.handleResize)
@@ -140,6 +326,7 @@ export default {
     },
 
     initGame() {
+      this.gridSize = this.canvasWidth / this.gameSettings.cells
       // Initialize snake in the middle
       const startX = Math.floor(this.canvasWidth / this.gridSize / 2)
       const startY = Math.floor(this.canvasHeight / this.gridSize / 2)
@@ -155,7 +342,9 @@ export default {
       this.score = 0
       this.gameOver = false
       this.isWin = false
-      this.spawnFood()
+      this.foods = []
+      this.walls = []
+      this.spawnFoods()
     },
 
     setupKeyboardControls() {
@@ -227,6 +416,7 @@ export default {
     startGame() {
       if (this.gameStarted || this.isScreenTooSmall) return
 
+      this.gameSpeed = this.speedSettings[this.gameSettings.speed]
       this.gameStarted = true
       this.startGameLoop()
     },
@@ -323,27 +513,33 @@ export default {
         return
       }
 
+      // Check wall block collision
+      if (this.walls.some((w) => w.x === head.x && w.y === head.y)) {
+        this.endGame()
+        return
+      }
+
       // Add new head
       this.snake.unshift(head)
 
       // Check food collision
-      if (head.x === this.food.x && head.y === this.food.y) {
+      const eatenIndex = this.foods.findIndex((f) => f.x === head.x && f.y === head.y)
+      if (eatenIndex !== -1) {
         this.score++
-        this.spawnFood()
-
-        // Increase speed slightly every 5 foods
-        //if (this.score % 5 === 0 && this.gameSpeed > 50) {
-        //this.gameSpeed -= 1
-        //this.stopGameLoop()
-        //this.startGameLoop()
-        //}
+        this.foods.splice(eatenIndex, 1)
+        // Spawn a wall every 2 food eaten in Walls mode
+        if (this.gameSettings.mode === 'Walls' && this.score % 2 === 0) {
+          this.spawnWall()
+        }
+        this.spawnFoods()
+        this.drawItems()
       } else {
         // Remove tail if no food eaten
         this.snake.pop()
       }
     },
 
-    spawnFood() {
+    spawnFoods() {
       const maxX = this.canvasWidth / this.gridSize
       const maxY = this.canvasHeight / this.gridSize
       const totalCells = maxX * maxY
@@ -355,20 +551,74 @@ export default {
         return
       }
 
-      let newFood
-      do {
-        newFood = {
-          x: Math.floor(Math.random() * maxX),
-          y: Math.floor(Math.random() * maxY),
-        }
-      } while (this.snake.some((segment) => segment.x === newFood.x && segment.y === newFood.y))
+      const target = this.gameSettings.apples
+      while (this.foods.length < target) {
+        // Stop if no free cells remain
+        if (this.snake.length + this.foods.length + this.walls.length >= totalCells) break
 
-      this.food = newFood
+        let newFood
+        do {
+          newFood = {
+            x: Math.floor(Math.random() * maxX),
+            y: Math.floor(Math.random() * maxY),
+          }
+        } while (
+          this.snake.some((s) => s.x === newFood.x && s.y === newFood.y) ||
+          this.foods.some((f) => f.x === newFood.x && f.y === newFood.y) ||
+          this.walls.some((w) => w.x === newFood.x && w.y === newFood.y)
+        )
+
+        this.foods.push(newFood)
+      }
+    },
+
+    spawnWall() {
+      const maxX = this.canvasWidth / this.gridSize
+      const maxY = this.canvasHeight / this.gridSize
+
+      // Build list of candidate positions
+      const available = []
+
+      for (let x = 0; x < maxX; x++) {
+        for (let y = 0; y < maxY; y++) {
+          // Must be at least 2 cells from every edge so corridors stay navigable
+          if (x < 1 || y < 1 || x > maxX - 2 || y > maxY - 2) continue
+
+          // All 8 neighbours must be wall-free
+          let tooClose = false
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              if (dx === 0 && dy === 0) continue
+              if (this.walls.some((w) => w.x === x + dx && w.y === y + dy)) {
+                tooClose = true
+                break
+              }
+            }
+            if (tooClose) break
+          }
+          if (tooClose) continue
+
+          // Not already occupied
+          if (this.walls.some((w) => w.x === x && w.y === y)) continue
+          if (this.snake.some((s) => s.x === x && s.y === y)) continue
+          if (this.foods.some((f) => f.x === x && f.y === y)) continue
+
+          available.push({ x, y })
+        }
+      }
+
+      if (available.length === 0) return
+
+      const pick = available[Math.floor(Math.random() * available.length)]
+      this.walls.push(pick)
     },
 
     drawStaticBackground() {
       const canvas = this.$refs.bgCanvas
-      if (!canvas) return
+      if (!canvas) {
+        console.error('Background canvas not found')
+        return
+      }
 
       const ctx = canvas.getContext('2d')
 
@@ -389,24 +639,17 @@ export default {
       ctx.stroke()
     },
 
-    drawGame() {
-      const canvas = this.$refs.gameCanvas
+    drawItems() {
+      const canvas = this.$refs.itemsCanvas
       if (!canvas) return
 
       const ctx = canvas.getContext('2d')
-
-      // Clear only the game layer (transparent)
       ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
 
-      // Calculate interpolation factor
-      const now = Date.now()
-      const timeSinceUpdate = now - this.lastUpdateTime
-      const progress = Math.min(timeSinceUpdate / this.gameSpeed, 1)
-
-      // Draw food as circle (much faster than emoji)
-      if (this.food) {
-        const x = this.food.x * this.gridSize + this.gridSize / 2
-        const y = this.food.y * this.gridSize + this.gridSize / 2
+      // Draw food as circles
+      for (const food of this.foods) {
+        const x = food.x * this.gridSize + this.gridSize / 2
+        const y = food.y * this.gridSize + this.gridSize / 2
         const radius = this.gridSize / 3
 
         ctx.fillStyle = '#ff4444'
@@ -420,6 +663,46 @@ export default {
         ctx.arc(x - radius / 3, y - radius / 3, radius / 3, 0, Math.PI * 2)
         ctx.fill()
       }
+
+      // Draw walls
+      for (const wall of this.walls) {
+        const wx = wall.x * this.gridSize
+        const wy = wall.y * this.gridSize
+        const padding = this.gridSize * 0.1
+
+        ctx.fillStyle = '#666'
+        ctx.fillRect(
+          wx + padding,
+          wy + padding,
+          this.gridSize - padding * 2,
+          this.gridSize - padding * 2,
+        )
+
+        // Inner darker square for depth
+        ctx.fillStyle = '#555'
+        const innerPad = this.gridSize * 0.2
+        ctx.fillRect(
+          wx + innerPad,
+          wy + innerPad,
+          this.gridSize - innerPad * 2,
+          this.gridSize - innerPad * 2,
+        )
+      }
+    },
+
+    drawGame() {
+      const canvas = this.$refs.gameCanvas
+      if (!canvas) return
+
+      const ctx = canvas.getContext('2d')
+
+      // Clear only the snake layer
+      ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+
+      // Calculate interpolation factor
+      const now = Date.now()
+      const timeSinceUpdate = now - this.lastUpdateTime
+      const progress = Math.min(timeSinceUpdate / this.gameSpeed, 1)
 
       // Draw snake with interpolation
       const snakeSegments = this.snake.map((segment, index) => {
@@ -594,10 +877,14 @@ export default {
     resetGame() {
       this.stopGameLoop()
       this.stopRenderLoop()
-      this.gameSpeed = 150
+      this.gameSpeed = this.speedSettings[this.gameSettings.speed]
       this.initGame()
       this.gameStarted = false
       this.needsRender = true
+      this.prevSnake = []
+      this.gameOver = false
+      this.drawStaticBackground()
+      this.drawItems()
       this.drawGame()
     },
 
@@ -670,6 +957,15 @@ export default {
   border-radius: 10px;
   background: #1a1a1a;
   box-shadow: 0 0 30px rgba(88, 98, 242, 0.3);
+}
+
+.items-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 3px solid transparent;
+  border-radius: 10px;
+  pointer-events: none;
 }
 
 .game-canvas {
