@@ -380,30 +380,20 @@
           </v-card>
 
           <v-card
-            v-if="
-              !gameCardsFilter ||
-              gameCardsFilter === 'Solo' ||
-              gameCardsFilter === 'Coins' ||
-              gameCardsFilter === 'Elo' ||
-              gameCardsFilter === '1v1'
-            "
+            v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'"
             class="game-action-card snake-action-card bg-black"
             variant="tonal"
-            @click="$router.push('/snake')"
+            @click="$router.push('/snake/solo')"
           >
             <v-card-title>
               Snake Game
               <v-chip-group style="float: right; pointer-events: none">
                 <v-chip size="small">Solo</v-chip>
                 <v-chip size="small">Coins</v-chip>
-                <v-chip size="small">1v1</v-chip>
-                <v-chip size="small" class="mr-0">Elo</v-chip>
               </v-chip-group>
             </v-card-title>
             <v-card-subtitle style="text-wrap: wrap">
-              <p>
-                Gagne des FlopoCoins en jouant au Snake en solo ou affronte un autre joueur en 1v1.
-              </p>
+              <p>Gagne des FlopoCoins en jouant au Snake en solo.</p>
             </v-card-subtitle>
             <v-card-text class="d-flex justify-end">
               <v-btn
@@ -414,7 +404,7 @@
                 variant="flat"
                 rounded="lg"
                 style="border-radius: 10px !important"
-                @click="$router.push('/snake')"
+                @click="$router.push('/snake/solo')"
               />
             </v-card-text>
           </v-card>
@@ -2078,11 +2068,12 @@ export default {
       })
 
       // Listen for data updates
-      this.socket.on('data-updated', (data) => {
+      this.socket.on('data-updated', async (data) => {
         // If we have userId and newCoins, update locally with animation
         if (data.userId && data.newCoins !== undefined) {
           this.updateUserCoinsLocally(data.userId, data.newCoins)
-          this.sparklines[data.userId] = this.getSparkline(data.userId)
+          this.sparklines[data.userId] = await this.getSparkline(data.userId)
+          console.log(this.sparklines)
         } else {
           // Fallback to full refresh if data format is unexpected
           this.getUsers()

@@ -19,6 +19,19 @@ axios.interceptors.request.use((config) => {
   return config
 })
 
+// Global axios interceptor: auto-logout on 401 responses
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('discordId')
+      router.push('/')
+    }
+    return Promise.reject(error)
+  }
+)
+
 const app = createApp(App)
 const pinia = createPinia()
 register()
