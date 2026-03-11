@@ -242,7 +242,7 @@ export default {
     if (!this.discordId) this.$router.push('/')
     // Make sure to replace with your actual API URL
     this.elo = await this.getElo(this.discordId)
-    this.socket = io(import.meta.env.VITE_FLAPI_URL.replace('/api', ''), {
+    this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
       withCredentials: false,
       auth: { token: localStorage.getItem('token') },
       extraHeaders: {
