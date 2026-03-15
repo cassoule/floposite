@@ -170,18 +170,18 @@
             <v-chip
               color="primary"
               variant="flat"
-              prepend-icon="mdi-numeric-2-circle"
+              prepend-icon="mdi-numeric-3-circle"
               size="large"
-              :value="2"
+              :value="3"
             >
               pommes
             </v-chip>
             <v-chip
               color="primary"
               variant="flat"
-              prepend-icon="mdi-numeric-3-circle"
+              prepend-icon="mdi-numeric-5-circle"
               size="large"
-              :value="3"
+              :value="5"
             >
               pommes
             </v-chip>
@@ -226,7 +226,7 @@
       text="Retour"
       variant="tonal"
       color="#ddd"
-      @click="$router.push('/')"
+      @click="$router.push('/dashboard')"
     ></v-btn>
   </v-layout>
 </template>

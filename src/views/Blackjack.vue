@@ -67,7 +67,7 @@
               <div class="d-flex align-center" style="gap: 0.5rem">
                 <v-img :src="me.avatar" width="40px" rounded="circle"></v-img>
                 <div>
-                  <div class="text-subtitle-2 font-weight-bold">{{ me.globalName }}</div>
+                  <div class="text-subtitle-2 font-weight-bold">{{ me.username }}</div>
                   <div class="meta" style="color: #777">
                     {{ formatAmount(me.bank) }} • Mise: {{ formatAmount(me.currentBet) }}
                   </div>
@@ -228,7 +228,7 @@
                 <v-img :src="p.avatar" max-width="40px" rounded="circle"></v-img>
                 <div class="player-info">
                   <div class="top">
-                    <span class="name" :class="{ me: p.id === discordId }">{{ p.globalName }}</span>
+                    <span class="name" :class="{ me: p.id === discordId }">{{ p.username }}</span>
                     <!-- Display status for the first hand in the sidebar, or iterate if desired -->
                     <v-chip size="x-small" variant="flat" :color="playerStatusColor(p.hands[0])">{{
                       playerHandStatusText(p.hands[0])
@@ -631,7 +631,7 @@ export default {
         timestamp: Date.now(),
         user: {
           id: this.discordId,
-          name: this.me?.globalName || 'Anonyme',
+          name: this.me?.username || 'Anonyme',
           avatar: this.me?.avatar || '',
         },
       })

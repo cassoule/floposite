@@ -178,7 +178,7 @@ export default {
                 if (index > 0) {
                   playerNames += ', '
                 }
-                playerNames += this.room.players[playerId].globalName
+                playerNames += this.room.players[playerId].username
               })
               this.showSuccessOrWarningToast(
                 `${data.playerIds.includes(this.discordId) ? `Tu as gagné ` : playerNames + (data.playerIds.length > 1 ? ' ont gagné ' : ' a gagné ')}${data.amount}`,
@@ -242,7 +242,7 @@ export default {
           userId: id,
           roomId: this.room.id,
         })
-        this.showSuccessOrWarningToast(`Joueur ${this.room.players[id].globalName} expulsé`, true)
+        this.showSuccessOrWarningToast(`Joueur ${this.room.players[id].username} expulsé`, true)
       } catch (e) {
         console.log(e)
       }
@@ -526,7 +526,7 @@ export default {
               </p>
               <p v-if="room?.current_player">
                 <span style="color: #dddddddd">Au tour de </span>
-                {{ room?.players[room?.current_player]?.globalName }}
+                {{ room?.players[room?.current_player]?.username }}
               </p>
             </div>
           </v-card>
@@ -574,7 +574,7 @@ export default {
                   height="20"
                   rounded="xl"
                 ></v-img>
-                {{ player.globalName }}
+                {{ player.username }}
                 <span
                   v-if="room.dealer === player.id"
                   style="
@@ -677,7 +677,7 @@ export default {
             <div v-if="Object.values(room?.queue).length > 0" class="mt-6 ml-6 d-flex flex-column">
               <p class="mb-3">File d'attente</p>
               <p v-for="player in room?.queue" :key="player.id" class="mb-3">
-                {{ player.globalName }}
+                {{ player.username }}
                 <button
                   v-if="discordId === room?.host_id"
                   :disabled="room?.current_turn !== 4 && room?.current_turn !== null"
