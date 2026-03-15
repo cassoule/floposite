@@ -19,6 +19,7 @@ import PaymentSuccess from '../views/PaymentSuccess.vue'
 import CGV from '../views/CGV.vue'
 import Privacy from '../views/Privacy.vue'
 import TradeUp from '../views/TradeUp.vue'
+import Inventory from '../views/Inventory.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -35,6 +36,7 @@ const routes = [
   { path: '/market', component: Market },
   { path: '/cases', component: CaseOpening },
   { path: '/trade-up', component: TradeUp },
+  { path: '/inventory', component: Inventory },
   { path: '/snake', component: SnakeMenu },
   { path: '/snake/solo', component: SnakeSolo },
   { path: '/snake/versus', component: SnakeVersus },

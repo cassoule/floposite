@@ -950,7 +950,7 @@ export default {
                       flex-direction: column;
                       place-items: center;
                       z-index: ${akhy.id === user.id ? '10' : '1'};`"
-                    :title="`${akhy?.globalName} - ${akhy?.elo}`"
+                    :title="`${akhy?.username} - ${akhy?.elo}`"
                     @click="goToUser(akhy.id)"
                   >
                     <v-img
@@ -1241,14 +1241,14 @@ export default {
                         class="username"
                         :title="
                           game.p1 === $route.params.id
-                            ? users.find((u) => u.id === game.p1)?.globalName
-                            : users.find((u) => u.id === game.p2)?.globalName
+                            ? users.find((u) => u.id === game.p1)?.username
+                            : users.find((u) => u.id === game.p2)?.username
                         "
                       >
                         {{
                           game.p1 === $route.params.id
-                            ? users.find((u) => u.id === game.p1)?.globalName
-                            : users.find((u) => u.id === game.p2)?.globalName
+                            ? users.find((u) => u.id === game.p1)?.username
+                            : users.find((u) => u.id === game.p2)?.username
                         }}
                       </h3>
                     </div>
@@ -1365,14 +1365,14 @@ export default {
                         class="username"
                         :title="
                           game.p1 === $route.params.id
-                            ? users.find((u) => u.id === game.p2)?.globalName
-                            : users.find((u) => u.id === game.p1)?.globalName
+                            ? users.find((u) => u.id === game.p2)?.username
+                            : users.find((u) => u.id === game.p1)?.username
                         "
                       >
                         {{
                           game.p1 === $route.params.id
-                            ? users.find((u) => u.id === game.p2)?.globalName
-                            : users.find((u) => u.id === game.p1)?.globalName
+                            ? users.find((u) => u.id === game.p2)?.username
+                            : users.find((u) => u.id === game.p1)?.username
                         }}
                       </h3>
                       <v-img
@@ -1457,22 +1457,14 @@ export default {
               </h2>
               <div class="d-flex ga-2">
                 <v-btn
+                  v-if="isOwnProfile"
                   color="primary"
                   rounded="lg"
                   class="text-none"
-                  prepend-icon="mdi-gift-open-outline"
-                  @click="$router.push('/cases')"
+                  prepend-icon="mdi-dots-horizontal"
+                  @click="$router.push('/inventory')"
                 >
-                  Caisses
-                </v-btn>
-                <v-btn
-                  color="primary"
-                  rounded="lg"
-                  class="text-none"
-                  prepend-icon="mdi-swap-vertical"
-                  @click="$router.push('/trade-up')"
-                >
-                  Trade Up
+                  Voir plus
                 </v-btn>
               </div>
             </div>

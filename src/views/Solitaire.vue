@@ -208,14 +208,14 @@
                       gap: 0.7em;
                       align-items: center;
                     "
-                    :title="'@' + stats.user.globalName"
+                    :title="'@' + stats.user.username"
                   >
                     <v-img
                       :src="stats.user.avatarUrl"
                       color="transparent"
                       style="border-radius: 50%; min-width: 30px; max-width: 30px; height: 30px"
                     />
-                    <p>@{{ stats.user.globalName }}</p>
+                    <p>@{{ stats.user.username }}</p>
                   </v-col>
                   <v-col cols="12" sm="0" order-sm="12" class="py-0 d-sm-none">
                     <v-divider

@@ -115,6 +115,7 @@ export default {
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5em 0.8em;
+  outline: 2px solid transparent;
 }
 
 .cs-skin-card:hover .cs-skin-image {
@@ -122,7 +123,7 @@ export default {
 }
 
 .cs-skin-card.selected {
-  outline: 2px solid #5865f2;
+  outline: 3px solid #5865f2;
   outline-offset: -2px;
 }
 
