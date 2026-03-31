@@ -2,12 +2,11 @@
 /* global localStorage */
 import { io } from 'socket.io-client'
 import axios from 'axios'
-import Toast from '@/components/Toast.vue'
 import { useToastStore } from '@/stores/toastStore.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 
 export default {
-  components: { CoinsCounter, Toast },
+  components: { CoinsCounter },
 
   setup() {
     const toastStore = useToastStore()
@@ -356,7 +355,7 @@ export default {
       @click="$router.push('/dashboard')"
     ></v-btn>
   </v-layout>
-  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
+
 </template>
 
 <style scoped>

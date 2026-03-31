@@ -1,14 +1,13 @@
 <script>
 import axios from 'axios'
 import CsSkinCard from '@/components/CsSkinCard.vue'
-import Toast from '@/components/Toast.vue'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { useToastStore } from '@/stores/toastStore.js'
 import { getRarityColor, TRADE_UP_LADDER } from '@/utils/csRarity.js'
 
 export default {
   name: 'Inventory',
-  components: { CsSkinCard, Toast, CoinsCounter },
+  components: { CsSkinCard, CoinsCounter },
 
   setup() {
     const toastStore = useToastStore()
@@ -356,7 +355,7 @@ export default {
     </v-card>
   </v-dialog>
 
-  <Toast v-if="toastStore.show" :key="toastStore.toastKey" />
+
 </template>
 
 <style scoped>

@@ -17,8 +17,19 @@
         <div class="shine"></div>
       </v-btn>
 
-      <p v-if="!flapi_ready" class="mt-5" style="color: #ddd">
-        FlopoBot n'est pas disponible pour le moment :(
+      <p v-if="maintenanceInfo?.scheduled" class="mt-5" style="color: #ddd">
+        ⏳ Maintenance prévue<span v-if="maintenanceInfo.remaining">
+          dans {{ maintenanceInfo.remaining }}</span
+        >
+      </p>
+
+      <p v-else-if="!flapi_ready" class="mt-5" style="color: #ddd">
+        <template v-if="maintenanceInfo?.active">
+          🔧 FlopoBot est en maintenance<span v-if="maintenanceInfo.remaining"
+            >, retour dans {{ maintenanceInfo.remaining }}</span
+          >
+        </template>
+        <template v-else> FlopoBot n'est pas disponible pour le moment :( </template>
       </p>
     </div>
   </div>
@@ -39,19 +50,16 @@
     <a href="/privacy">Politique de Confidentialité</a>
   </footer>
 
-  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
+
 </template>
 
 <script>
 /* global localStorage */
-import Toast from '@/components/Toast.vue'
 import { useToastStore } from '@/stores/toastStore.js'
 import axios from 'axios'
 import { io } from 'socket.io-client'
 
 export default {
-  components: { Toast },
-
   setup() {
     const toastStore = useToastStore()
 
@@ -64,6 +72,7 @@ export default {
     return {
       flapi_ready: false,
       discordId: null,
+      maintenanceInfo: null,
     }
   },
 
@@ -74,8 +83,8 @@ export default {
   },
 
   async mounted() {
-    //await this.checkFlapi()
     this.initSocket()
+    await this.checkFlapi()
   },
 
   methods: {
@@ -96,17 +105,50 @@ export default {
       this.socket.on('disconnect', () => {
         console.log('Disconnected from WebSocket server')
       })
+
+      this.socket.on('maintenance-update', (data) => {
+        if (data.active) {
+          this.maintenanceInfo = {
+            active: true,
+            remaining: this.formatRemaining(data.estimatedEnd),
+          }
+          this.flapi_ready = false
+        }
+      })
+
+      this.socket.on('maintenance-scheduled', (data) => {
+        if (data?.startsAt) {
+          this.maintenanceInfo = { scheduled: true, remaining: this.formatRemaining(data.startsAt) }
+        } else {
+          this.maintenanceInfo = null
+        }
+      })
     },
 
     handleLogin() {
       window.location = this.discordAuthUrl
     },
 
+    formatRemaining(timestamp) {
+      if (!timestamp) return null
+      const ms = timestamp - Date.now()
+      if (ms <= 0) return null
+      const totalSeconds = Math.ceil(ms / 1000)
+      if (totalSeconds < 60) return `${totalSeconds}s`
+      const minutes = Math.ceil(ms / 60000)
+      if (minutes >= 60) {
+        const hours = Math.floor(minutes / 60)
+        const mins = minutes % 60
+        return `${hours}h${mins > 0 ? mins.toString().padStart(2, '0') : ''}`
+      }
+      return `${minutes}min`
+    },
+
     async checkFlapi() {
       console.log('Checking flAPI...')
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/check'
       try {
-        await axios.get(fetchUrl, {
+        const response = await axios.get(fetchUrl, {
           headers: {
             'ngrok-skip-browser-warning': 'true',
             'Content-Type': 'application/json',
@@ -115,9 +157,22 @@ export default {
         })
         console.log('flAPI ready')
         this.flapi_ready = true
-      } catch {
+        // Check if a maintenance is scheduled
+        if (response.data.scheduledMaintenance) {
+          const { startsAt } = response.data.scheduledMaintenance
+          this.maintenanceInfo = { scheduled: true, remaining: this.formatRemaining(startsAt) }
+        }
+      } catch (err) {
         console.log('flAPI not ready')
         this.flapi_ready = false
+        if (err.response?.status === 503 && err.response?.data?.error === 'maintenance') {
+          this.maintenanceInfo = {
+            active: true,
+            remaining: this.formatRemaining(err.response.data.estimatedEnd),
+          }
+        } else {
+          this.maintenanceInfo = null
+        }
       }
       this.discordId = localStorage.getItem('discordId')
       const token = localStorage.getItem('token')

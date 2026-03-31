@@ -2,7 +2,6 @@
 /* global localStorage, setInterval, clearInterval */
 import axios from 'axios'
 import { useToastStore } from '@/stores/toastStore.js'
-import Toast from '@/components/Toast.vue'
 import { io } from 'socket.io-client'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { getRarityColor } from '@/utils/csRarity.js'
@@ -10,7 +9,7 @@ import { getRarityColor } from '@/utils/csRarity.js'
 export default {
   name: 'Market',
 
-  components: { CoinsCounter, Toast },
+  components: { CoinsCounter },
 
   setup() {
     const toastStore = useToastStore()
@@ -1037,7 +1036,7 @@ export default {
     </v-card>
   </v-dialog>
 
-  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
+
 </template>
 
 <style scoped>
