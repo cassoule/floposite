@@ -1,9 +1,44 @@
 const RANKS = [
-  { min: 1200, max: 1400, name: 'Bronze', icon: '/ranks_icons/bronze.svg', color: '#C58A48', divs: [1250, 1300, 1350] },
-  { min: 1400, max: 1600, name: 'Silver', icon: '/ranks_icons/silver.svg', color: '#BDC3C5', divs: [1450, 1500, 1550] },
-  { min: 1600, max: 1850, name: 'Gold', icon: '/ranks_icons/gold.svg', color: '#FED833', divs: [1663, 1725, 1788] },
-  { min: 1850, max: 2100, name: 'Diamond', icon: '/ranks_icons/diamond.svg', color: '#A6D5E9', divs: [1913, 1975, 2038] },
-  { min: 2100, max: Infinity, name: 'Master', icon: '/ranks_icons/master.svg', color: '#77BB77', divs: [] },
+  {
+    min: 1200,
+    max: 1400,
+    name: 'Bronze',
+    icon: '/ranks_icons/bronze.svg',
+    color: '#C58A48',
+    divs: [1250, 1300, 1350],
+  },
+  {
+    min: 1400,
+    max: 1600,
+    name: 'Silver',
+    icon: '/ranks_icons/silver.svg',
+    color: '#BDC3C5',
+    divs: [1450, 1500, 1550],
+  },
+  {
+    min: 1600,
+    max: 1850,
+    name: 'Gold',
+    icon: '/ranks_icons/gold.svg',
+    color: '#FED833',
+    divs: [1663, 1725, 1788],
+  },
+  {
+    min: 1850,
+    max: 2100,
+    name: 'Diamond',
+    icon: '/ranks_icons/diamond.svg',
+    color: '#A6D5E9',
+    divs: [1913, 1975, 2038],
+  },
+  {
+    min: 2100,
+    max: Infinity,
+    name: 'Master',
+    icon: '/ranks_icons/master.svg',
+    color: '#77BB77',
+    divs: [],
+  },
 ]
 
 const DIV_LABELS = ['I', 'II', 'III', 'IV']
@@ -44,10 +79,14 @@ const SEGMENT_STARTS = [50, 300, 600, 900, 1200, 1500]
 export function playerPosition(elo) {
   if (!elo || elo === 0) return SEGMENT_STARTS[0]
   if (elo < 1200) return (elo / 1199) * (SEGMENT_STARTS[1] - SEGMENT_STARTS[0]) + SEGMENT_STARTS[0]
-  if (elo < 1400) return ((elo - 1200) / 199) * (SEGMENT_STARTS[2] - SEGMENT_STARTS[1]) + SEGMENT_STARTS[1]
-  if (elo < 1600) return ((elo - 1400) / 199) * (SEGMENT_STARTS[3] - SEGMENT_STARTS[2]) + SEGMENT_STARTS[2]
-  if (elo < 1850) return ((elo - 1600) / 249) * (SEGMENT_STARTS[4] - SEGMENT_STARTS[3]) + SEGMENT_STARTS[3]
-  if (elo < 2100) return ((elo - 1850) / 249) * (SEGMENT_STARTS[5] - SEGMENT_STARTS[4]) + SEGMENT_STARTS[4]
+  if (elo < 1400)
+    return ((elo - 1200) / 199) * (SEGMENT_STARTS[2] - SEGMENT_STARTS[1]) + SEGMENT_STARTS[1]
+  if (elo < 1600)
+    return ((elo - 1400) / 199) * (SEGMENT_STARTS[3] - SEGMENT_STARTS[2]) + SEGMENT_STARTS[2]
+  if (elo < 1850)
+    return ((elo - 1600) / 249) * (SEGMENT_STARTS[4] - SEGMENT_STARTS[3]) + SEGMENT_STARTS[3]
+  if (elo < 2100)
+    return ((elo - 1850) / 249) * (SEGMENT_STARTS[5] - SEGMENT_STARTS[4]) + SEGMENT_STARTS[4]
   return SEGMENT_STARTS[5]
 }
 

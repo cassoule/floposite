@@ -912,7 +912,13 @@
                 />
               </v-list-item>
               <v-list-item>
-                <v-list-item-subtitle> {{ elos[akhy.id]?.isPlacement ? `Placement ${elos[akhy.id]?.gamesPlayed}/5` : `${elos[akhy.id]?.elo ?? 0} FlopoRank` }} </v-list-item-subtitle>
+                <v-list-item-subtitle>
+                  {{
+                    elos[akhy.id]?.isPlacement
+                      ? `Placement ${elos[akhy.id]?.gamesPlayed}/5`
+                      : `${elos[akhy.id]?.elo ?? 0} FlopoRank`
+                  }}
+                </v-list-item-subtitle>
               </v-list-item>
               <v-list-item class="pb-1 px-3">
                 <v-btn
