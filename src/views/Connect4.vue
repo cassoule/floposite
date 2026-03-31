@@ -107,19 +107,15 @@
 
     <v-progress-linear v-if="foundLobby" v-model="timeLeft" style="position: fixed; left: 0" />
 
-    <v-dialog v-model="endGameDialog" persistent max-width="250">
-      <v-card color="primary" style="border-radius: 15px">
-        <v-card-title class="text-uppercase pt-4 pb-0">
-          {{ title }}
-        </v-card-title>
-        <v-card-text class="px-4 py-0 font-weight-light">
-          {{ message }}
-        </v-card-text>
-        <v-card-actions>
-          <v-btn class="rounded-lg" text="Ok" variant="tonal" @click="reload"></v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <GameOverDialog
+      :model-value="endGameDialog"
+      :title="title"
+      :message="message"
+      :old-elo="eloBeforeGame"
+      :new-elo="eloAfterGame"
+      :games-played="gamesPlayedAfter"
+      @close="reload"
+    />
 
     <v-btn
       class="back-btn text-none"
@@ -136,9 +132,11 @@
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
+import GameOverDialog from '@/components/GameOverDialog.vue'
 
 export default {
   name: 'Connect4',
+  components: { GameOverDialog },
   beforeRouteLeave(to, from, next) {
     this.leaveQueueSync({ reason: 'route-leave' })
     next()
@@ -159,6 +157,9 @@ export default {
       now: Date.now(),
       oppElo: null,
       elo: null,
+      eloBeforeGame: null,
+      eloAfterGame: null,
+      gamesPlayedAfter: null,
     }
   },
   computed: {
@@ -284,7 +285,7 @@ export default {
       if (this.foundLobby && this.foundLobby.msgId === data.game.msgId) {
         this.gameOver = true
         this.winner = data.winner
-        this.foundLobby.winningPieces = data.game.winningPieces // Get winning pieces
+        this.foundLobby.winningPieces = data.game.winningPieces
         this.title =
           this.winner === 'draw'
             ? 'Égalité'
@@ -297,6 +298,12 @@ export default {
             : this.foundLobby.p1.id === this.winner
               ? `Victoire de ${this.foundLobby.p1.name}`
               : `Victoire de ${this.foundLobby.p2.name}`
+        if (data.eloChanges && data.eloChanges[this.discordId]) {
+          const myElo = data.eloChanges[this.discordId]
+          this.eloBeforeGame = myElo.oldElo
+          this.eloAfterGame = myElo.newElo
+          this.gamesPlayedAfter = myElo.gamesPlayed
+        }
         setTimeout(() => {
           this.endGameDialog = true
         }, 250)

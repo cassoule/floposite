@@ -3,8 +3,10 @@
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
+import GameOverDialog from '@/components/GameOverDialog.vue'
 
 export default {
+  components: { GameOverDialog },
   beforeRouteLeave(to, from, next) {
     this.leaveQueueSync({ reason: 'route-leave' })
     next()
@@ -34,6 +36,9 @@ export default {
       elo: null,
       oppElo: null,
       elo_graph: [],
+      eloBeforeGame: null,
+      eloAfterGame: null,
+      gamesPlayedAfter: null,
     }
   },
 
@@ -59,7 +64,6 @@ export default {
         this.title = winner.id === this.discordId ? 'Victoire' : 'Défaite'
         this.message = `Temps écoulé pour ${loser}`
         this.socket.emit('tictactoegameOver', { playerId: this.discordId, winner: winner.id })
-        this.endGameDialog = true
       }
     },
   },
@@ -208,6 +212,34 @@ export default {
 
         this.check(this.discordId, this.foundLobby.sum)
       })
+
+      this.socket.on('tictactoegameOver', (data) => {
+        if (!this.foundLobby) return
+        if (data.eloChanges && data.eloChanges[this.discordId]) {
+          const myElo = data.eloChanges[this.discordId]
+          this.eloBeforeGame = myElo.oldElo
+          this.eloAfterGame = myElo.newElo
+          this.gamesPlayedAfter = myElo.gamesPlayed
+        }
+        if (!this.endGameDialog) {
+          // Fallback: if check() didn't set title/message (e.g. opponent won)
+          if (!this.title) {
+            const winner = data.winner
+            if (winner === null) {
+              this.title = 'Égalité'
+              this.message = 'Personne ne gagne'
+            } else {
+              this.title = winner === this.discordId ? 'Victoire' : 'Défaite'
+              const winnerName =
+                this.foundLobby.p1.id === winner
+                  ? this.foundLobby.p1.name
+                  : this.foundLobby.p2.name
+              this.message = `Victoire de ${winnerName}`
+            }
+          }
+        }
+        this.endGameDialog = true
+      })
     },
 
     async getElo(id) {
@@ -310,12 +342,10 @@ export default {
         }
         let winner = this.foundLobby?.sum % 2 === 0 ? this.foundLobby?.p1 : this.foundLobby?.p2
         this.socket.emit('tictactoegameOver', { playerId: this.discordId, winner: winner.id })
-        this.endGameDialog = true
       } else if (this.foundLobby?.sum === 10) {
         this.title = 'égalité'
         this.message = 'Personne ne gagne'
         this.socket.emit('tictactoegameOver', { playerId: this.discordId, winner: null })
-        this.endGameDialog = true
       }
     },
 
@@ -432,25 +462,15 @@ export default {
       style="position: fixed; left: 0"
     />
 
-    <v-dialog v-model="endGameDialog" persistent max-width="250">
-      <v-card color="primary" style="border-radius: 15px">
-        <v-card-title class="text-uppercase pt-4 pb-0">
-          {{ title }}
-        </v-card-title>
-        <v-card-text class="px-4 py-0 font-weight-light">
-          {{ message }}
-        </v-card-text>
-        <v-card-actions>
-          <v-btn
-            class="rounded-lg"
-            text="Ok"
-            variant="tonal"
-            @click="endGameDialog = false"
-            @click.stop="reload"
-          ></v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <GameOverDialog
+      :model-value="endGameDialog"
+      :title="title"
+      :message="message"
+      :old-elo="eloBeforeGame"
+      :new-elo="eloAfterGame"
+      :games-played="gamesPlayedAfter"
+      @close="reload"
+    />
 
     <v-btn
       class="back-btn text-none"
