@@ -407,7 +407,7 @@ export default {
     activeHandIndex: 0, // Tracks the currently selected hand for the 'me' player
     textMsg: '',
     chatMsgs: [],
-    openChat: true,
+    openChat: false,
     chatNotifs: 0,
   }),
 

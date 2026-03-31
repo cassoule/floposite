@@ -2,7 +2,6 @@
 /* global localStorage, setTimeout */
 import axios from 'axios'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
-import Toast from '../components/Toast.vue'
 import CsSkinCard from '@/components/CsSkinCard.vue'
 import { useToastStore } from '../stores/toastStore.js'
 import { getRarityColor } from '@/utils/csRarity.js'
@@ -10,7 +9,7 @@ import { getRarityColor } from '@/utils/csRarity.js'
 export default {
   name: 'AkhyStats',
 
-  components: { Toast, CsSkinCard },
+  components: { CsSkinCard },
 
   setup() {
     const toastStore = useToastStore()
@@ -1513,8 +1512,6 @@ export default {
       @click="$router.push('/dashboard')"
     ></v-btn>
   </v-layout>
-
-  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
 
   <v-dialog
     v-model="skinVideoDialog"

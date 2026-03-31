@@ -3,11 +3,10 @@
 import { io } from 'socket.io-client'
 import axios from 'axios'
 import { time } from '@discordjs/formatters'
-import Toast from '../components/Toast.vue'
 import { useToastStore } from '../stores/toastStore.js'
 
 export default {
-  components: { Toast },
+  components: {},
   setup() {
     const toastStore = useToastStore()
 
@@ -826,7 +825,7 @@ export default {
       @click="$router.push('/poker')"
     ></v-btn>
   </v-layout>
-  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
+
 </template>
 
 <style scoped>

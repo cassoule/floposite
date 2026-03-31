@@ -134,5 +134,47 @@ export const useToastStore = defineStore('toast', {
         this.show = false
       }, 3750)
     },
+    showMaintenanceToast(estimatedEnd) {
+      let text = 'Maintenance en cours'
+      if (estimatedEnd) {
+        const remaining = estimatedEnd - Date.now()
+        if (remaining > 0) {
+          text += `, retour dans ${this._formatDuration(remaining)}`
+        }
+      }
+      this.key = Date.now()
+      this.text = text
+      this.icon = 'mdi mdi-wrench'
+      this.color = 'warning'
+      this.show = true
+
+      setTimeout(() => {
+        this.show = false
+      }, 8000)
+    },
+    showMaintenanceScheduledToast(startsAt) {
+      const remaining = startsAt - Date.now()
+      if (remaining <= 0) return
+      this.key = Date.now()
+      this.text = `Maintenance prévue dans ${this._formatDuration(remaining)}`
+      this.icon = 'mdi mdi-wrench-clock'
+      this.color = 'warning'
+      this.show = true
+
+      setTimeout(() => {
+        this.show = false
+      }, 8000)
+    },
+    _formatDuration(ms) {
+      const totalSeconds = Math.ceil(ms / 1000)
+      if (totalSeconds < 60) return `${totalSeconds}s`
+      const minutes = Math.ceil(ms / 60000)
+      if (minutes >= 60) {
+        const hours = Math.floor(minutes / 60)
+        const mins = minutes % 60
+        return `~${hours}h${mins > 0 ? mins.toString().padStart(2, '0') : ''}`
+      }
+      return `~${minutes}min`
+    },
   },
 })

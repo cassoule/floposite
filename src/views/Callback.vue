@@ -4,7 +4,6 @@ import axios from 'axios'
 import { useToastStore } from '../stores/toastStore'
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import Toast from '@/components/Toast.vue'
 
 const toastStore = useToastStore()
 const router = useRouter()
@@ -56,5 +55,5 @@ onMounted(async () => {
   <div class="callback">
     <p>Connexion...</p>
   </div>
-  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
+
 </template>

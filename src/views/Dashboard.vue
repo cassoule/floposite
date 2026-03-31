@@ -942,8 +942,6 @@
     </div>
   </div>
 
-  <toast v-if="toastStore.show" :key="toastStore.toastKey" />
-
   <!--  DIALOGS -->
   <v-dialog
     v-model="isRegistered"
@@ -1785,15 +1783,10 @@
 /* global localStorage */
 import axios from 'axios'
 import { io } from 'socket.io-client'
-import Toast from '../components/Toast.vue'
 import { useToastStore } from '../stores/toastStore.js'
 import 'animate.css'
 
 export default {
-  components: {
-    Toast,
-  },
-
   setup() {
     const toastStore = useToastStore()
 
