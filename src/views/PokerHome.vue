@@ -355,7 +355,6 @@ export default {
       @click="$router.push('/dashboard')"
     ></v-btn>
   </v-layout>
-
 </template>
 
 <style scoped>

@@ -354,8 +354,6 @@ export default {
       </v-card-actions>
     </v-card>
   </v-dialog>
-
-
 </template>
 
 <style scoped>

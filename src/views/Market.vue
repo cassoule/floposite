@@ -1035,8 +1035,6 @@ export default {
       </v-card-item>
     </v-card>
   </v-dialog>
-
-
 </template>
 
 <style scoped>

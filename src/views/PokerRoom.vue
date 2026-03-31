@@ -825,7 +825,6 @@ export default {
       @click="$router.push('/poker')"
     ></v-btn>
   </v-layout>
-
 </template>
 
 <style scoped>

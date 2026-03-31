@@ -95,20 +95,25 @@
             </template>
           </v-btn>
         </p>
-        <div v-if="elos[discordId]" class="d-flex ga-2" style="place-items: center">
-          <div style="display: flex; place-items: center">
-            <v-img :src="rankIcon(user?.elo)" width="22" height="30">
-              <div
-                :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
-              >
-                <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
-              </div>
-            </v-img>
-          </div>
-          {{ elos[discordId] }} FlopoElo
-          <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
-            'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
-          }}</span>
+        <div v-if="elos[discordId]?.elo" class="d-flex ga-2" style="place-items: center">
+          <template v-if="elos[discordId]?.isPlacement">
+            <span>Placement {{ elos[discordId]?.gamesPlayed }}/5</span>
+          </template>
+          <template v-else>
+            <div style="display: flex; place-items: center">
+              <v-img :src="rankIcon(user?.elo)" width="22" height="30">
+                <div
+                  :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+                >
+                  <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
+                </div>
+              </v-img>
+            </div>
+            {{ elos[discordId]?.elo }} FlopoElo
+            <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
+              'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
+            }}</span>
+          </template>
         </div>
       </div>
     </div>
@@ -827,13 +832,18 @@
             {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
           </div>
           <div v-else style="display: flex; place-items: center">
-            <v-img :src="rankIcon(akhy.elo)" width="20" height="20">
-              <div
-                :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
-              >
-                <p style="font-weight: 400">{{ rankDiv(akhy?.elo) }}</p>
-              </div>
-            </v-img>
+            <template v-if="akhy.isPlacement">
+              <span style="font-size: 0.8em; opacity: 0.6">Placement {{ akhy.gamesPlayed }}/5</span>
+            </template>
+            <template v-else>
+              <v-img :src="rankIcon(akhy.elo)" width="20" height="20">
+                <div
+                  :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+                >
+                  <p style="font-weight: 400">{{ rankDiv(akhy?.elo) }}</p>
+                </div>
+              </v-img>
+            </template>
           </div>
 
           <v-menu activator="parent" location="end" open-on-click transition="scale-transition">
@@ -902,7 +912,13 @@
                 />
               </v-list-item>
               <v-list-item>
-                <v-list-item-subtitle> {{ elos[akhy.id] ?? 0 }} FlopoRank </v-list-item-subtitle>
+                <v-list-item-subtitle>
+                  {{
+                    elos[akhy.id]?.isPlacement
+                      ? `Placement ${elos[akhy.id]?.gamesPlayed}/5`
+                      : `${elos[akhy.id]?.elo ?? 0} FlopoRank`
+                  }}
+                </v-list-item-subtitle>
               </v-list-item>
               <v-list-item class="pb-1 px-3">
                 <v-btn
@@ -1784,6 +1800,7 @@
 import axios from 'axios'
 import { io } from 'socket.io-client'
 import { useToastStore } from '../stores/toastStore.js'
+import { rankIcon, rankDiv, rankColor } from '../utils/rank.js'
 import 'animate.css'
 
 export default {
@@ -2230,7 +2247,7 @@ export default {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo'
       try {
         const response = await axios.get(fetchUrl)
-        return response.data.elo
+        return response.data
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -2516,97 +2533,9 @@ export default {
       }
     },
 
-    rankIcon(elo) {
-      if (elo < 900) {
-        return ''
-      } else if (elo < 1100) {
-        return '/ranks_icons/bronze.svg'
-      } else if (elo < 1300) {
-        return '/ranks_icons/silver.svg'
-      } else if (elo < 1600) {
-        return '/ranks_icons/gold.svg'
-      } else if (elo < 2000) {
-        return '/ranks_icons/diamond.svg'
-      } else if (elo >= 2000) {
-        return '/ranks_icons/master.svg'
-      } else {
-        return ''
-      }
-    },
-
-    rankDiv(elo) {
-      if (!elo) {
-        return ''
-      }
-      if (elo < 900) {
-        return ''
-      } else if (elo < 1100) {
-        if (elo < 950) {
-          return 'I'
-        } else if (elo < 1000) {
-          return 'II'
-        } else if (elo < 1050) {
-          return 'III'
-        } else {
-          return 'IV'
-        }
-      } else if (elo < 1300) {
-        if (elo < 1150) {
-          return 'I'
-        } else if (elo < 1200) {
-          return 'II'
-        } else if (elo < 1250) {
-          return 'III'
-        } else {
-          return 'IV'
-        }
-      } else if (elo < 1600) {
-        if (elo < 1375) {
-          return 'I'
-        } else if (elo < 1450) {
-          return 'II'
-        } else if (elo < 1525) {
-          return 'III'
-        } else {
-          return 'IV'
-        }
-      } else if (elo < 2000) {
-        if (elo < 1700) {
-          return 'I'
-        } else if (elo < 1800) {
-          return 'II'
-        } else if (elo < 1900) {
-          return 'III'
-        } else {
-          return 'IV'
-        }
-      } else if (elo >= 2000) {
-        return ''
-      } else {
-        return ''
-      }
-    },
-
-    rankColor(elo) {
-      if (!elo) {
-        return ''
-      }
-      if (elo < 900) {
-        return '#ddddddaa'
-      } else if (elo < 1100) {
-        return '#C58A48'
-      } else if (elo < 1300) {
-        return '#BDC3C5'
-      } else if (elo < 1600) {
-        return '#FED833'
-      } else if (elo < 2000) {
-        return '#A6D5E9'
-      } else if (elo >= 2000) {
-        return '#77BB77'
-      } else {
-        return ''
-      }
-    },
+    rankIcon,
+    rankDiv,
+    rankColor,
   },
 }
 </script>

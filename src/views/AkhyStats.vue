@@ -5,6 +5,14 @@ import { frenchColorToHex } from '@/utils/colorToHex.js'
 import CsSkinCard from '@/components/CsSkinCard.vue'
 import { useToastStore } from '../stores/toastStore.js'
 import { getRarityColor } from '@/utils/csRarity.js'
+import {
+  rankIcon,
+  rankDiv,
+  rankText,
+  rankColor,
+  playerPosition,
+  RANK_MARKERS,
+} from '@/utils/rank.js'
 
 export default {
   name: 'AkhyStats',
@@ -26,6 +34,7 @@ export default {
 
   data() {
     return {
+      RANK_MARKERS,
       users: null,
       user: null,
       sparkline: null,
@@ -153,6 +162,9 @@ export default {
       await this.getGames()
     }
     this.loading = false
+    this.$nextTick(() => {
+      this.scrollToPlayerRank()
+    })
     if (this.user) {
       this.loadingInventory = true
       await this.getInventory()
@@ -161,6 +173,12 @@ export default {
   },
 
   methods: {
+    scrollToPlayerRank() {
+      const bar = this.$refs.rankBar
+      if (!bar || !this.elo?.elo) return
+      const pos = playerPosition(this.elo.elo)
+      bar.scrollLeft = pos - bar.clientWidth / 2
+    },
     async getUsers() {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
@@ -208,7 +226,7 @@ export default {
       const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + this.$route.params.id + '/elo'
       try {
         const response = await axios.get(fetchUrl)
-        return response.data.elo
+        return response.data
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -343,173 +361,11 @@ export default {
       }
     },
 
-    rankIcon(elo) {
-      if (!elo) {
-        return ''
-      }
-      if (elo < 900) {
-        return ''
-      } else if (elo < 1100) {
-        return '/ranks_icons/bronze.svg'
-      } else if (elo < 1300) {
-        return '/ranks_icons/silver.svg'
-      } else if (elo < 1600) {
-        return '/ranks_icons/gold.svg'
-      } else if (elo < 2000) {
-        return '/ranks_icons/diamond.svg'
-      } else if (elo >= 2000) {
-        return '/ranks_icons/master.svg'
-      } else {
-        return ''
-      }
-    },
-    rankDiv(elo) {
-      if (!elo) {
-        return ''
-      }
-      if (elo < 900) {
-        return ''
-      } else if (elo < 1100) {
-        if (elo < 950) {
-          return 'I'
-        } else if (elo < 1000) {
-          return 'II'
-        } else if (elo < 1050) {
-          return 'III'
-        } else {
-          return 'IV'
-        }
-      } else if (elo < 1300) {
-        if (elo < 1150) {
-          return 'I'
-        } else if (elo < 1200) {
-          return 'II'
-        } else if (elo < 1250) {
-          return 'III'
-        } else {
-          return 'IV'
-        }
-      } else if (elo < 1600) {
-        if (elo < 1375) {
-          return 'I'
-        } else if (elo < 1450) {
-          return 'II'
-        } else if (elo < 1525) {
-          return 'III'
-        } else {
-          return 'IV'
-        }
-      } else if (elo < 2000) {
-        if (elo < 1700) {
-          return 'I'
-        } else if (elo < 1800) {
-          return 'II'
-        } else if (elo < 1900) {
-          return 'III'
-        } else {
-          return 'IV'
-        }
-      } else if (elo >= 2000) {
-        return ''
-      } else {
-        return ''
-      }
-    },
-    rankText(elo) {
-      if (!elo) {
-        return 'Non classé'
-      }
-      if (elo < 900) {
-        return 'Flop'
-      } else if (elo < 1100) {
-        if (elo < 950) {
-          return 'Bronze I'
-        } else if (elo < 1000) {
-          return 'Bronze II'
-        } else if (elo < 1050) {
-          return 'Bronze III'
-        } else {
-          return 'Bronze IV'
-        }
-      } else if (elo < 1300) {
-        if (elo < 1150) {
-          return 'Silver I'
-        } else if (elo < 1200) {
-          return 'Silver II'
-        } else if (elo < 1250) {
-          return 'Silver III'
-        } else {
-          return 'Silver IV'
-        }
-      } else if (elo < 1600) {
-        if (elo < 1375) {
-          return 'Gold I'
-        } else if (elo < 1450) {
-          return 'Gold II'
-        } else if (elo < 1525) {
-          return 'Gold III'
-        } else {
-          return 'Gold IV'
-        }
-      } else if (elo < 2000) {
-        if (elo < 1700) {
-          return 'Diamond I'
-        } else if (elo < 1800) {
-          return 'Diamond II'
-        } else if (elo < 1900) {
-          return 'Diamond III'
-        } else {
-          return 'Diamond IV'
-        }
-      } else if (elo >= 2000) {
-        return 'Master'
-      } else {
-        return 'Non classé'
-      }
-    },
-    rankColor(elo) {
-      if (!elo) {
-        return ''
-      }
-      if (elo < 900) {
-        return '#dddddd'
-      } else if (elo < 1100) {
-        return '#C58A48'
-      } else if (elo < 1300) {
-        return '#BDC3C5'
-      } else if (elo < 1600) {
-        return '#FED833'
-      } else if (elo < 2000) {
-        return '#A6D5E9'
-      } else if (elo >= 2000) {
-        return '#77BB77'
-      } else {
-        return ''
-      }
-    },
-    playerPositoin(elo) {
-      if (elo === 0) {
-        return '88'
-      }
-      if (!elo) {
-        return '-100'
-      }
-      if (elo < 900) {
-        return (elo / 899) * 177 + 88
-      } else if (elo < 1100) {
-        return ((elo - 900) / 199) * 354 + 265.5
-      } else if (elo < 1300) {
-        return ((elo - 1100) / 199) * 177 + 619.5
-      } else if (elo < 1600) {
-        return ((elo - 1300) / 299) * 177 + 796.5
-      } else if (elo < 2000) {
-        return ((elo - 1600) / 399) * 177 + 973.5
-      } else if (elo >= 2000) {
-        return '1150.5'
-      } else {
-        return '-100'
-      }
-    },
+    rankIcon,
+    rankDiv,
+    rankText,
+    rankColor,
+    playerPositoin: playerPosition,
     getChromaText(skin, skinInfo) {
       let result = ''
       for (let i = 1; i <= skinInfo.chromas.length; i++) {
@@ -791,18 +647,33 @@ export default {
               <div class="d-flex rank-ctn" style="place-content: space-between">
                 <div style="margin-right: 4em">
                   <h1>FlopoRank</h1>
-                  <h2 class="mt-2" :style="`color: ${rankColor(user?.elo)}`">
-                    {{ rankText(user?.elo) }}
-                  </h2>
-                  <h3 v-if="elo">
-                    {{ elo }}
-                    <span style="color: rgba(255, 255, 255, 0.3)">
-                      {{ Math.max(...(eloGraph ?? [])) }} PB
-                    </span>
-                  </h3>
-                  <h3 v-else>-</h3>
+                  <template v-if="elo?.isPlacement">
+                    <h2 class="mt-2" style="color: #ddddddaa">
+                      Placement {{ elo?.gamesPlayed }}/5
+                    </h2>
+                    <h3 v-if="elo?.elo">{{ elo.elo }}</h3>
+                    <h3 v-else>-</h3>
+                  </template>
+                  <template v-else>
+                    <h2 class="mt-2" :style="`color: ${rankColor(user?.elo)}`">
+                      {{ rankText(user?.elo) }}
+                    </h2>
+                    <h3 v-if="elo?.elo">
+                      {{ elo.elo }}
+                      <span style="color: rgba(255, 255, 255, 0.3)">
+                        {{ Math.max(...(eloGraph ?? [])) }} PB
+                      </span>
+                    </h3>
+                    <h3 v-else>-</h3>
+                  </template>
                 </div>
-                <v-img class="mt-3" :src="rankIcon(user?.elo)" max-width="96" height="96">
+                <v-img
+                  v-if="!elo?.isPlacement"
+                  class="mt-3"
+                  :src="rankIcon(user?.elo)"
+                  max-width="96"
+                  height="96"
+                >
                   <div
                     :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: 2.5em; color: #222`"
                   >
@@ -813,127 +684,69 @@ export default {
             </div>
           </v-list-item>
 
-          <v-list-item class="px-0 pb-3">
+          <v-list-item class="w-100 px-0 pb-3">
             <v-card class="py-0 text-white" elevation="0" rounded="0" variant="text">
               <v-card-item class="pa-0">
                 <div
-                  class="w-100 d-flex pb-6 pt-13"
+                  ref="rankBar"
+                  class="w-100 pb-6 pt-13"
                   style="
                     position: relative;
-                    place-content: space-between;
-                    gap: 64px;
                     overflow-x: scroll;
-                    padding: 0 64px 64px 32px;
+                    min-height: 280px;
                     scrollbar-width: auto;
                   "
                 >
                   <div
+                    v-for="(label, i) in [
+                      { elo: 0, name: 'Flop', left: 50 },
+                      { elo: 1200, name: 'Bronze', left: 300 },
+                      { elo: 1400, name: 'Silver', left: 600 },
+                      { elo: 1600, name: 'Gold', left: 900 },
+                      { elo: 1850, name: 'Diamond', left: 1200 },
+                      { elo: 2100, name: 'Master', left: 1500 },
+                    ]"
+                    :key="i"
                     class="d-flex"
-                    style="
+                    :style="`
+                      position: absolute;
+                      left: ${label.left}px;
+                      top: 20px;
                       flex-direction: column;
                       place-items: center;
-                      min-width: 113px;
-                      max-width: 113px;
-                    "
+                      width: 130px;
+                      transform: translateX(-50%);
+                    `"
                   >
-                    <v-img class="mt-3" src="" width="64" height="64" />
-                    <h2>Flop</h2>
-                    <h3 :style="`color: ${'#dddddd77'}`">0&nbsp;Elo</h3>
-                  </div>
-                  <div
-                    class="d-flex"
-                    style="
-                      flex-direction: column;
-                      place-items: center;
-                      min-width: 113px;
-                      max-width: 113px;
-                    "
-                  >
-                    <v-img class="mt-3" :src="rankIcon(900)" width="64" height="64" />
-                    <h2 :style="`color: ${rankColor(900)}`">Bronze</h2>
-                    <h3 :style="`color: ${rankColor(900) + '77'}`">900&nbsp;Elo</h3>
-                  </div>
-                  <div
-                    class="d-flex"
-                    style="
-                      flex-direction: column;
-                      place-items: center;
-                      min-width: 113px;
-                      max-width: 113px;
-                    "
-                  >
-                    <v-img class="mt-3" src="" width="64" height="64" />
-                    <h2 style="color: #dddddd">Start</h2>
-                    <h3 style="color: #dddddd77">1000&nbsp;Elo</h3>
-                  </div>
-                  <div
-                    class="d-flex"
-                    style="
-                      flex-direction: column;
-                      place-items: center;
-                      min-width: 113px;
-                      max-width: 113px;
-                    "
-                  >
-                    <v-img class="mt-3" :src="rankIcon(1100)" width="64" height="64" />
-                    <h2 :style="`color: ${rankColor(1100)}`">Silver</h2>
-                    <h3 :style="`color: ${rankColor(1100) + '77'}`">1100&nbsp;Elo</h3>
-                  </div>
-                  <div
-                    class="d-flex"
-                    style="
-                      flex-direction: column;
-                      place-items: center;
-                      min-width: 113px;
-                      max-width: 113px;
-                    "
-                  >
-                    <v-img class="mt-3" :src="rankIcon(1300)" width="64" height="64" />
-                    <h2 :style="`color: ${rankColor(1300)}`">Gold</h2>
-                    <h3 :style="`color: ${rankColor(1300) + '77'}`">1300&nbsp;Elo</h3>
-                  </div>
-                  <div
-                    class="d-flex"
-                    style="
-                      flex-direction: column;
-                      place-items: center;
-                      min-width: 113px;
-                      max-width: 113px;
-                    "
-                  >
-                    <v-img class="mt-3" :src="rankIcon(1600)" width="64" height="64" />
-                    <h2 :style="`color: ${rankColor(1600)}`">Diamond</h2>
-                    <h3 :style="`color: ${rankColor(1600) + '77'}`">1600&nbsp;Elo</h3>
-                  </div>
-                  <div
-                    class="d-flex"
-                    style="
-                      flex-direction: column;
-                      place-items: center;
-                      min-width: 113px;
-                      max-width: 113px;
-                    "
-                  >
-                    <v-img class="mt-3" :src="rankIcon(2000)" width="64" height="64" />
-                    <h2 :style="`color: ${rankColor(2000)}`">Master</h2>
-                    <h3 :style="`color: ${rankColor(2000) + '77'}`">2000+&nbsp;Elo</h3>
+                    <v-img
+                      class="mt-3"
+                      :src="label.elo ? rankIcon(label.elo) : ''"
+                      width="64"
+                      height="64"
+                    />
+                    <h2 :style="`color: ${label.elo ? rankColor(label.elo) : '#dddddd'}`">
+                      {{ label.name }}
+                    </h2>
+                    <h3 :style="`color: ${(label.elo ? rankColor(label.elo) : '#dddddd') + '77'}`">
+                      {{ label.elo === 2100 ? '2100+' : label.elo }}&nbsp;Elo
+                    </h3>
                   </div>
                   <div
                     style="
                       position: absolute;
                       left: 0;
-                      top: 7em;
+                      top: 70px;
                       z-index: -1;
-                      width: 1350px;
+                      width: 1600px;
                       height: 5px;
                       background: linear-gradient(
                         90deg,
-                        #dddddd11 0px 220px,
-                        #c58a48 265.5px 563px,
-                        #bdc3c5 619.5px 740px,
-                        #fed833 796.5px 917px,
-                        #a6d5e9 973.5px 1094px,
-                        #77bb77 1150.5px 1271px
+                        #dddddd11 0px 300px,
+                        #c58a48 300px 600px,
+                        #bdc3c5 600px 900px,
+                        #fed833 900px 1200px,
+                        #a6d5e9 1200px 1500px,
+                        #77bb77 1500px 1600px
                       );
                     "
                   ></div>
@@ -943,7 +756,7 @@ export default {
                     class="cursor-pointer user-rank-point"
                     :style="`position: absolute;
                       left: ${playerPositoin(akhy?.elo)}px;
-                      bottom: 10em;
+                      top: 10px;
                       transform: translateX(-50%);
                       display: flex;
                       flex-direction: column;
@@ -972,11 +785,13 @@ export default {
 
                   <div>
                     <p
+                      v-for="marker in RANK_MARKERS"
+                      :key="marker.elo"
                       class="cursor-pointer bg-dark opacity-90"
                       :style="`position: absolute;
-                      color: ${rankColor(950)} !important;
-                      left: ${playerPositoin(950)}px;
-                      bottom: 8.2em;
+                      color: ${rankColor(marker.elo)} !important;
+                      left: ${playerPositoin(marker.elo)}px;
+                      top: 63px;
                       transform: translateX(-50%);
                       display: flex;
                       flex-direction: column;
@@ -985,207 +800,9 @@ export default {
                       font-size: .8em;
                       border-radius: 5em;
                       z-index: 10;`"
-                      title="950 elo"
+                      :title="`${marker.elo} elo`"
                     >
-                      II
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1000)} !important;
-                      left: ${playerPositoin(1000)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1000 elo"
-                    >
-                      III
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1050)} !important;
-                      left: ${playerPositoin(1050)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1050 elo"
-                    >
-                      IV
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1150)} !important;
-                      left: ${playerPositoin(1150)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1150 elo"
-                    >
-                      II
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1200)} !important;
-                      left: ${playerPositoin(1200)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1200 elo"
-                    >
-                      III
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1250)} !important;
-                      left: ${playerPositoin(1250)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1250 elo"
-                    >
-                      IV
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1375)} !important;
-                      left: ${playerPositoin(1375)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1375 elo"
-                    >
-                      II
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1450)} !important;
-                      left: ${playerPositoin(1450)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1450 elo"
-                    >
-                      III
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1525)} !important;
-                      left: ${playerPositoin(1525)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1525 elo"
-                    >
-                      IV
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1700)} !important;
-                      left: ${playerPositoin(1700)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1700 elo"
-                    >
-                      II
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1800)} !important;
-                      left: ${playerPositoin(1800)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1800 elo"
-                    >
-                      III
-                    </p>
-                    <p
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(1900)} !important;
-                      left: ${playerPositoin(1900)}px;
-                      bottom: 8.2em;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      title="1900 elo"
-                    >
-                      IV
+                      {{ marker.div }}
                     </p>
                   </div>
                 </div>
