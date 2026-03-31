@@ -55,5 +55,4 @@ onMounted(async () => {
   <div class="callback">
     <p>Connexion...</p>
   </div>
-
 </template>

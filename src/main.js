@@ -29,7 +29,7 @@ axios.interceptors.response.use(
       router.push('/')
     }
     return Promise.reject(error)
-  }
+  },
 )
 
 const app = createApp(App)

@@ -49,8 +49,6 @@
     <a href="/cgv">Conditions Générales de Vente</a>
     <a href="/privacy">Politique de Confidentialité</a>
   </footer>
-
-
 </template>
 
 <script>
