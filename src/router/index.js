@@ -8,6 +8,7 @@ import Connect4 from '../views/Connect4.vue'
 import PokerHome from '../views/PokerHome.vue'
 import PokerRoom from '../views/PokerRoom.vue'
 import Solitaire from '../views/Solitaire.vue'
+import Sudoku from '../views/Sudoku.vue'
 import Blackjack from '../views/Blackjack.vue'
 import AkhyStats from '../views/AkhyStats.vue'
 import Market from '../views/Market.vue'
@@ -31,6 +32,7 @@ const routes = [
   { path: '/poker', component: PokerHome },
   { path: '/poker/:id', component: PokerRoom },
   { path: '/solitaire', component: Solitaire },
+  { path: '/sudoku', component: Sudoku },
   { path: '/blackjack', component: Blackjack },
   { path: '/akhy/:id', component: AkhyStats },
   { path: '/market', component: Market },

@@ -231,9 +231,7 @@ export default {
             } else {
               this.title = winner === this.discordId ? 'Victoire' : 'Défaite'
               const winnerName =
-                this.foundLobby.p1.id === winner
-                  ? this.foundLobby.p1.name
-                  : this.foundLobby.p2.name
+                this.foundLobby.p1.id === winner ? this.foundLobby.p1.name : this.foundLobby.p2.name
               this.message = `Victoire de ${winnerName}`
             }
           }

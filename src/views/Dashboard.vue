@@ -269,6 +269,36 @@
           </v-card>
 
           <v-card
+            v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'"
+            class="game-action-card sudoku-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/sudoku')"
+          >
+            <v-card-title>
+              Sudoku
+              <v-chip-group style="float: right; pointer-events: none">
+                <v-chip size="small">Solo</v-chip>
+                <v-chip size="small">Coins</v-chip>
+              </v-chip-group>
+            </v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Gagne des FlopoCoins en complétant des grilles de sudoku.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none"
+                append-icon="mdi-snake"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                style="border-radius: 10px !important"
+                @click="$router.push('/sudoku')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card
             v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'"
             class="game-action-card poker-action-card bg-black"
             variant="tonal"
@@ -2845,6 +2875,11 @@ button:disabled {
 .snake-action-card::after {
   background: url('/game_illu_snake.png') no-repeat center center;
   background-size: 30% auto;
+  transform: rotate(5deg);
+}
+.sudoku-action-card::after {
+  background: url('/game_illu_sudoku.png') no-repeat center center;
+  background-size: 50% auto;
   transform: rotate(5deg);
 }
 
