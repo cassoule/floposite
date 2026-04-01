@@ -27,4 +27,27 @@ export default {
   undoMove() {
     return axios.post(`${API_URL}/solitaire/undo`)
   },
+
+  // Sudoku
+  getSudokuRankings() {
+    return axios.get(`${API_URL}/sudoku/sotd/rankings`)
+  },
+  startSudoku(difficulty) {
+    return axios.post(`${API_URL}/sudoku/start`, { difficulty })
+  },
+  startSudokuSOTD() {
+    return axios.post(`${API_URL}/sudoku/start/sotd`)
+  },
+  resetSudoku() {
+    return axios.post(`${API_URL}/sudoku/reset`)
+  },
+  getSudokuState(userId) {
+    return axios.get(`${API_URL}/sudoku/state/${userId}`)
+  },
+  submitSudoku(grid) {
+    return axios.post(`${API_URL}/sudoku/submit`, { grid })
+  },
+  saveSudokuProgress(grid, notes) {
+    return axios.post(`${API_URL}/sudoku/progress`, { grid, notes })
+  },
 }

@@ -35,7 +35,7 @@ export default {
 
       skipAnimation: false, // For testing purposes
 
-      CS_CASE_PRICE: 300,
+      CS_CASE_PRICE: 250,
     }
   },
   computed: {
