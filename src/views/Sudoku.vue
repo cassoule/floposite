@@ -38,7 +38,12 @@
         </div>
 
         <div v-if="isLoading" class="loading-overlay">
-          <div class="spinner">...</div>
+          <v-progress-circular
+            size="20"
+            :width="10"
+            color="primary"
+            indeterminate
+          ></v-progress-circular>
         </div>
 
         <!-- Game board -->
@@ -875,8 +880,9 @@ export default {
 }
 
 .loading-overlay {
-  position: absolute;
-  bottom: 0;
+  position: fixed;
+  bottom: 1em;
+  right: 1em;
 }
 
 .buy-btn {
