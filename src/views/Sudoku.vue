@@ -721,7 +721,7 @@ export default {
         // Highlight matching numbers
         if (
           this.grid[this.selectedCell] &&
-          this.grid[index] === this.grid[this.selectedCell] &&
+          parseInt(this.grid[index]) === parseInt(this.grid[this.selectedCell]) &&
           index !== this.selectedCell
         ) {
           classes.push('matching')

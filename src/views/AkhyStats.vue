@@ -156,7 +156,7 @@ export default {
       const id = this.$route.params.id
       //this.sparkline = await this.getSparkline(id)
       this.elo = await this.getElo(id)
-      this.eloGraph = await this.getEloGraph(id)
+      //this.eloGraph = await this.getEloGraph(id)
       await this.getActiveSlowmodes()
       await this.isTimedOut()
       await this.getGames()
@@ -168,7 +168,7 @@ export default {
     if (this.user) {
       this.loadingInventory = true
       await this.getInventory()
-      await this.fetchSkinsVideoUrls()
+      //await this.fetchSkinsVideoUrls()
     }
   },
 
