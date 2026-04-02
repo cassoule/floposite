@@ -1,123 +1,13 @@
 <template>
-  <div v-if="user" class="user-tab">
-    <div style="position: relative; margin-top: 1rem">
-      <v-sparkline
-        v-if="sparklines[discordId]?.length > 0"
-        smooth
-        auto-draw
-        color="primary"
-        line-width="0.5"
-        :model-value="
-          sparklines[discordId]?.length > 0
-            ? sparklines[discordId]?.map((entry) => entry.userNewAmount)
-            : [0]
-        "
-        style="
-          position: absolute;
-          left: 0;
-          top: 0;
-          filter: blur(3px);
-          z-index: -1;
-          height: 100%;
-          width: 100%;
-        "
-      />
-      <v-sparkline
-        v-if="elo_graphs[discordId]?.length > 0"
-        smooth
-        auto-draw
-        color="secondary"
-        line-width="0.5"
-        :model-value="elo_graphs[discordId]?.length > 0 ? elo_graphs[discordId] : [0]"
-        style="
-          position: absolute;
-          left: 0;
-          top: 0;
-          filter: blur(3px);
-          z-index: -1;
-          height: 100%;
-          width: 100%;
-        "
-      />
-      <v-img
-        class="cursor-pointer"
-        :src="avatar"
-        lazy-src="anon.png"
-        width="70"
-        color="transparent"
-        style="border-radius: 50%; width: 70px; height: 70px"
-        @click="$router.push('/akhy/' + discordId)"
-      />
-      <h1 class="cursor-pointer" @click="$router.push('/akhy/' + discordId)">
-        Salut <span style="color: #5865f2">@{{ user?.username || anonUsername }}</span>
-      </h1>
-      <span
-        v-if="
-          active_slowmodes && Object.values(active_slowmodes).find((s) => s.userId === discordId)
-        "
-        class="bubble-text"
-        style="
-          background: radial-gradient(circle at -100% 0%, #ff8c00, transparent 120%);
-          border: 1px solid #ff8c00;
-        "
-      >
-        slowmode
-      </span>
-      <span
-        v-if="user_isTimedOut"
-        class="bubble-text"
-        style="
-          background: radial-gradient(circle at -100% 0%, #aa3e3e, transparent 120%);
-          border: 1px solid #aa3e3e;
-        "
-      >
-        timed out
-      </span>
-      <span class="bubble-text" style="opacity: 0"></span>
-      <div class="d-flex flex-wrap mt-2 justify-space-between" style="column-gap: 2em">
-        <p class="d-flex" style="place-items: baseline">
-          <span class="font-weight-bold">{{
-            user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-          }}</span>
-          &nbsp;FlopoCoins&nbsp;
-          <v-btn
-            text="Acheter"
-            append-icon=""
-            class="text-none buy-btn ml-2"
-            color="white"
-            variant="tonal"
-            size="small"
-            rounded="lg"
-            @click="coinsModal = true"
-          >
-            <template #append>
-              <v-img src="star.svg" width="12px" height="12px" />
-            </template>
-          </v-btn>
-        </p>
-        <div v-if="elos[discordId]?.elo" class="d-flex ga-2" style="place-items: center">
-          <template v-if="elos[discordId]?.isPlacement">
-            <span>Placement {{ elos[discordId]?.gamesPlayed }}/5</span>
-          </template>
-          <template v-else>
-            <div style="display: flex; place-items: center">
-              <v-img :src="rankIcon(user?.elo)" width="22" height="30">
-                <div
-                  :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
-                >
-                  <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
-                </div>
-              </v-img>
-            </div>
-            {{ elos[discordId]?.elo }} FlopoElo
-            <span v-if="elo_graphs[discordId]" style="color: rgba(255, 255, 255, 0.3)">{{
-              'Best : ' + Math.max(...elo_graphs[discordId], 0) + ' Elo'
-            }}</span>
-          </template>
-        </div>
-      </div>
-    </div>
-
+  <profile-menu
+    v-if="user && !mounting"
+    :user="user"
+    :elos="elos"
+    :elo_graphs="elo_graphs"
+    @logout="logout"
+    @buy-coins="coinsModal = true"
+  ></profile-menu>
+  <div v-if="user && !mounting" class="user-tab">
     <div
       class="mt-5 d-flex flex-column align-start justify-center"
       style="gap: 0.5rem; position: relative; place-content: space-between"
@@ -125,50 +15,42 @@
       <div
         class="d-flex py-2"
         style="
-          gap: 0.5rem;
+          gap: 3rem;
           overflow-y: scroll;
           overflow-x: visible;
           padding-top: 0.6em;
           padding-right: 1em;
+          place-items: center;
         "
       >
-        <!-- <v-btn-toggle
-          disabled
-          rounded="lg"
-          base-color="primary"
-          variant="flat"
-          density="compact"
-          style="border-radius: 10px !important"
-        >
-          <v-btn
-            class="text-capitalize"
-            text="Market"
-            append-icon="mdi-cart"
-            @click="$router.push('/market')"
-          />
-          <v-btn class="text-capitalize" text="Caisses" @click="$router.push('/cases')">
-            <template #append>
-              <v-icon class="mdi mdi-treasure-chest-outline mt-1"></v-icon>
-            </template>
-          </v-btn>
-        </v-btn-toggle> -->
-
         <v-btn
-          v-if="!user.dailyQueried"
           :key="Date.now() + '-daily-reward'"
+          class="text-none"
           color="primary"
           variant="tonal"
           rounded="lg"
           style="border: 1px solid #5865f2"
+          :disabled="user.dailyQueried"
           @click="handleDailyQuery"
         >
+          <span
+            v-if="user.dailyQueried"
+            style="font-size: 12px; font-variant-numeric: tabular-nums; color: white"
+          >
+            {{ dailyCountdown }}
+          </span>
           <v-icon
-            class="animate__animated animate__heartBeat animate__infinite animate__slow mdi mdi-gift"
+            v-else
+            class="mdi mdi-gift animate__animated animate__heartBeat animate__infinite animate__slow"
             size="20"
             color="white"
           ></v-icon>
         </v-btn>
+        <p>Classement Solitaire Of The Day: #-</p>
+        <p>Classement Sudoku Of The Day: #-</p>
       </div>
+
+      <p></p>
       <v-chip-group
         v-model="gameCardsFilter"
         class="mb-0 pb-0 text-secondary"
@@ -769,23 +651,9 @@
       {{ formatAmount(user?.coins) }} Flopos
       <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
     </p>
-
-    <button class="discord-logout" @click="logout">Déconnexion</button>
   </div>
 
-  <div v-else class="user-tab">
-    <v-skeleton-loader
-      class="mt-2 mb-2"
-      type="avatar"
-      color="transparent"
-      style="min-width: 800px"
-    ></v-skeleton-loader>
-    <v-skeleton-loader
-      class="mb-6"
-      type="heading"
-      color="transparent"
-      style="max-width: 300px"
-    ></v-skeleton-loader>
+  <div v-else class="user-tab" style="min-width: 800px">
     <v-skeleton-loader
       class=""
       type="text@3"
@@ -793,7 +661,7 @@
       style="max-width: 300px"
     ></v-skeleton-loader>
     <v-skeleton-loader
-      class="mb-10"
+      class="mb-2"
       type="text"
       color="transparent"
       style="max-width: 300px"
@@ -811,7 +679,7 @@
     ></v-skeleton-loader>
   </div>
 
-  <div v-if="users" class="leaderboard-container">
+  <div v-if="users && !mounting" class="leaderboard-container">
     <h2 style="display: flex; place-content: space-between; align-items: center">
       Classement
       <span
@@ -1832,8 +1700,13 @@ import { io } from 'socket.io-client'
 import { useToastStore } from '../stores/toastStore.js'
 import { rankIcon, rankDiv, rankColor } from '../utils/rank.js'
 import 'animate.css'
+import ProfileMenu from '../components/ProfileMenu.vue'
 
 export default {
+  components: {
+    ProfileMenu,
+  },
+
   setup() {
     const toastStore = useToastStore()
 
@@ -1874,6 +1747,7 @@ export default {
 
   data() {
     return {
+      mounting: true,
       windowWidth: window.innerWidth,
 
       anonUsername: null,
@@ -1947,6 +1821,9 @@ export default {
       gameCardsFilter: null,
 
       acceptedCGV: false,
+
+      dailyCountdown: '',
+      dailyCountdownInterval: null,
     }
   },
 
@@ -2016,6 +1893,7 @@ export default {
   },
 
   async mounted() {
+    this.mounting = true
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
 
@@ -2039,6 +1917,8 @@ export default {
 
     this.initSocket()
     window.addEventListener('resize', this.updateWindowWidth)
+    this.startDailyCountdown()
+    this.mounting = false
   },
 
   beforeUnmount() {
@@ -2046,9 +1926,26 @@ export default {
     if (this.socket) {
       this.socket.disconnect()
     }
+    if (this.dailyCountdownInterval) {
+      clearInterval(this.dailyCountdownInterval)
+    }
   },
 
   methods: {
+    startDailyCountdown() {
+      const update = () => {
+        const now = new Date()
+        const midnight = new Date(now)
+        midnight.setHours(24, 0, 0, 0)
+        const diff = midnight - now
+        const h = String(Math.floor(diff / 3600000)).padStart(2, '0')
+        const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0')
+        const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0')
+        this.dailyCountdown = `${h}:${m}:${s}`
+      }
+      update()
+      this.dailyCountdownInterval = setInterval(update, 1000)
+    },
     updateWindowWidth() {
       this.windowWidth = window.innerWidth
     },
@@ -2625,7 +2522,7 @@ button:disabled {
   color: #ff3860;
   margin-top: 12px;
 }
-.discord-logout {
+/* .discord-logout {
   position: absolute;
   top: 2em;
   right: 2em;
@@ -2643,7 +2540,7 @@ button:disabled {
 .discord-logout:hover {
   background: #aa3e3e;
   box-shadow: 0 0 32px 0 #a1282955;
-}
+} */
 .buy-btn {
   z-index: 1;
   /*border-radius: 10px !important;*/
