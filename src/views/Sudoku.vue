@@ -819,7 +819,8 @@ export default {
 }
 
 .sudoku-cell.error {
-  background: rgba(239, 83, 80, 0.3);
+  background: rgba(255, 83, 80, 0.8);
+  margin: 0 !important;
 }
 
 .cell-value {

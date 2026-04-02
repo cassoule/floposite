@@ -288,40 +288,12 @@
               <v-btn
                 text="Jouer"
                 class="text-none"
-                append-icon="mdi-snake"
+                append-icon="mdi-grid"
                 color="primary"
                 variant="flat"
                 rounded="lg"
                 style="border-radius: 10px !important"
                 @click="$router.push('/sudoku')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'"
-            class="game-action-card poker-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/poker')"
-          >
-            <v-card-title>
-              Flopoker
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">Multi</v-chip>
-                <v-chip size="small" class="mr-0">Coins</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none game-btn"
-                color="primary"
-                append-icon="mdi mdi-cards-playing-spade-multiple"
-                style="z-index: 0"
-                @click="$router.push('/poker')"
               />
             </v-card-text>
           </v-card>
@@ -352,6 +324,34 @@
                 rounded="lg"
                 style="border-radius: 10px !important"
                 @click="$router.push('/blackjack')"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card
+            v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'"
+            class="game-action-card poker-action-card bg-black"
+            variant="tonal"
+            @click="$router.push('/poker')"
+          >
+            <v-card-title>
+              Flopoker
+              <v-chip-group style="float: right; pointer-events: none">
+                <v-chip size="small">Multi</v-chip>
+                <v-chip size="small" class="mr-0">Coins</v-chip>
+              </v-chip-group>
+            </v-card-title>
+            <v-card-subtitle style="text-wrap: wrap">
+              <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
+            </v-card-subtitle>
+            <v-card-text class="d-flex justify-end">
+              <v-btn
+                text="Jouer"
+                class="text-none game-btn"
+                color="primary"
+                append-icon="mdi mdi-cards-playing-spade-multiple"
+                style="z-index: 0"
+                @click="$router.push('/poker')"
               />
             </v-card-text>
           </v-card>
@@ -2025,10 +2025,10 @@ export default {
 
     this.avatar = await this.getAvatar(this.discordId)
     this.anonUsername = await this.fetchUsername(this.discordId)
-    this.fetchAvatars()
-    this.fetchSparklines()
-    this.fetchElos()
-    this.fetchEloGraphs()
+    await this.fetchAvatars()
+    await this.fetchSparklines()
+    await this.fetchElos()
+    await this.fetchEloGraphs()
     //await this.getInventory()
     await this.getActivePolls()
     await this.getActiveSlowmodes()
@@ -2157,10 +2157,10 @@ export default {
         await this.getUsers()
         this.avatar = await this.getAvatar(this.discordId)
         this.anonUsername = await this.fetchUsername(this.discordId)
-        this.fetchAvatars()
-        this.fetchSparklines()
-        this.fetchElos()
-        this.fetchEloGraphs()
+        await this.fetchAvatars()
+        await this.fetchSparklines()
+        await this.fetchElos()
+        await this.fetchEloGraphs()
         // await this.getInventory()
         await this.getActivePolls()
         await this.getActiveSlowmodes()
@@ -2187,28 +2187,58 @@ export default {
       }
     },
 
-    fetchAvatars() {
-      this.users.forEach(async (user) => {
-        this.avatars[user.id] = await this.getAvatar(user.id)
-      })
+    async fetchAvatars() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users/avatars'
+      try {
+        const response = await axios.get(fetchUrl, {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+          withCredentials: false,
+        })
+        this.users.forEach((user) => {
+          this.avatars[user.id] = response.data.avatars[user.id]
+        })
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
     },
 
-    fetchSparklines() {
-      this.users.forEach(async (user) => {
-        this.sparklines[user.id] = await this.getSparkline(user.id)
-      })
+    async fetchSparklines() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users/sparklines'
+      try {
+        const response = await axios.get(fetchUrl)
+        this.users.forEach(async (user) => {
+          this.sparklines[user.id] = response.data.sparklines[user.id]
+        })
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
     },
 
-    fetchElos() {
-      this.users.forEach(async (user) => {
-        this.elos[user.id] = await this.getElo(user.id)
-      })
+    async fetchElos() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users/elos'
+      try {
+        const response = await axios.get(fetchUrl)
+        this.users.forEach(async (user) => {
+          this.elos[user.id] = response.data.elos[user.id]
+        })
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
     },
 
-    fetchEloGraphs() {
-      this.users.forEach(async (user) => {
-        this.elo_graphs[user.id] = await this.getEloGraph(user.id)
-      })
+    async fetchEloGraphs() {
+      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users/elo-graphs'
+      try {
+        const response = await axios.get(fetchUrl)
+        this.users.forEach(async (user) => {
+          this.elo_graphs[user.id] = response.data.eloGraphs[user.id]
+        })
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
     },
 
     logout() {
