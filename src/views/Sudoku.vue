@@ -38,7 +38,12 @@
         </div>
 
         <div v-if="isLoading" class="loading-overlay">
-          <div class="spinner">...</div>
+          <v-progress-circular
+            size="20"
+            :width="10"
+            color="primary"
+            indeterminate
+          ></v-progress-circular>
         </div>
 
         <!-- Game board -->
@@ -721,7 +726,7 @@ export default {
         // Highlight matching numbers
         if (
           this.grid[this.selectedCell] &&
-          this.grid[index] === this.grid[this.selectedCell] &&
+          parseInt(this.grid[index]) === parseInt(this.grid[this.selectedCell]) &&
           index !== this.selectedCell
         ) {
           classes.push('matching')
@@ -819,7 +824,8 @@ export default {
 }
 
 .sudoku-cell.error {
-  background: rgba(239, 83, 80, 0.3);
+  background: rgba(255, 83, 80, 0.8);
+  margin: 0 !important;
 }
 
 .cell-value {
@@ -874,8 +880,9 @@ export default {
 }
 
 .loading-overlay {
-  position: absolute;
-  bottom: 0;
+  position: fixed;
+  bottom: 1em;
+  right: 1em;
 }
 
 .buy-btn {

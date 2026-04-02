@@ -47,10 +47,15 @@
           </v-btn>
         </div>
         <div v-if="isLoading" class="loading-overlay">
-          <div class="spinner">...</div>
+          <v-progress-circular
+            size="20"
+            :width="10"
+            color="primary"
+            indeterminate
+          ></v-progress-circular>
         </div>
         <div v-if="gameState?.seed" class="seed-overlay">
-          <div>Seed : {{ gameState.seed }}</div>
+          <div style="font-size: 0.6em">Seed : {{ gameState.seed }}</div>
         </div>
 
         <div v-if="gameState" :key="Date.now()" class="solitaire-board pb-16">
@@ -414,7 +419,7 @@ export default {
       await this.getRankings()
       await this.fetchGameState(this.userId)
       this.isLoading = false
-      this.fetchAvatars()
+      //this.fetchAvatars()
       if (this.gameState?.isDone) {
         this.winDialog = true
       }
@@ -834,8 +839,9 @@ export default {
   border-radius: 12px;
 }
 .loading-overlay {
-  position: absolute;
-  bottom: 0;
+  position: fixed;
+  bottom: 1em;
+  right: 1em;
 }
 .seed-overlay {
   position: fixed;
