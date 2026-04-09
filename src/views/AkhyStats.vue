@@ -3,6 +3,7 @@
 import axios from 'axios'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
 import CsSkinCard from '@/components/CsSkinCard.vue'
+import HomeBtn from '@/components/HomeBtn.vue'
 import { useToastStore } from '../stores/toastStore.js'
 import { getRarityColor } from '@/utils/csRarity.js'
 import {
@@ -17,7 +18,7 @@ import {
 export default {
   name: 'AkhyStats',
 
-  components: { CsSkinCard },
+  components: { CsSkinCard, HomeBtn },
 
   setup() {
     const toastStore = useToastStore()
@@ -1121,13 +1122,7 @@ export default {
       </div>
     </v-main>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 
   <v-dialog

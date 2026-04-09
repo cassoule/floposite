@@ -3,10 +3,12 @@
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { getRarityColor } from '@/utils/csRarity.js'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
   components: {
     CoinsCounter,
+    HomeBtn,
   },
   data() {
     return {
@@ -180,9 +182,16 @@ export default {
         v-model="skipAnimation"
         density="compact"
         hide-details
-        :label="'Skip Animation : ' + (skipAnimation ? 'ON' : 'OFF')"
+        :label="'Animation: ' + (skipAnimation ? 'OFF' : 'ON')"
         color="primary"
-        style="position: fixed; bottom: 10px; right: 10px; transform: scale(0.75); width: 200px"
+        style="
+          position: fixed;
+          bottom: 10px;
+          right: 0;
+          transform: scale(0.75);
+          width: 150px;
+          z-index: 10;
+        "
       ></v-switch>
       <v-card color="#1A1A1A" rounded="xl" class="px-0" style="min-width: 280px; max-width: 400px">
         <v-card-item class="px-4 py-4">
@@ -284,13 +293,7 @@ export default {
       </v-card>
     </v-main>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 
   <!-- Roulette Dialog -->

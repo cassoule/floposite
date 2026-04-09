@@ -5,11 +5,12 @@ import { useToastStore } from '@/stores/toastStore.js'
 import { io } from 'socket.io-client'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { getRarityColor } from '@/utils/csRarity.js'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
   name: 'Market',
 
-  components: { CoinsCounter },
+  components: { CoinsCounter, HomeBtn },
 
   setup() {
     const toastStore = useToastStore()
@@ -610,13 +611,7 @@ export default {
       </div>
     </v-main>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 
   <v-dialog
@@ -922,7 +917,7 @@ export default {
         >
           <v-expansion-panel v-for="skin in userInventory" :key="'inv-' + skin.id">
             <v-expansion-panel-title
-              class="d-flex ga-3"
+              class="d-flex ga-3 px-2"
               @click="createOffer.price = Math.floor(skin.price * 0.75)"
             >
               <v-img :src="skin.imageUrl" height="30" min-width="50" max-width="50"></v-img>
@@ -955,7 +950,7 @@ export default {
               <v-spacer></v-spacer>
               <p>{{ skin.price }}&nbsp;Flopos</p>
             </v-expansion-panel-title>
-            <v-expansion-panel-text>
+            <v-expansion-panel-text class="pa-4 pt-0">
               <h3 class="mt-3">Infos</h3>
               <v-divider class="mt-1 mb-5"></v-divider>
               <v-row>

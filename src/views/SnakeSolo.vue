@@ -221,13 +221,7 @@
       </v-card>
     </v-dialog>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 </template>
 
@@ -235,12 +229,14 @@
 /* global localStorage, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame */
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
   name: 'SnakeSolo',
 
   components: {
     CoinsCounter,
+    HomeBtn,
   },
 
   data() {

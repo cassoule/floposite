@@ -53,20 +53,20 @@
       </div>
     </v-main>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 </template>
 
 <script>
 /* global localStorage */
+import HomeBtn from '@/components/HomeBtn.vue'
+
 export default {
   name: 'SnakeMenu',
+
+  components: {
+    HomeBtn,
+  },
 
   data() {
     return {

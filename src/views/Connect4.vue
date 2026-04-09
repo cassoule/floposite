@@ -117,13 +117,7 @@
       @close="reload"
     />
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 </template>
 
@@ -133,10 +127,11 @@ import { io } from 'socket.io-client'
 import axios from 'axios'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
 import GameOverDialog from '@/components/GameOverDialog.vue'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
   name: 'Connect4',
-  components: { GameOverDialog },
+  components: { GameOverDialog, HomeBtn },
   beforeRouteLeave(to, from, next) {
     this.leaveQueueSync({ reason: 'route-leave' })
     next()

@@ -2,10 +2,12 @@
 /* global localStorage, setTimeout */
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
   components: {
     CoinsCounter,
+    HomeBtn,
   },
 
   data() {
@@ -120,7 +122,7 @@ export default {
   <CoinsCounter @update-coins="user.coins = $event" />
   <v-layout>
     <v-main
-      class="d-flex"
+      class="d-flex mt-10"
       style="place-items: center; place-content: center; gap: 2em; flex-wrap: wrap"
     >
       <div
@@ -136,7 +138,7 @@ export default {
         <div
           v-if="!userGamePath || userGamePath.length === 0"
           class="w-100"
-          style="max-width: 400px"
+          style="max-width: 400px; min-width: 250px"
         >
           <v-card class="modals-card text-white w-100" variant="tonal" rounded="xl">
             <v-card-title>Monke Game</v-card-title>
@@ -288,13 +290,7 @@ export default {
       </v-card>
     </v-dialog>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 </template>
 

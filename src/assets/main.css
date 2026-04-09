@@ -60,3 +60,13 @@ a,
     place-items: start;
   }
 }
+
+.v-expansion-panel-title {
+  padding: 0 !important;
+}
+.v-expansion-panel-text__wrapper {
+  padding: 0 !important;
+}
+.v-expansion-panel {
+  padding: 0 !important;
+}

@@ -4,10 +4,11 @@ import CsSkinCard from '@/components/CsSkinCard.vue'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { useToastStore } from '@/stores/toastStore.js'
 import { getRarityColor, TRADE_UP_LADDER } from '@/utils/csRarity.js'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
   name: 'Inventory',
-  components: { CsSkinCard, CoinsCounter },
+  components: { CsSkinCard, CoinsCounter, HomeBtn },
 
   setup() {
     const toastStore = useToastStore()
@@ -206,20 +207,22 @@ export default {
             density="compact"
             variant="outlined"
             hide-details
-            class="filter-select"
+            class="filter-select mr-3"
           />
 
-          <v-chip-group filter v-model="filterStattrak" class="ml-3">
-            <v-chip text="StatTrak" :value="true"></v-chip>
-          </v-chip-group>
-          <v-chip-group filter v-model="filterSouvenir" class="mr-3">
-            <v-chip text="Souvenir" :value="true"></v-chip>
-          </v-chip-group>
+          <div class="d-flex">
+            <v-chip-group filter v-model="filterStattrak">
+              <v-chip text="StatTrak" :value="true"></v-chip>
+            </v-chip-group>
+            <v-chip-group filter v-model="filterSouvenir" class="mr-3">
+              <v-chip text="Souvenir" :value="true"></v-chip>
+            </v-chip-group>
+          </div>
 
           <v-spacer />
 
           <v-btn
-            v-if="filterRarity || filterWeaponType || filterStattrak || filterSouvenir"
+            :disabled="!(filterRarity || filterWeaponType || filterStattrak || filterSouvenir)"
             rounded="lg"
             variant="text"
             size="small"
@@ -229,21 +232,34 @@ export default {
             Réinitialiser
           </v-btn>
 
-          <v-btn-toggle
-            v-model="sortBy"
-            mandatory
-            rounded="lg"
-            variant="tonal"
-            density="compact"
+          <v-btn
+            text="Trade Up"
+            class="text-none"
+            append-icon="mdi-swap-vertical"
             color="primary"
-          >
-            <v-btn value="price" size="small" class="text-none text-secondary">Prix</v-btn>
-            <v-btn value="float" size="small" class="text-none text-secondary">Float</v-btn>
-          </v-btn-toggle>
+            variant="flat"
+            rounded="lg"
+            style="border-radius: 10px !important"
+            @click="$router.push('/trade-up')"
+          />
 
-          <v-btn icon variant="text" size="small" @click="sortDesc = !sortDesc">
-            <v-icon>{{ sortDesc ? 'mdi-sort-descending' : 'mdi-sort-ascending' }}</v-icon>
-          </v-btn>
+          <div class="d-flex">
+            <v-btn-toggle
+              v-model="sortBy"
+              mandatory
+              rounded="lg"
+              variant="tonal"
+              density="compact"
+              color="primary"
+            >
+              <v-btn value="price" size="small" class="text-none text-secondary">Prix</v-btn>
+              <v-btn value="float" size="small" class="text-none text-secondary">Float</v-btn>
+            </v-btn-toggle>
+
+            <v-btn icon variant="text" size="small" @click="sortDesc = !sortDesc">
+              <v-icon>{{ sortDesc ? 'mdi-sort-descending' : 'mdi-sort-ascending' }}</v-icon>
+            </v-btn>
+          </div>
         </div>
 
         <!-- Selection bar -->
@@ -298,9 +314,10 @@ export default {
         </div>
 
         <!-- Skin grid -->
-        <div v-else class="inventory-grid">
+        <div v-else class="inventory-grid w-100">
           <CsSkinCard
             v-for="skin in filteredAndSortedSkins"
+            class="w-100"
             :key="skin.id"
             :skin="skin"
             size="md"
@@ -312,13 +329,7 @@ export default {
         </div>
       </div>
     </v-main>
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 
   <!-- Sell confirmation dialog -->
