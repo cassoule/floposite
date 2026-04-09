@@ -4,9 +4,10 @@ import { io } from 'socket.io-client'
 import axios from 'axios'
 import { useToastStore } from '@/stores/toastStore.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
-  components: { CoinsCounter },
+  components: { CoinsCounter, HomeBtn },
 
   setup() {
     const toastStore = useToastStore()
@@ -347,13 +348,7 @@ export default {
       </div>
     </v-main>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 </template>
 

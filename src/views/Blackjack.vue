@@ -381,13 +381,7 @@
       </v-card>
     </v-main>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 </template>
 
@@ -395,8 +389,10 @@
 /* global localStorage, setInterval, clearInterval, fetch */
 import axios from 'axios'
 import { io } from 'socket.io-client'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
+  components: { HomeBtn },
   data: () => ({
     discordId: null,
     room: null,

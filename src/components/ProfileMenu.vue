@@ -1,6 +1,7 @@
 <template>
   <div style="position: fixed; top: 1rem; left: 1rem; z-index: 1000; transition: all 0.5s">
     <v-expansion-panels
+      v-model="panelOpened"
       color="transparent"
       rounded="xl"
       variant="accordion"
@@ -38,9 +39,22 @@
               <v-img :src="user.avatarUrl" max-width="40" min-width="40" rounded="circle" />
 
               <div style="line-height: 1.25em">
-                <h3>{{ user.username }}</h3>
-                <p>
-                  <span class="font-weight-bold" style="font-size: 0.8em">{{
+                <h3
+                  style="
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    max-width: 133px;
+                    min-width: 133px;
+                    font-size: 1em;
+                  "
+                  :style="panelOpened === 0 ? 'max-width: 200px' : ''"
+                  :title="user.username"
+                >
+                  {{ user.username }}
+                </h3>
+                <p style="font-size: 0.9em">
+                  <span class="font-weight-bold" style="font-size: 1em">{{
                     user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
                   }}</span
                   >&nbsp;Coins&nbsp;
@@ -48,6 +62,21 @@
               </div>
             </div>
           </v-card-item>
+          <template v-slot:actions="{ expanded }">
+            <div
+              v-if="elos[user.id]?.elo && !elos[user.id]?.isPlacement && !expanded"
+              class="px-3"
+              style="display: flex; place-items: center"
+            >
+              <v-img :src="rankIcon(user?.elo)" width="20" height="25">
+                <div
+                  :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+                >
+                  <p style="font-weight: 400">{{ rankDiv(user?.elo) }}</p>
+                </div>
+              </v-img>
+            </div>
+          </template>
         </v-expansion-panel-title>
         <v-expansion-panel-text class="text-white">
           <div v-if="elos[user.id]?.elo" class="d-flex ga-2 px-4 pt-2" style="place-items: center">
@@ -70,7 +99,9 @@
               }}</span>
             </template>
           </div>
-          <p class="pl-11 pb-5" style="line-height: 0.5em; color: #ffffff77">-%WR</p>
+          <p class="pl-4 pt-1 pb-5" style="line-height: 0.5em; color: #ffffff77">
+            {{ winRate ?? '-' }}% WR
+          </p>
           <div class="w-100 px-2 ga-2 d-flex">
             <v-btn
               text="Voir le profil"
@@ -111,6 +142,7 @@
 </template>
 
 <script>
+import axios from 'axios'
 import { rankIcon, rankDiv, rankColor } from '../utils/rank.js'
 
 export default {
@@ -132,6 +164,19 @@ export default {
   },
 
   emits: ['logout', 'buy-coins'],
+
+  data() {
+    return {
+      winRate: null,
+      panelOpened: null,
+    }
+  },
+
+  async mounted() {
+    const FLAPI_URL = import.meta.env.VITE_FLAPI_URL
+    const response = await axios.get(FLAPI_URL + '/user/' + this.user.id)
+    this.winRate = response.data?.user?.winRate
+  },
 
   methods: {
     rankIcon,

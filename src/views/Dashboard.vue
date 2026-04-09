@@ -1,860 +1,701 @@
 <template>
-  <profile-menu
-    v-if="user && !mounting"
-    :user="user"
-    :elos="elos"
-    :elo_graphs="elo_graphs"
-    @logout="logout"
-    @buy-coins="coinsModal = true"
-  ></profile-menu>
-  <div v-if="user && !mounting" class="user-tab">
+  <v-layout class="w-100">
+    <profile-menu
+      v-if="user && !mounting"
+      :user="user"
+      :elos="elos"
+      :elo_graphs="elo_graphs"
+      @logout="logout"
+      @buy-coins="coinsModal = true"
+    ></profile-menu>
+
     <div
-      class="mt-5 d-flex flex-column align-start justify-center"
-      style="gap: 0.5rem; position: relative; place-content: space-between"
+      v-if="!leaderBoardOpen"
+      style="
+        position: fixed;
+        right: 0;
+        top: 50%;
+        height: 70px;
+        width: 25px;
+        background: rgba(255, 255, 255, 0);
+        padding: 1.5em 0.1em;
+        border-radius: 10px 0 0 10px;
+        cursor: pointer;
+        transform: translateY(-50%);
+      "
+      @click="leaderBoardOpen = true"
+    />
+    <v-navigation-drawer
+      v-model="leaderBoardOpen"
+      location="right"
+      :width="350"
+      variant="text"
+      color="transparent"
+      elevation="0"
+      temporary
+      :scrim="false"
     >
-      <div
-        class="d-flex py-2"
-        style="
-          gap: 3rem;
-          overflow-y: scroll;
-          overflow-x: visible;
-          padding-top: 0.6em;
-          padding-right: 1em;
-          place-items: center;
-        "
-      >
-        <v-btn
-          :key="Date.now() + '-daily-reward'"
-          class="text-none"
-          color="primary"
-          variant="tonal"
-          rounded="lg"
-          style="border: 1px solid #5865f2"
-          :disabled="user.dailyQueried"
-          @click="handleDailyQuery"
-        >
-          <span
-            v-if="user.dailyQueried"
-            style="font-size: 12px; font-variant-numeric: tabular-nums; color: white"
-          >
-            {{ dailyCountdown }}
-          </span>
-          <v-icon
-            v-else
-            class="mdi mdi-gift animate__animated animate__heartBeat animate__infinite animate__slow"
-            size="20"
-            color="white"
-          ></v-icon>
-        </v-btn>
-        <p>Classement Solitaire Of The Day: #-</p>
-        <p>Classement Sudoku Of The Day: #-</p>
-      </div>
-
-      <p></p>
-      <v-chip-group
-        v-model="gameCardsFilter"
-        class="mb-0 pb-0 text-secondary"
-        selected-class="text-white"
-        :disabled="tab !== 'games'"
-      >
-        <v-chip size="small" :value="'1v1'" filter>1v1</v-chip>
-        <v-chip size="small" :value="'Multi'" filter>Multi</v-chip>
-        <v-chip size="small" :value="'Solo'" filter>Solo</v-chip>
-        <v-chip size="small" :value="'Elo'" filter>Elo</v-chip>
-        <v-chip size="small" :value="'Coins'" filter class="mr-0">Coins</v-chip>
-      </v-chip-group>
-    </div>
-
-    <v-tabs
-      v-model="tab"
-      variant="tonal"
-      color="white"
-      align-tabs="center"
-      grow
-      density="compact"
-      class="tabs w-100 mt-5"
-    >
-      <v-tab value="games" icon><i class="mdi mdi-controller" /></v-tab>
-      <v-tab class="new-tab" value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
-      <v-tab v-if="user?.isAkhy" value="commandes" icon>
-        <i class="mdi mdi-slash-forward-box" />
-      </v-tab>
-      <v-tab v-if="user?.isAkhy" value="predictions" icon>
-        <i class="mdi mdi-tooltip-question-outline" />
-      </v-tab>
-    </v-tabs>
-
-    <v-tabs-window v-model="tab" class="w-100">
-      <v-tabs-window-item value="games">
-        <div class="actions-container">
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === '1v1' || gameCardsFilter === 'Elo'"
-            class="game-action-card c4-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/connect-4')"
-          >
-            <v-card-title>
-              Puissance 4
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">1v1</v-chip>
-                <v-chip size="small" class="mr-0">Elo</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>
-                Joue une partie de puissance 4 contre un autre joueur, mais attention à ton
-                FlopoRank.
-              </p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-numeric-4-circle"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/connect-4')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'"
-            class="game-action-card sol-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/solitaire')"
-          >
-            <v-card-title>
-              Solitaire
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">Solo</v-chip>
-                <v-chip size="small" class="mr-0">Coins</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Tente de gagner quelques FlopoCoins au solitaire.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-cards-spade"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/solitaire')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'"
-            class="game-action-card sudoku-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/sudoku')"
-          >
-            <v-card-title>
-              Sudoku
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">Solo</v-chip>
-                <v-chip size="small">Coins</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Gagne des FlopoCoins en complétant des grilles de sudoku.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-grid"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/sudoku')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'"
-            class="game-action-card bj-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/blackjack')"
-          >
-            <v-card-title>
-              Blackjack
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">Multi</v-chip>
-                <v-chip size="small" class="mr-0">Coins</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Mise tes FlopoCoins au Blackjack</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-cards"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/blackjack')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === 'Multi' || gameCardsFilter === 'Coins'"
-            class="game-action-card poker-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/poker')"
-          >
-            <v-card-title>
-              Flopoker
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">Multi</v-chip>
-                <v-chip size="small" class="mr-0">Coins</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none game-btn"
-                color="primary"
-                append-icon="mdi mdi-cards-playing-spade-multiple"
-                style="z-index: 0"
-                @click="$router.push('/poker')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === '1v1' || gameCardsFilter === 'Elo'"
-            class="game-action-card ttt-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/tic-tac-toe')"
-          >
-            <v-card-title>
-              Tic Tac Toe
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">1v1</v-chip>
-                <v-chip size="small" class="mr-0">Elo</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none game-btn"
-                color="primary"
-                append-icon="mdi mdi-pound"
-                style="z-index: 0"
-                @click="$router.push('/tic-tac-toe')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'"
-            class="game-action-card mg-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/monke-game')"
-          >
-            <v-card-title>
-              Monke Game
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">Solo</v-chip>
-                <v-chip size="small" class="mr-0">Coins</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Tente de gagner des FlopoCoins mais attention aux bombes !</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-bomb"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/monke-game')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            v-if="!gameCardsFilter || gameCardsFilter === 'Solo' || gameCardsFilter === 'Coins'"
-            class="game-action-card snake-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/snake/solo')"
-          >
-            <v-card-title>
-              Snake Game
-              <v-chip-group style="float: right; pointer-events: none">
-                <v-chip size="small">Solo</v-chip>
-                <v-chip size="small">Coins</v-chip>
-              </v-chip-group>
-            </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Gagne des FlopoCoins en jouant au Snake en solo.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Jouer"
-                class="text-none"
-                append-icon="mdi-snake"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/snake/solo')"
-              />
-            </v-card-text>
-          </v-card>
-        </div>
-      </v-tabs-window-item>
-
-      <v-tabs-window-item value="skins">
-        <div class="actions-container">
-          <v-card class="game-action-card bg-black" variant="tonal" @click="$router.push('/cases')">
-            <v-card-title> Caisses </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Ouvre des caisses pour obtenir des skins rares et uniques.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Caisses"
-                class="text-none"
-                append-icon="mdi-gift-open-outline"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/cases')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            class="game-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/market')"
-          >
-            <v-card-title> FlopoMarket </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Vends tes skins au enchères ou achètes-en de nouveaux pour ta collection.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Market"
-                class="text-none"
-                append-icon="mdi-cart-variant"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/market')"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            class="game-action-card bg-black"
-            variant="tonal"
-            @click="$router.push('/trade-up')"
-          >
-            <v-card-title> Trade Up </v-card-title>
-            <v-card-subtitle style="text-wrap: wrap">
-              <p>Améliore tes skins en les combinant pour obtenir des versions plus rares.</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="Upgrade"
-                class="text-none"
-                append-icon="mdi-swap-vertical"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                @click="$router.push('/trade-up')"
-              />
-            </v-card-text>
-          </v-card>
-        </div>
-      </v-tabs-window-item>
-
-      <v-tabs-window-item v-if="user?.isAkhy" value="commandes">
-        <div class="actions-container">
-          <v-card class="action-card" variant="tonal">
-            <v-card-title>Modif Pseudo</v-card-title>
-            <v-card-subtitle>
-              <p>Modifie le pseudo de quelqu'un</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="1K FlopoCoins"
-                class="text-none"
-                append-icon="mdi-play"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                :disabled="user?.coins < 1000"
-                @click="nicknameModal = true"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card" variant="tonal">
-            <v-card-title>Spam Ping</v-card-title>
-            <v-card-subtitle>
-              <p>Spam quelqu'un pendant 30 secondes</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="5K FlopoCoins"
-                class="text-none"
-                append-icon="mdi-play"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                :disabled="user?.coins < 5000"
-                @click="spamPingModal = true"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card" variant="tonal">
-            <v-card-title>Slow Mode</v-card-title>
-            <v-card-subtitle>
-              <p>1 message par minute pendant 1 heure</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="10K FlopoCoins"
-                class="text-none"
-                append-icon="mdi-play"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                :disabled="user?.coins < 10000"
-                @click="slowmodeModal = true"
-              />
-            </v-card-text>
-          </v-card>
-
-          <v-card class="action-card" variant="tonal">
-            <v-card-title>Time-Out</v-card-title>
-            <v-card-subtitle>
-              <p>Time-out quelqu'un pendant 12 heures</p>
-            </v-card-subtitle>
-            <v-card-text class="d-flex justify-end">
-              <v-btn
-                text="100K FlopoCoins"
-                class="text-none"
-                append-icon="mdi-play"
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                style="border-radius: 10px !important"
-                :disabled="user?.coins < 100000"
-                @click="timeoutModal = true"
-              />
-            </v-card-text>
-          </v-card>
-        </div>
-      </v-tabs-window-item>
-
-      <v-tabs-window-item v-if="user?.isAkhy" value="predictions">
-        <div class="actions-container">
-          <div
+      <div v-if="users && !mounting" class="leaderboard-container h-100">
+        <TransitionGroup name="leaderboard-list" tag="div" class="leaderboard h-100">
+          <h2
+            class="pa-2 mb-2 w-100 text-white"
             style="
-              position: absolute;
-              z-index: 2;
-              padding: 0.7em 0.5em;
-              width: 100%;
               display: flex;
               place-content: space-between;
-              backdrop-filter: blur(5px);
+              align-items: center;
+              position: sticky;
+              top: 0;
+              z-index: 100;
             "
           >
-            <h2 class="text-white">Prédictions</h2>
+            <span
+              class="d-flex justify-center text-white align-center text-capitalize cursor-pointer text-center"
+              style="
+                user-select: none;
+                width: 60px;
+                font-size: 0.75em;
+                height: 25px;
+                padding-bottom: 2px;
+                background: #5865f2;
+                border-radius: 10px;
+              "
+              @click="leaderboardSwitch"
+            >
+              {{ leaderboardType }}
+            </span>
             <v-btn
-              class="text-none"
-              variant="flat"
-              color="primary"
-              text="Nouvelle Prédi"
-              style="border-radius: 10px"
-              @click="prediModal = true"
-            />
-          </div>
+              icon
+              variant="text"
+              density="compact"
+              class="mdi mdi-close"
+              style="font-size: 1em"
+              @click="leaderBoardOpen = false"
+            ></v-btn>
+          </h2>
           <div
-            v-if="active_predis"
-            class="predis-containers pt-12"
-            :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+            v-for="akhy in leaderboardUsers"
+            :key="akhy.id"
+            v-motion
+            :initial="{ opacity: 0, y: -20, scale: 0.9 }"
+            :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 300, delay: 50 } }"
+            :leave="{ opacity: 0, y: 20, scale: 0.9, transition: { duration: 200 } }"
+            style="border-radius: 10px; margin: 0 6px"
+            :style="
+              akhy.id === discordId
+                ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)'
+                : ''
+            "
           >
-            <v-card
-              v-for="[key, predi] in Object.entries(active_predis)"
-              :key="key"
-              class="votes-card"
-              :variant="
-                ((predi.endTime - Date.now()) / 1000).toFixed() < 0 || predi.closed
-                  ? 'plain'
-                  : 'tonal'
+            <div
+              v-if="akhy"
+              style="
+                display: flex;
+                place-content: space-between;
+                min-width: 300px;
+                width: 100%;
+                padding: 0.5em 1em;
               "
             >
-              <div>
+              <span style="color: #fff; display: flex; place-items: center; gap: 0.7rem">
                 <v-img
-                  :src="avatars[predi.creatorId]"
+                  :src="akhy.avatarUrl"
                   color="transparent"
-                  style="
-                    border-radius: 50%;
-                    width: 25px;
-                    height: 25px;
-                    position: absolute;
-                    right: 1em;
-                    top: 1em;
-                  "
+                  style="border-radius: 50%; width: 20px; height: 20px"
                 />
-                <v-card-text class="font-weight-bold pr-0 mr-12">
-                  {{ predi.label }}
-                </v-card-text>
-                <v-card-subtitle class="pb-3">
-                  {{ predi.options[0].votes.length + predi.options[1].votes.length }}
-                  vote(s) - Prédi de {{ users.find((u) => u.id === predi.creatorId).username }}
-                </v-card-subtitle>
-                <v-card-subtitle class="d-flex pb-2" style="place-content: space-between">
-                  <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
-                    {{ predi.options[0].label }}
-                  </p>
-                  <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
-                    {{ predi.options[1].label }}
-                  </p>
-                </v-card-subtitle>
-                <v-card-text class="px-0">
-                  <div
-                    class="animate__animated animate__fadeIn"
-                    style="text-align: right; position: absolute"
-                    :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${predi.options[0].percent - 100}%); background: #5865f2; border: 2px solid #5865f277`"
-                  >
-                    <p class="pr-4" style="transform: translateY(-25px)">
-                      {{ predi.options[0].percent.toFixed(1) }}%
-                    </p>
-                  </div>
-                  <div
-                    class="animate__animated animate__fadeIn"
-                    style="text-align: left; position: absolute"
-                    :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${100 - predi.options[1].percent}%); background: #aa3e3e; border: 2px solid #aa3e3e77`"
-                  >
-                    <p class="pl-4" style="transform: translateY(-25px)">
-                      {{ predi.options[1].percent.toFixed(1) }}%
-                    </p>
-                  </div>
-                </v-card-text>
-                <v-card-subtitle class="d-flex justify-space-between pt-2">
-                  <div style="display: flex; place-content: start; gap: 0">
-                    <div
-                      v-for="(vote, index) in predi.options[0].votes"
-                      :key="vote.id + Date.now()"
-                      :style="`transform: translateX(calc(-12px * ${index})); z-index: 1;`"
-                    >
-                      <v-img
-                        :src="avatars[vote.id]"
-                        color="transparent"
-                        style="border-radius: 50%; width: 20px; height: 20px"
-                      />
-                    </div>
-                  </div>
-                  <div
-                    style="display: flex; flex-direction: row-reverse; place-content: start; gap: 0"
-                  >
-                    <div
-                      v-for="(vote, index) in predi.options[1].votes"
-                      :key="vote.id + Date.now()"
-                      :style="`transform: translateX(calc(12px * ${index})); z-index: 1;`"
-                    >
-                      <v-img
-                        :src="avatars[vote.id]"
-                        color="transparent"
-                        style="border-radius: 50%; width: 20px; height: 20px"
-                      />
-                    </div>
-                  </div>
-                </v-card-subtitle>
-                <v-card-text class="d-flex align-end">
-                  <p v-if="!predi.closed">
-                    {{
-                      ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
-                        ? ((predi.closingTime - Date.now()) / 1000).toFixed() +
-                          's restantes pour voter'
-                        : ((predi.endTime - Date.now()) / 1000).toFixed() > 0
-                          ? Math.max(((predi.endTime - Date.now()) / 1000).toFixed(), 0) +
-                            's avant les résultats'
-                          : 'Prédi terminée, en attente de validation'
-                    }}
-                  </p>
-                  <p v-else>Prédi terminée, les FlopoCoins ont été distribués</p>
-
-                  <v-spacer />
-                  <div v-if="!predi.options[0].votes.find((v) => v?.voter === discordId)">
-                    <v-btn
-                      :text="
-                        ((predi.closingTime - Date.now()) / 1000).toFixed() > 0 ? 'Voter' : 'Voir'
-                      "
-                      color="primary"
-                      variant="flat"
-                      rounded="lg"
-                      @click="setSelectedPredi(predi, key)"
-                      @click.stop="prediVoteModal = true"
-                    />
-                  </div>
-                  <div v-else>Tu as voté !</div>
-                </v-card-text>
+                @{{ akhy?.username }}&nbsp;
+                <i
+                  v-if="akhy?.isAkhy"
+                  class="mdi mdi-check-decagram-outline"
+                  title="Akhy certifié"
+                ></i>
+                <i v-if="akhy.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
+              </span>
+              <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center">
+                {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
               </div>
-            </v-card>
-            <div v-if="Object.keys(active_predis)?.length === 0" class="pt-16 pl-5">
-              <p class="pt-16 w-100 text-center">Aucune prédi en cours</p>
+              <div v-else style="display: flex; place-items: center">
+                <template v-if="akhy.isPlacement">
+                  <span style="font-size: 0.8em; opacity: 0.6"
+                    >Placement {{ akhy.gamesPlayed }}/5</span
+                  >
+                </template>
+                <template v-else>
+                  <v-img :src="rankIcon(akhy.elo)" width="20" height="20">
+                    <div
+                      :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
+                    >
+                      <p style="font-weight: 400">{{ rankDiv(akhy?.elo) }}</p>
+                    </div>
+                  </v-img>
+                </template>
+              </div>
+
+              <v-menu activator="parent" location="end" open-on-click transition="scale-transition">
+                <v-list
+                  width="250"
+                  class="mr-2 py-0"
+                  elevation="20"
+                  rounded="xl"
+                  bg-color="#181818"
+                  base-color="white"
+                  variant="tonal"
+                  style="border: 2px solid #ffffff55"
+                >
+                  <v-list-item class="px-2">
+                    <v-list-item-title
+                      style="display: flex; place-content: start; place-items: center; gap: 0.7rem"
+                      class="cursor-pointer"
+                      @click="$router.push('/akhy/' + akhy.id)"
+                    >
+                      <v-img
+                        :src="akhy.avatarUrl"
+                        color="transparent"
+                        max-width="30"
+                        style="border-radius: 50%; width: 20px; height: 30px"
+                      />
+                      {{ akhy?.username }}
+                    </v-list-item-title>
+                  </v-list-item>
+                  <v-list-item>
+                    <v-sparkline
+                      smooth
+                      auto-draw
+                      class="pa-0 ma-0"
+                      color="primary"
+                      line-width="2"
+                      :model-value="
+                        sparklines[akhy.id]?.length > 1
+                          ? sparklines[akhy.id]?.map((entry) => entry.userNewAmount)
+                          : [0, 0]
+                      "
+                      style="position: absolute; left: 0; top: 0"
+                      title="Evolution de FlopoCoins"
+                    />
+                  </v-list-item>
+                  <v-list-item>
+                    <v-list-item-subtitle>
+                      {{
+                        users
+                          .find((u) => u.id === akhy.id)
+                          ?.coins.toString()
+                          .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+                      }}
+                      FlopoCoins
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                  <v-list-item>
+                    <v-sparkline
+                      smooth
+                      auto-draw
+                      class="pa-0 ma-0"
+                      color="secondary"
+                      line-width="2"
+                      :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0, 0]"
+                      style="position: absolute; left: 0; top: 0"
+                      title="Evolution de l'elo"
+                    />
+                  </v-list-item>
+                  <v-list-item>
+                    <v-list-item-subtitle>
+                      {{
+                        elos[akhy.id]?.isPlacement
+                          ? `Placement ${elos[akhy.id]?.gamesPlayed}/5`
+                          : `${elos[akhy.id]?.elo ?? 0} FlopoRank`
+                      }}
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                  <v-list-item class="pb-1 px-3">
+                    <v-btn
+                      class="text-none"
+                      color="primary"
+                      block
+                      rounded
+                      density="comfortable"
+                      @click="$router.push('/akhy/' + akhy.id)"
+                      >Voir plus</v-btn
+                    >
+                  </v-list-item>
+                </v-list>
+              </v-menu>
             </div>
           </div>
+        </TransitionGroup>
+      </div>
+      <div
+        style="
+          position: absolute;
+          left: -25px;
+          top: 50%;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(15px);
+          padding: 1.5em 0.1em;
+          border-radius: 15px 0 0 15px;
+          cursor: pointer;
+          transform: translateY(-50%);
+        "
+        @click="leaderBoardOpen = false"
+      >
+        <v-icon :class="'mdi mdi-chevron-' + (leaderBoardOpen ? 'right' : 'left')"></v-icon>
+      </div>
+    </v-navigation-drawer>
+
+    <v-main class="w-100" style="position: relative; min-height: 100vh">
+      <div v-if="user && !mounting" class="w-100 user-tab">
+        <div
+          class="w-100 mt-5 d-flex flex-column align-start justify-center"
+          style="gap: 0.5rem; position: relative; place-content: space-between"
+        >
           <div
-            v-else
-            style="width: 100%; display: flex; place-content: center; place-items: center"
-            :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+            class="d-flex justify-space-between rounded-xl w-100 px-2 pb-1"
+            style="background: #dddddd22"
           >
-            <v-progress-circular
-              :size="70"
-              :width="10"
+            <v-chip-group
+              v-model="gameCardsFilter"
+              class="mb-0 pb-0 text-secondary"
+              selected-class="text-white"
+            >
+              <v-chip size="small" :value="'1v1'" filter>1v1</v-chip>
+              <v-chip size="small" :value="'Multi'" filter>Multi</v-chip>
+              <v-chip size="small" :value="'Solo'" filter>Solo</v-chip>
+              <v-chip size="small" :value="'Elo'" filter>Elo</v-chip>
+              <v-chip size="small" :value="'Coins'" filter class="mr-0">Coins</v-chip>
+            </v-chip-group>
+            <v-btn
+              :key="Date.now() + '-daily-reward'"
+              class="text-none mt-2"
               color="primary"
-              indeterminate
-            ></v-progress-circular>
+              variant="tonal"
+              style="border: 1px solid #5865f2; border-radius: 20px; height: 27px"
+              :disabled="user.dailyQueried"
+              @click="handleDailyQuery"
+            >
+              <span
+                v-if="user.dailyQueried"
+                style="font-size: 12px; font-variant-numeric: tabular-nums; color: white"
+              >
+                {{ dailyCountdown }}
+              </span>
+              <v-icon
+                v-else
+                class="mdi mdi-gift animate__animated animate__heartBeat animate__infinite animate__slow"
+                size="18"
+                color="white"
+              ></v-icon>
+            </v-btn>
           </div>
         </div>
-      </v-tabs-window-item>
-    </v-tabs-window>
-    <p class="d-flex mt-2" style="place-items: center">
-      {{ formatAmount(user?.coins) }} Flopos
-      <v-img src="star.svg" class="ml-2" max-width="12px" height="12px" />
-    </p>
-  </div>
 
-  <div v-else class="user-tab" style="min-width: 800px">
-    <v-skeleton-loader
-      class=""
-      type="text@3"
-      color="transparent"
-      style="max-width: 300px"
-    ></v-skeleton-loader>
-    <v-skeleton-loader
-      class="mb-2"
-      type="text"
-      color="transparent"
-      style="max-width: 300px"
-    ></v-skeleton-loader>
-    <v-skeleton-loader
-      class="px-0"
-      type="heading"
-      color="transparent"
-      style="max-width: 800px"
-    ></v-skeleton-loader>
-    <v-skeleton-loader
-      type="image@3"
-      color="transparent"
-      style="border-radius: 20px; overflow: hidden"
-    ></v-skeleton-loader>
-  </div>
-
-  <div v-if="users && !mounting" class="leaderboard-container">
-    <h2 style="display: flex; place-content: space-between; align-items: center">
-      Classement
-      <span
-        class="d-flex justify-center text-white align-center text-capitalize cursor-pointer rounded-xl text-center"
-        style="user-select: none; width: 60px; font-size: 0.75em; height: 25px"
-        :style="leaderboardType === 'coins' ? 'background: #5865f2;' : 'background: #5865f277;'"
-        @click="leaderboardSwitch"
-      >
-        {{ leaderboardType }}
-      </span>
-    </h2>
-    <TransitionGroup name="leaderboard-list" tag="div" class="leaderboard">
-      <div
-        v-for="akhy in leaderboardUsers"
-        :key="akhy.id"
-        v-motion
-        :initial="{ opacity: 0, y: -20, scale: 0.9 }"
-        :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 300, delay: 50 } }"
-        :leave="{ opacity: 0, y: 20, scale: 0.9, transition: { duration: 200 } }"
-        style="border-radius: 10px"
-        :style="
-          akhy.id === discordId
-            ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)'
-            : ''
-        "
-      >
         <div
-          v-if="akhy"
+          class="w-100 mt-2"
           style="
             display: flex;
-            place-content: space-between;
-            min-width: 300px;
-            width: 100%;
-            padding: 0.5em 1em;
+            flex-direction: column;
+            gap: 0rem;
+            row-gap: 0rem;
+            overflow-x: auto;
+            flex-wrap: wrap;
+            border-radius: 20px;
           "
         >
-          <span style="color: #ddd; display: flex; place-items: center; gap: 0.7rem">
-            <v-img
-              :src="akhy.avatarUrl"
-              color="transparent"
-              style="border-radius: 50%; width: 20px; height: 20px"
-            />
-            @{{ akhy?.username }}&nbsp;
-            <i v-if="akhy?.isAkhy" class="mdi mdi-check-decagram-outline" title="Akhy certifié"></i>
-            <i v-if="akhy.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
-          </span>
-          <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center">
-            {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
-          </div>
-          <div v-else style="display: flex; place-items: center">
-            <template v-if="akhy.isPlacement">
-              <span style="font-size: 0.8em; opacity: 0.6">Placement {{ akhy.gamesPlayed }}/5</span>
-            </template>
-            <template v-else>
-              <v-img :src="rankIcon(akhy.elo)" width="20" height="20">
-                <div
-                  :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
-                >
-                  <p style="font-weight: 400">{{ rankDiv(akhy?.elo) }}</p>
-                </div>
-              </v-img>
-            </template>
-          </div>
+          <game-card
+            v-for="game in games"
+            :key="game.name"
+            :game="game"
+            :gameCardsFilter="gameCardsFilter"
+            :SOTDRank="
+              game.name === 'Solitaire'
+                ? user?.solitaireOTDRank
+                : game.name === 'Sudoku'
+                  ? user?.sudokuOTDRank
+                  : null
+            "
+          ></game-card>
+        </div>
 
-          <v-menu activator="parent" location="end" open-on-click transition="scale-transition">
-            <v-list
-              width="250"
-              class="mr-2 py-0"
-              elevation="20"
-              rounded="xl"
-              bg-color="#181818"
-              base-color="white"
-              variant="tonal"
-              style="border: 2px solid #ffffff55"
-            >
-              <v-list-item class="px-2">
-                <v-list-item-title
-                  style="display: flex; place-content: start; place-items: center; gap: 0.7rem"
-                  class="cursor-pointer"
-                  @click="$router.push('/akhy/' + akhy.id)"
-                >
-                  <v-img
-                    :src="akhy.avatarUrl"
-                    color="transparent"
-                    max-width="30"
-                    style="border-radius: 50%; width: 20px; height: 30px"
+        <v-tabs
+          v-model="tab"
+          variant="tonal"
+          color="white"
+          align-tabs="center"
+          grow
+          density="compact"
+          class="tabs w-100 mt-5"
+        >
+          <v-tab class="new-tab" value="skins" icon><i class="mdi mdi-pistol" /></v-tab>
+          <v-tab v-if="user?.isAkhy" value="commandes" icon>
+            <i class="mdi mdi-slash-forward-box" />
+          </v-tab>
+          <v-tab v-if="user?.isAkhy" value="predictions" icon>
+            <i class="mdi mdi-tooltip-question-outline" />
+          </v-tab>
+        </v-tabs>
+
+        <v-tabs-window v-model="tab" class="w-100">
+          <v-tabs-window-item value="skins">
+            <div class="cases-actions-container">
+              <v-card
+                class="game-action-card bg-black pb-1"
+                variant="tonal"
+                style="display: flex; flex-direction: column; place-content: space-between"
+                @click="$router.push('/cases')"
+              >
+                <v-card-title> Caisses </v-card-title>
+                <v-card-subtitle style="text-wrap: wrap">
+                  <p>Ouvre des caisses pour obtenir des skins rares et uniques.</p>
+                </v-card-subtitle>
+                <v-card-item class="d-flex justify-end">
+                  <v-btn
+                    text="Caisses"
+                    class="text-none"
+                    append-icon="mdi-gift-open-outline"
+                    color="primary"
+                    variant="flat"
+                    rounded="lg"
+                    block
+                    style="border-radius: 10px !important"
+                    @click="$router.push('/cases')"
                   />
-                  {{ akhy?.username }}
-                </v-list-item-title>
-              </v-list-item>
-              <v-list-item>
-                <v-sparkline
-                  smooth
-                  auto-draw
-                  class="pa-0 ma-0"
-                  color="primary"
-                  line-width="2"
-                  :model-value="
-                    sparklines[akhy.id]?.length > 1
-                      ? sparklines[akhy.id]?.map((entry) => entry.userNewAmount)
-                      : [0, 0]
-                  "
-                  style="position: absolute; left: 0; top: 0"
-                  title="Evolution de FlopoCoins"
-                />
-              </v-list-item>
-              <v-list-item>
-                <v-list-item-subtitle>
-                  {{
-                    users
-                      .find((u) => u.id === akhy.id)
-                      ?.coins.toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-                  }}
-                  FlopoCoins
-                </v-list-item-subtitle>
-              </v-list-item>
-              <v-list-item>
-                <v-sparkline
-                  smooth
-                  auto-draw
-                  class="pa-0 ma-0"
-                  color="secondary"
-                  line-width="2"
-                  :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0, 0]"
-                  style="position: absolute; left: 0; top: 0"
-                  title="Evolution de l'elo"
-                />
-              </v-list-item>
-              <v-list-item>
-                <v-list-item-subtitle>
-                  {{
-                    elos[akhy.id]?.isPlacement
-                      ? `Placement ${elos[akhy.id]?.gamesPlayed}/5`
-                      : `${elos[akhy.id]?.elo ?? 0} FlopoRank`
-                  }}
-                </v-list-item-subtitle>
-              </v-list-item>
-              <v-list-item class="pb-1 px-3">
+                </v-card-item>
+              </v-card>
+
+              <v-card
+                class="game-action-card bg-black pb-1"
+                variant="tonal"
+                style="display: flex; flex-direction: column; place-content: space-between"
+                @click="$router.push('/market')"
+              >
+                <v-card-title> FlopoMarket </v-card-title>
+                <v-card-subtitle style="text-wrap: wrap">
+                  <p>Vends tes skins au enchères ou achètes-en de nouveaux pour ta collection.</p>
+                </v-card-subtitle>
+                <v-card-item class="d-flex justify-end">
+                  <v-btn
+                    text="Market"
+                    class="text-none"
+                    append-icon="mdi-cart-variant"
+                    color="primary"
+                    variant="flat"
+                    rounded="lg"
+                    block
+                    style="border-radius: 10px !important"
+                    @click="$router.push('/market')"
+                  />
+                </v-card-item>
+              </v-card>
+
+              <v-card
+                class="game-action-card bg-black pb-1"
+                variant="tonal"
+                style="display: flex; flex-direction: column; place-content: space-between"
+                @click="$router.push('/inventory')"
+              >
+                <v-card-title> Inventaire </v-card-title>
+                <v-card-subtitle style="text-wrap: wrap">
+                  <p>Gère, revend ou échange tes skins.</p>
+                </v-card-subtitle>
+                <v-card-item class="d-flex justify-end">
+                  <v-btn
+                    text="Inventaire"
+                    class="text-none"
+                    append-icon="mdi-bookshelf"
+                    color="primary"
+                    variant="flat"
+                    rounded="lg"
+                    block
+                    style="border-radius: 10px !important"
+                    @click="$router.push('/inventory')"
+                  />
+                </v-card-item>
+              </v-card>
+            </div>
+          </v-tabs-window-item>
+
+          <v-tabs-window-item v-if="user?.isAkhy" value="commandes">
+            <div class="actions-container">
+              <v-card class="action-card" variant="tonal">
+                <v-card-title>Modif Pseudo</v-card-title>
+                <v-card-subtitle>
+                  <p>Modifie le pseudo de quelqu'un</p>
+                </v-card-subtitle>
+                <v-card-text class="d-flex justify-end">
+                  <v-btn
+                    text="1K FlopoCoins"
+                    class="text-none"
+                    append-icon="mdi-play"
+                    color="primary"
+                    variant="flat"
+                    rounded="lg"
+                    style="border-radius: 10px !important"
+                    :disabled="user?.coins < 1000"
+                    @click="nicknameModal = true"
+                  />
+                </v-card-text>
+              </v-card>
+
+              <v-card class="action-card" variant="tonal">
+                <v-card-title>Spam Ping</v-card-title>
+                <v-card-subtitle>
+                  <p>Spam quelqu'un pendant 30 secondes</p>
+                </v-card-subtitle>
+                <v-card-text class="d-flex justify-end">
+                  <v-btn
+                    text="5K FlopoCoins"
+                    class="text-none"
+                    append-icon="mdi-play"
+                    color="primary"
+                    variant="flat"
+                    rounded="lg"
+                    style="border-radius: 10px !important"
+                    :disabled="user?.coins < 5000"
+                    @click="spamPingModal = true"
+                  />
+                </v-card-text>
+              </v-card>
+
+              <v-card class="action-card" variant="tonal">
+                <v-card-title>Slow Mode</v-card-title>
+                <v-card-subtitle>
+                  <p>1 message par minute pendant 1 heure</p>
+                </v-card-subtitle>
+                <v-card-text class="d-flex justify-end">
+                  <v-btn
+                    text="10K FlopoCoins"
+                    class="text-none"
+                    append-icon="mdi-play"
+                    color="primary"
+                    variant="flat"
+                    rounded="lg"
+                    style="border-radius: 10px !important"
+                    :disabled="user?.coins < 10000"
+                    @click="slowmodeModal = true"
+                  />
+                </v-card-text>
+              </v-card>
+
+              <v-card class="action-card" variant="tonal">
+                <v-card-title>Time-Out</v-card-title>
+                <v-card-subtitle>
+                  <p>Time-out quelqu'un pendant 12 heures</p>
+                </v-card-subtitle>
+                <v-card-text class="d-flex justify-end">
+                  <v-btn
+                    text="100K FlopoCoins"
+                    class="text-none"
+                    append-icon="mdi-play"
+                    color="primary"
+                    variant="flat"
+                    rounded="lg"
+                    style="border-radius: 10px !important"
+                    :disabled="user?.coins < 100000"
+                    @click="timeoutModal = true"
+                  />
+                </v-card-text>
+              </v-card>
+            </div>
+          </v-tabs-window-item>
+
+          <v-tabs-window-item v-if="user?.isAkhy" value="predictions">
+            <div class="actions-container">
+              <div
+                style="
+                  position: absolute;
+                  z-index: 2;
+                  padding: 0.7em 0.5em;
+                  width: 100%;
+                  display: flex;
+                  place-content: space-between;
+                  backdrop-filter: blur(5px);
+                "
+              >
+                <h2 class="text-white">Prédictions</h2>
                 <v-btn
                   class="text-none"
+                  variant="flat"
                   color="primary"
-                  block
-                  rounded
-                  density="comfortable"
-                  @click="$router.push('/akhy/' + akhy.id)"
-                  >Voir plus</v-btn
+                  text="Nouvelle Prédi"
+                  style="border-radius: 10px"
+                  @click="prediModal = true"
+                />
+              </div>
+              <div
+                v-if="active_predis"
+                class="predis-containers pt-12"
+                :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+              >
+                <v-card
+                  v-for="[key, predi] in Object.entries(active_predis)"
+                  :key="key"
+                  class="votes-card"
+                  :variant="
+                    ((predi.endTime - Date.now()) / 1000).toFixed() < 0 || predi.closed
+                      ? 'plain'
+                      : 'tonal'
+                  "
                 >
-              </v-list-item>
-            </v-list>
-          </v-menu>
-        </div>
+                  <div>
+                    <v-img
+                      :src="avatars[predi.creatorId]"
+                      color="transparent"
+                      style="
+                        border-radius: 50%;
+                        width: 25px;
+                        height: 25px;
+                        position: absolute;
+                        right: 1em;
+                        top: 1em;
+                      "
+                    />
+                    <v-card-text class="font-weight-bold pr-0 mr-12">
+                      {{ predi.label }}
+                    </v-card-text>
+                    <v-card-subtitle class="pb-3">
+                      {{ predi.options[0].votes.length + predi.options[1].votes.length }}
+                      vote(s) - Prédi de {{ users.find((u) => u.id === predi.creatorId).username }}
+                    </v-card-subtitle>
+                    <v-card-subtitle class="d-flex pb-2" style="place-content: space-between">
+                      <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
+                        {{ predi.options[0].label }}
+                      </p>
+                      <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
+                        {{ predi.options[1].label }}
+                      </p>
+                    </v-card-subtitle>
+                    <v-card-text class="px-0">
+                      <div
+                        class="animate__animated animate__fadeIn"
+                        style="text-align: right; position: absolute"
+                        :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${predi.options[0].percent - 100}%); background: #5865f2; border: 2px solid #5865f277`"
+                      >
+                        <p class="pr-4" style="transform: translateY(-25px)">
+                          {{ predi.options[0].percent.toFixed(1) }}%
+                        </p>
+                      </div>
+                      <div
+                        class="animate__animated animate__fadeIn"
+                        style="text-align: left; position: absolute"
+                        :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${100 - predi.options[1].percent}%); background: #aa3e3e; border: 2px solid #aa3e3e77`"
+                      >
+                        <p class="pl-4" style="transform: translateY(-25px)">
+                          {{ predi.options[1].percent.toFixed(1) }}%
+                        </p>
+                      </div>
+                    </v-card-text>
+                    <v-card-subtitle class="d-flex justify-space-between pt-2">
+                      <div style="display: flex; place-content: start; gap: 0">
+                        <div
+                          v-for="(vote, index) in predi.options[0].votes"
+                          :key="vote.id + Date.now()"
+                          :style="`transform: translateX(calc(-12px * ${index})); z-index: 1;`"
+                        >
+                          <v-img
+                            :src="avatars[vote.id]"
+                            color="transparent"
+                            style="border-radius: 50%; width: 20px; height: 20px"
+                          />
+                        </div>
+                      </div>
+                      <div
+                        style="
+                          display: flex;
+                          flex-direction: row-reverse;
+                          place-content: start;
+                          gap: 0;
+                        "
+                      >
+                        <div
+                          v-for="(vote, index) in predi.options[1].votes"
+                          :key="vote.id + Date.now()"
+                          :style="`transform: translateX(calc(12px * ${index})); z-index: 1;`"
+                        >
+                          <v-img
+                            :src="avatars[vote.id]"
+                            color="transparent"
+                            style="border-radius: 50%; width: 20px; height: 20px"
+                          />
+                        </div>
+                      </div>
+                    </v-card-subtitle>
+                    <v-card-text class="d-flex align-end">
+                      <p v-if="!predi.closed">
+                        {{
+                          ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
+                            ? ((predi.closingTime - Date.now()) / 1000).toFixed() +
+                              's restantes pour voter'
+                            : ((predi.endTime - Date.now()) / 1000).toFixed() > 0
+                              ? Math.max(((predi.endTime - Date.now()) / 1000).toFixed(), 0) +
+                                's avant les résultats'
+                              : 'Prédi terminée, en attente de validation'
+                        }}
+                      </p>
+                      <p v-else>Prédi terminée, les FlopoCoins ont été distribués</p>
+
+                      <v-spacer />
+                      <div v-if="!predi.options[0].votes.find((v) => v?.voter === discordId)">
+                        <v-btn
+                          :text="
+                            ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
+                              ? 'Voter'
+                              : 'Voir'
+                          "
+                          color="primary"
+                          variant="flat"
+                          rounded="lg"
+                          @click="setSelectedPredi(predi, key)"
+                          @click.stop="prediVoteModal = true"
+                        />
+                      </div>
+                      <div v-else>Tu as voté !</div>
+                    </v-card-text>
+                  </div>
+                </v-card>
+                <div v-if="Object.keys(active_predis)?.length === 0" class="pt-16 pl-5">
+                  <p class="pt-16 w-100 text-center">Aucune prédi en cours</p>
+                </div>
+              </div>
+              <div
+                v-else
+                style="width: 100%; display: flex; place-content: center; place-items: center"
+                :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+              >
+                <v-progress-circular
+                  :size="70"
+                  :width="10"
+                  color="primary"
+                  indeterminate
+                ></v-progress-circular>
+              </div>
+            </div>
+          </v-tabs-window-item>
+        </v-tabs-window>
       </div>
-    </TransitionGroup>
-  </div>
-  <div v-else class="leaderboard-container">
-    <h2 style="display: flex; place-content: space-between">
-      Classement
-      <span
-        class="text-capitalize text-secondary cursor-pointer rounded-lg"
-        style="user-select: none"
-      >
-        {{ leaderboardType }}
-      </span>
-    </h2>
-    <div class="leaderboard">
-      <v-skeleton-loader
-        v-for="n in 19"
-        :key="n"
-        type="text"
+
+      <div v-else class="user-tab w-100">
+        <v-skeleton-loader
+          class="px-0 w-100"
+          type="heading"
+          color="transparent"
+        ></v-skeleton-loader>
+        <v-skeleton-loader
+          type="image@4"
+          color="transparent"
+          style="border-radius: 20px; overflow: hidden"
+        ></v-skeleton-loader>
+      </div>
+      <v-divider class="my-8 py-4"> </v-divider>
+
+      <v-footer
         color="transparent"
-        style="min-width: 300px"
-      ></v-skeleton-loader>
-    </div>
-  </div>
+        class="d-flex flex-row flex-wrap justify-space-between align-baseline"
+        style="position: absolute; bottom: 0; right: 0; width: 100%"
+      >
+        <p class="pr-6">&copy; 2026 Floposite. Tous droits réservés.</p>
+        <div class="d-flex ga-4">
+          <a href="/cgv">Conditions Générales de Vente</a>
+          <a href="/privacy">Politique de Confidentialité</a>
+        </div>
+      </v-footer>
+    </v-main>
+  </v-layout>
 
   <!--  DIALOGS -->
   <v-dialog
@@ -936,12 +777,15 @@
     "
   >
     <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
-      <v-card-title class="pt-4"> Achat de FlopoCoins </v-card-title>
+      <v-card-title class="pt-4">
+        Achat de FlopoCoins
+        <v-icon class="mdi mdi-close float-right" size="20" @click="coinsModal = false"></v-icon>
+      </v-card-title>
       <v-card-subtitle class="pb-1">
         <p>Recharge tes FlopoCoins !</p>
       </v-card-subtitle>
       <v-card-text
-        class="d-flex px-4 pt-16"
+        class="d-flex px-4 pt-4"
         style="gap: 1em; place-content: start; flex-wrap: wrap; height: fit-content"
       >
         <v-card
@@ -1069,7 +913,7 @@
           </v-card-actions>
         </v-card>
       </v-card-text>
-      <v-card-text
+      <v-card-item
         class="pt-1 pb-4 px-5"
         style="color: #ddddddaa; text-align: right; overflow: hidden"
       >
@@ -1094,7 +938,7 @@
             </p>
           </template>
         </v-checkbox>
-      </v-card-text>
+      </v-card-item>
     </v-card>
   </v-dialog>
 
@@ -1701,10 +1545,12 @@ import { useToastStore } from '../stores/toastStore.js'
 import { rankIcon, rankDiv, rankColor } from '../utils/rank.js'
 import 'animate.css'
 import ProfileMenu from '../components/ProfileMenu.vue'
+import GameCard from '../components/GameCard.vue'
 
 export default {
   components: {
     ProfileMenu,
+    GameCard,
   },
 
   setup() {
@@ -1751,6 +1597,7 @@ export default {
       windowWidth: window.innerWidth,
 
       anonUsername: null,
+      leaderBoardOpen: false,
 
       isRegistered: false,
       tab: null,
@@ -1824,6 +1671,66 @@ export default {
 
       dailyCountdown: '',
       dailyCountdownInterval: null,
+
+      games: [
+        {
+          name: 'Puissance 4',
+          description:
+            'Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.',
+          route: 'connect-4',
+          class: 'c4-action-card',
+          chips: ['1v1', 'Elo'],
+        },
+        {
+          name: 'Solitaire',
+          description: 'Tente de gagner quelques FlopoCoins au solitaire.',
+          route: 'solitaire',
+          class: 'sol-action-card',
+          chips: ['Solo', 'Coins'],
+        },
+        {
+          name: 'Sudoku',
+          description: 'Gagne des FlopoCoins en complétant des grilles de sudoku.',
+          route: 'sudoku',
+          class: 'sudoku-action-card',
+          chips: ['Solo', 'Coins'],
+        },
+        {
+          name: 'Blackjack',
+          description: 'Mise tes FlopoCoins au Blackjack.',
+          route: 'blackjack',
+          class: 'bj-action-card',
+          chips: ['Multi', 'Coins'],
+        },
+        {
+          name: 'Flopoker',
+          description: 'Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.',
+          route: 'flopoker',
+          class: 'poker-action-card',
+          chips: ['Multi', 'Coins'],
+        },
+        {
+          name: 'Morpion',
+          description: 'Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.',
+          route: 'tic-tac-toe',
+          class: 'ttt-action-card',
+          chips: ['1v1', 'Elo'],
+        },
+        {
+          name: 'Monke',
+          description: 'Tente de gagner des FlopoCoins mais attention aux bombes !',
+          route: 'monke-game',
+          class: 'mg-action-card',
+          chips: ['Solo', 'Coins'],
+        },
+        {
+          name: 'Snake',
+          description: 'Gagne des FlopoCoins en jouant au Snake en solo.',
+          route: 'snake/solo',
+          class: 'snake-action-card',
+          chips: ['Solo', 'Coins'],
+        },
+      ],
     }
   },
 
@@ -2579,15 +2486,15 @@ button:disabled {
 }
 .leaderboard-container {
   width: fit-content;
-  margin-top: 5rem;
+  padding: 1rem 1rem 1rem 0;
+  width: 100%;
 }
 .leaderboard {
-  float: right;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
   border: solid 2px rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
-  padding: 6px 5px;
-  height: 885px;
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 0 0 6px 0;
   overflow-y: scroll;
   transition: 2s ease;
   position: relative;
@@ -2668,7 +2575,7 @@ button:disabled {
 
 .tabs {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 5px 5px 0 0;
+  border-radius: 20px 20px 0 0;
   min-width: 800px;
 }
 
@@ -2676,6 +2583,25 @@ button:disabled {
   height: 590px !important;
   overflow-y: scroll;
   border-radius: 0 0 15px 0;
+}
+.cases-actions-container {
+  display: flex;
+  flex-wrap: wrap;
+  border-radius: 0 0 20px 20px;
+  overflow: hidden;
+}
+.cases-actions-container > .game-action-card {
+  border-radius: 0 !important;
+  border: none !important;
+  flex-grow: 1 !important;
+  flex-shrink: 1 !important;
+  flex-basis: 33%;
+  min-width: 250px;
+}
+
+.cases-actions-container > .game-action-card::before {
+  background: none !important;
+  backdrop-filter: none !important;
 }
 
 .action-card {
@@ -2737,7 +2663,6 @@ button:disabled {
 
 .game-action-card {
   position: relative;
-  margin-top: 10px;
   background: transparent !important;
   border-radius: 0 15px 15px 0 !important;
   border-left: 3px solid #fff !important;
@@ -2748,8 +2673,8 @@ button:disabled {
   top: 0;
   left: -50%;
   width: 150%;
-  height: 100%;
-  background: radial-gradient(circle at -30% 0%, #5865f2, #010217aa 70%) !important;
+  height: 102%;
+  background: radial-gradient(circle at 50% 50%, #010217aa, #5865f255 70%) !important;
   -webkit-backdrop-filter: blur(7px);
   backdrop-filter: blur(7px);
   transform: translateX(20%);
@@ -2758,56 +2683,55 @@ button:disabled {
 }
 .game-action-card:hover::before {
   transform: translateX(30%);
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
 }
 .game-action-card::after {
   content: '';
   pointer-events: none;
   position: absolute;
   z-index: -2;
-  top: 0;
-  left: 0;
+  top: -25%;
+  left: 25%;
   width: 104%;
-  height: 100%;
+  height: 150%;
+  transition: cubic-bezier(0.25, 0.8, 0.25, 1) 0.5s;
+  transform: rotate(5deg);
+}
+.game-action-card:hover::after {
+  transform: rotate(3deg) scale(1.1);
 }
 .ttt-action-card::after {
   background: url('/game_illu_ttt.png') no-repeat center center;
-  background-size: 20% auto;
-  transform: rotate(5deg);
+  background-size: 25% auto;
 }
 .poker-action-card::after {
   background: url('/game_illu_poker.png') no-repeat center center;
-  background-size: 80% auto;
-  transform: rotate(-5deg);
+  background-size: 50% auto;
 }
 .c4-action-card::after {
   background: url('/game_illu_c4.png') no-repeat center center;
-  background-size: 20% auto;
-  transform: rotate(5deg);
+  background-size: 50% auto;
 }
 .sol-action-card::after {
   background: url('/game_illu_sol.png') no-repeat center center;
-  background-size: 70% auto;
-  transform: rotate(-5deg);
+  background-size: 50% auto;
 }
 .bj-action-card::after {
   background: url('/game_illu_bj.png') no-repeat center center;
   background-size: 20% auto;
-  transform: rotate(5deg);
 }
 .mg-action-card::after {
   background: url('/game_illu_mg.png') no-repeat center center;
-  background-size: 30% auto;
-  transform: rotate(-5deg);
+  background-size: 25% auto;
 }
 .snake-action-card::after {
   background: url('/game_illu_snake.png') no-repeat center center;
   background-size: 30% auto;
-  transform: rotate(5deg);
 }
 .sudoku-action-card::after {
   background: url('/game_illu_sudoku.png') no-repeat center center;
   background-size: 50% auto;
-  transform: rotate(5deg);
 }
 
 .disabled-card::after {

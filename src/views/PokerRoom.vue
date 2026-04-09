@@ -4,9 +4,10 @@ import { io } from 'socket.io-client'
 import axios from 'axios'
 import { time } from '@discordjs/formatters'
 import { useToastStore } from '../stores/toastStore.js'
+import HomeBtn from '../components/HomeBtn.vue'
 
 export default {
-  components: {},
+  components: { HomeBtn },
   setup() {
     const toastStore = useToastStore()
 
@@ -817,13 +818,7 @@ export default {
         </p>
       </div>
     </v-main>
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/poker')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 </template>
 

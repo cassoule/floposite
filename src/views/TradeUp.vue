@@ -3,12 +3,14 @@
 import axios from 'axios'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import CsSkinCard from '@/components/CsSkinCard.vue'
+import HomeBtn from '@/components/HomeBtn.vue'
 import { getRarityColor, TRADE_UP_LADDER, getNextRarity, canTradeUp } from '@/utils/csRarity.js'
 
 export default {
   components: {
     CoinsCounter,
     CsSkinCard,
+    HomeBtn,
   },
   data() {
     return {
@@ -249,13 +251,7 @@ export default {
       </div>
     </v-main>
 
-    <v-btn
-      class="back-btn text-none"
-      text="Retour"
-      variant="tonal"
-      color="#ddd"
-      @click="$router.push('/dashboard')"
-    ></v-btn>
+    <home-btn />
   </v-layout>
 
   <!-- Trade Up Result Dialog -->
