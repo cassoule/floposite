@@ -227,7 +227,7 @@
 
 <script>
 /* global localStorage, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame */
-import axios from 'axios'
+import flapi from '@/services/flapi.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import HomeBtn from '@/components/HomeBtn.vue'
 
@@ -859,9 +859,8 @@ export default {
         this.saveHighScore()
       }
 
-      const url = import.meta.env.VITE_FLAPI_URL + '/snake/reward'
       try {
-        await axios.post(url, {
+        await flapi.post('/snake/reward', {
           score: this.score,
           isWin: this.isWin,
         })

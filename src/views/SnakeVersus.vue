@@ -212,8 +212,8 @@
 
 <script>
 /* global localStorage, fetch, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, location */
-import { io } from 'socket.io-client'
-import axios from 'axios'
+import flapi, { FLAPI_BASE } from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
 
 export default {
@@ -323,6 +323,12 @@ export default {
     window.removeEventListener('keydown', this.handleKeyPress)
     window.removeEventListener('resize', this.handleResize)
     this.leaveQueueSync({ reason: 'component-destroy' })
+    if (this.socket) {
+      if (this._onMatch) this.socket.off('snakematch', this._onMatch)
+      if (this._onQueue) this.socket.off('snakequeue', this._onQueue)
+      if (this._onGameState) this.socket.off('snakegamestate', this._onGameState)
+      if (this._onGameOver) this.socket.off('snakegameOver', this._onGameOver)
+    }
     this.stopGameLoop()
     this.stopRenderLoop()
     this.stopCountdown()
@@ -334,23 +340,18 @@ export default {
       this.windowHeight = window.innerHeight
     },
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      this.socket = getSocket()
 
       this.socket.emit('snakeconnection', { id: this.discordId })
 
       // Listen for match confirmation with gameKey
-      this.socket.on('snakematch', (e) => {
+      this._onMatch = (e) => {
         console.log('Match found with gameKey:', e.gameKey)
         this.gameKey = e.gameKey
-      })
+      }
+      this.socket.on('snakematch', this._onMatch)
 
-      this.socket.on('snakequeue', async (e) => {
+      this._onQueue = async (e) => {
         this.queue = e.queue
 
         this.foundLobby = e.allPlayers.find(
@@ -438,9 +439,10 @@ export default {
         }
 
         this.inQueue = this.inQueue && (this.foundLobby === null || this.foundLobby === undefined)
-      })
+      }
+      this.socket.on('snakequeue', this._onQueue)
 
-      this.socket.on('snakegamestate', (e) => {
+      this._onGameState = (e) => {
         // Filter by gameKey to only process updates for this game
         if (e.gameKey !== this.gameKey) {
           return
@@ -472,9 +474,10 @@ export default {
         /*if ((this.myGameOver || this.myWin) && (this.oppGameOver || this.oppWin)) {
           this.handleMatchEnd()
         }*/
-      })
+      }
+      this.socket.on('snakegamestate', this._onGameState)
 
-      this.socket.on('snakegameOver', (e) => {
+      this._onGameOver = (e) => {
         // Filter by gameKey to ensure we only handle game over for this game
         if (e.gameKey !== this.gameKey) {
           return
@@ -484,7 +487,8 @@ export default {
         this.foundLobby = lobby
 
         this.handleMatchEnd()
-      })
+      }
+      this.socket.on('snakegameOver', this._onGameOver)
     },
 
     handleUnload(evt) {
@@ -499,13 +503,14 @@ export default {
 
       if (!this.discordId) return
 
-      const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
+      const url = `${FLAPI_BASE}/queue/leave`
       const token = localStorage.getItem('token')
       try {
         fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(payload),
@@ -525,9 +530,8 @@ export default {
     },
 
     async getElo(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + id + '/elo')
         return response.data.elo
       } catch (e) {
         console.error('flAPI error:', e)

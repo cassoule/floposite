@@ -1,24 +1,16 @@
 <script>
 /* global localStorage, setTimeout, setInterval, clearInterval */
-import { io } from 'socket.io-client'
-import axios from 'axios'
+import flapi from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
+import { formatAmount } from '@/utils/format.js'
+import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import { time } from '@discordjs/formatters'
-import { useToastStore } from '../stores/toastStore.js'
 import HomeBtn from '../components/HomeBtn.vue'
 
 export default {
   components: { HomeBtn },
   setup() {
-    const toastStore = useToastStore()
-
-    const showSuccessOrWarningToast = (message, warning) => {
-      toastStore.showSuccessOrWarningToast(message, warning)
-    }
-
-    return {
-      toastStore: toastStore.$state,
-      showSuccessOrWarningToast,
-    }
+    return { ...useFlopoToasts() }
   },
 
   data() {
@@ -106,24 +98,18 @@ export default {
   beforeUnmount() {
     clearInterval(this.interval)
     if (this.socket) {
-      this.socket.off('poker-update')
-      this.socket.off('poker-toast')
-      this.socket.disconnect()
+      if (this._onPokerUpdate) this.socket.off('poker-update', this._onPokerUpdate)
+      if (this._onPokerToast) this.socket.off('poker-toast', this._onPokerToast)
     }
   },
 
   methods: {
     time,
+    formatAmount,
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      this.socket = getSocket()
 
-      this.socket.on('poker-update', async (data) => {
+      this._onPokerUpdate = async (data) => {
         const initialRoom = this.room
         await this.getRoom()
         switch (data.type) {
@@ -142,9 +128,10 @@ export default {
               (this.room?.highest_bet ?? 0) - (this.room?.players[this.discordId]?.bet ?? 0) + 10
             break
         }
-      })
+      }
+      this.socket.on('poker-update', this._onPokerUpdate)
 
-      this.socket.on('poker-toast', async (data) => {
+      this._onPokerToast = async (data) => {
         if (data.roomId === this.room.id) {
           await this.getRoom()
           switch (data.type) {
@@ -190,13 +177,13 @@ export default {
               break
           }
         }
-      })
+      }
+      this.socket.on('poker-toast', this._onPokerToast)
     },
 
     async getRoom() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/' + this.room_id
       try {
-        const response = await axios.get(url)
+        const response = await flapi.get('/poker/' + this.room_id)
         this.room = response.data.room
       } catch (e) {
         console.log(e)
@@ -205,9 +192,8 @@ export default {
     },
 
     async joinRoom() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/join'
       try {
-        await axios.post(url, { roomId: this.room_id })
+        await flapi.post('/poker/join', { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -215,9 +201,8 @@ export default {
     },
 
     async handleAccept(id) {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/accept'
       try {
-        await axios.post(url, { userId: id, roomId: this.room_id })
+        await flapi.post('/poker/accept', { userId: id, roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -225,10 +210,9 @@ export default {
     },
 
     async leaveRoom() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/leave'
       try {
         this.$router.push('/poker')
-        await axios.post(url, { roomId: this.room_id })
+        await flapi.post('/poker/leave', { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -236,9 +220,8 @@ export default {
     },
 
     async handleKick(id) {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/kick'
       try {
-        await axios.post(url, {
+        await flapi.post('/poker/kick', {
           userId: id,
           roomId: this.room.id,
         })
@@ -250,13 +233,12 @@ export default {
     },
 
     async startGame() {
-      const url =
-        import.meta.env.VITE_FLAPI_URL +
-        (this.room?.waiting_for_restart || this.room?.current_turn === 4
+      const path =
+        this.room?.waiting_for_restart || this.room?.current_turn === 4
           ? '/poker/next-hand'
-          : '/poker/start')
+          : '/poker/start'
       try {
-        await axios.post(url, { roomId: this.room_id })
+        await flapi.post(path, { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -264,9 +246,8 @@ export default {
     },
 
     async handleFold() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/fold'
       try {
-        await axios.post(url, { roomId: this.room_id })
+        await flapi.post('/poker/action/fold', { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -274,9 +255,8 @@ export default {
     },
 
     async handleCheck() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/check'
       try {
-        await axios.post(url, { roomId: this.room_id })
+        await flapi.post('/poker/action/check', { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -284,9 +264,8 @@ export default {
     },
 
     async handleCall() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/call'
       try {
-        await axios.post(url, { roomId: this.room_id })
+        await flapi.post('/poker/action/call', { roomId: this.room_id })
       } catch (e) {
         console.log(e)
       }
@@ -294,9 +273,8 @@ export default {
     },
 
     async handleRaise() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/action/raise'
       try {
-        await axios.post(url, {
+        await flapi.post('/poker/action/raise', {
           roomId: this.room_id,
           amount: this.raiseValue,
         })
@@ -304,37 +282,6 @@ export default {
         console.log(e)
       }
       await this.getRoom()
-    },
-
-    formatAmount(amount) {
-      if (amount >= 1000000000) {
-        amount /= 1000000000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'Md'
-        )
-      }
-      if (amount >= 1000000) {
-        amount /= 1000000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'M'
-        )
-      }
-      if (amount >= 10000) {
-        amount /= 1000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'K'
-        )
-      }
-      return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
     },
 
     startAdjust(amount) {
@@ -366,29 +313,15 @@ export default {
     },
 
     async getUsers() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
-        console.log(fetchUrl)
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/users')
         this.users = response.data
       } catch (e) {
         console.error('flAPI error:', e)
       }
 
       try {
-        const response = await axios.get(fetchUrl + '/by-elo', {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/users/by-elo')
         this.usersByElo = response.data
       } catch (e) {
         console.error('flAPI error:', e)

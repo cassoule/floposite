@@ -1,6 +1,6 @@
 <script>
 /* global localStorage, setTimeout */
-import axios from 'axios'
+import flapi from '@/services/flapi.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import CsSkinCard from '@/components/CsSkinCard.vue'
 import HomeBtn from '@/components/HomeBtn.vue'
@@ -60,9 +60,7 @@ export default {
     async fetchInventory() {
       this.loading = true
       try {
-        const response = await axios.get(
-          import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/inventory',
-        )
+        const response = await flapi.get('/user/' + this.discordId + '/inventory')
         this.csInventory = response.data.csInventory || []
       } catch (e) {
         console.error('flAPI error:', e)
@@ -92,7 +90,7 @@ export default {
       if (!this.canSubmit) return
       this.processing = true
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/trade-up', {
+        const response = await flapi.post('/trade-up', {
           skinIds: this.selectedSkins.map((s) => s.id),
         })
         console.log(response)

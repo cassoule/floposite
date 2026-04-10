@@ -2,32 +2,36 @@
 import { RouterView } from 'vue-router'
 import { onMounted, onUnmounted } from 'vue'
 import { useToastStore } from '@/stores/toastStore.js'
-import { io } from 'socket.io-client'
+import { getSocket, disconnectSocket } from '@/services/socket.js'
 import Toast from '@/components/Toast.vue'
 
 const toastStore = useToastStore()
 let socket = null
 
+const onMaintenanceUpdate = (data) => {
+  if (data.active) {
+    toastStore.showMaintenanceToast(data.estimatedEnd)
+  }
+}
+
+const onMaintenanceScheduled = (data) => {
+  if (data?.startsAt) {
+    toastStore.showMaintenanceScheduledToast(data.startsAt)
+  }
+}
+
 onMounted(() => {
-  socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-    extraHeaders: { 'ngrok-skip-browser-warning': 'true' },
-  })
-
-  socket.on('maintenance-update', (data) => {
-    if (data.active) {
-      toastStore.showMaintenanceToast(data.estimatedEnd)
-    }
-  })
-
-  socket.on('maintenance-scheduled', (data) => {
-    if (data?.startsAt) {
-      toastStore.showMaintenanceScheduledToast(data.startsAt)
-    }
-  })
+  socket = getSocket()
+  socket.on('maintenance-update', onMaintenanceUpdate)
+  socket.on('maintenance-scheduled', onMaintenanceScheduled)
 })
 
 onUnmounted(() => {
-  if (socket) socket.disconnect()
+  if (socket) {
+    socket.off('maintenance-update', onMaintenanceUpdate)
+    socket.off('maintenance-scheduled', onMaintenanceScheduled)
+  }
+  disconnectSocket()
 })
 </script>
 

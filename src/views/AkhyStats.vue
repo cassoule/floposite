@@ -1,41 +1,25 @@
 <script>
 /* global localStorage, setTimeout */
-import axios from 'axios'
+import flapi from '@/services/flapi.js'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
-import CsSkinCard from '@/components/CsSkinCard.vue'
 import HomeBtn from '@/components/HomeBtn.vue'
-import { useToastStore } from '../stores/toastStore.js'
+import CsInventoryGrid from '@/components/akhy-stats/CsInventoryGrid.vue'
+import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import { getRarityColor } from '@/utils/csRarity.js'
-import {
-  rankIcon,
-  rankDiv,
-  rankText,
-  rankColor,
-  playerPosition,
-  RANK_MARKERS,
-} from '@/utils/rank.js'
+import { rankIcon, rankDiv, rankText, rankColor } from '@/utils/rank.js'
+import FlopoRankBar from '@/components/akhy-stats/FlopoRankBar.vue'
 
 export default {
   name: 'AkhyStats',
 
-  components: { CsSkinCard, HomeBtn },
+  components: { HomeBtn, CsInventoryGrid, FlopoRankBar },
 
   setup() {
-    const toastStore = useToastStore()
-
-    const showErrorToast = (message) => {
-      toastStore.showErrorToast(message)
-    }
-
-    return {
-      toastStore: toastStore.$state,
-      showErrorToast,
-    }
+    return { ...useFlopoToasts() }
   },
 
   data() {
     return {
-      RANK_MARKERS,
       users: null,
       user: null,
       sparkline: null,
@@ -175,21 +159,11 @@ export default {
 
   methods: {
     scrollToPlayerRank() {
-      const bar = this.$refs.rankBar
-      if (!bar || !this.elo?.elo) return
-      const pos = playerPosition(this.elo.elo)
-      bar.scrollLeft = pos - bar.clientWidth / 2
+      this.$refs.flopoRankBar?.scrollToPlayerRank()
     },
     async getUsers() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/users')
         return response.data
       } catch (e) {
         console.error('flAPI error:', e)
@@ -197,15 +171,8 @@ export default {
     },
 
     async getAvatar(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/user/' + id + '/avatar')
         return response.data.avatarUrl
       } catch (e) {
         console.error('flAPI error:', e)
@@ -213,10 +180,8 @@ export default {
     },
 
     async getSparkline() {
-      const fetchUrl =
-        import.meta.env.VITE_FLAPI_URL + '/user/' + this.$route.params.id + '/sparkline'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + this.$route.params.id + '/sparkline')
         return response.data.sparkline
       } catch (e) {
         console.error('flAPI error:', e)
@@ -224,9 +189,8 @@ export default {
     },
 
     async getElo() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + this.$route.params.id + '/elo'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + this.$route.params.id + '/elo')
         return response.data
       } catch (e) {
         console.error('flAPI error:', e)
@@ -234,10 +198,8 @@ export default {
     },
 
     async getEloGraph() {
-      const fetchUrl =
-        import.meta.env.VITE_FLAPI_URL + '/user/' + this.$route.params.id + '/elo-graph'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + this.$route.params.id + '/elo-graph')
         return response.data.eloGraph
       } catch (e) {
         console.error('flAPI error:', e)
@@ -245,16 +207,8 @@ export default {
     },
 
     async getInventory() {
-      const fetchUrl =
-        import.meta.env.VITE_FLAPI_URL + '/user/' + this.$route.params.id + '/inventory'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/user/' + this.$route.params.id + '/inventory')
         this.user_inventory = response.data.inventory
         this.cs_inventory = response.data.csInventory || []
       } catch (e) {
@@ -282,9 +236,8 @@ export default {
     },
 
     async getSkinVideoUrl(skin) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
       try {
-        const response = await axios.post(fetchUrl, {
+        const response = await flapi.post('/skin/' + skin.uuid, {
           level: skin.currentLvl,
           chroma: skin.currentChroma,
         })
@@ -295,9 +248,8 @@ export default {
     },
 
     async getSkinData(skin) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/skin/' + skin.uuid)
         this.skinsData[skin.uuid] = response.data
       } catch (e) {
         console.error('flAPI error:', e)
@@ -305,15 +257,8 @@ export default {
     },
 
     async getActiveSlowmodes() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/slowmodes'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/slowmodes')
         this.active_slowmodes = response.data.slowmodes
       } catch (e) {
         console.error('flAPI error:', e)
@@ -321,10 +266,8 @@ export default {
     },
 
     async getGames() {
-      const fetchUrl =
-        import.meta.env.VITE_FLAPI_URL + '/user/' + this.$route.params.id + '/games-history'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + this.$route.params.id + '/games-history')
         this.games = response.data.games
       } catch (e) {
         console.error('flAPI error:', e)
@@ -333,7 +276,7 @@ export default {
 
     async isTimedOut() {
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout')
+        const response = await flapi.post('/timedout')
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
         console.log(e)
@@ -366,7 +309,6 @@ export default {
     rankDiv,
     rankText,
     rankColor,
-    playerPositoin: playerPosition,
     getChromaText(skin, skinInfo) {
       let result = ''
       for (let i = 1; i <= skinInfo.chromas.length; i++) {
@@ -422,10 +364,8 @@ export default {
       if (!discordId || !this.user || discordId !== this.user.id) {
         return
       }
-      const url =
-        import.meta.env.VITE_FLAPI_URL + '/skin/' + this.selectedSkin.uuid + '/instant-sell'
       try {
-        await axios.post(url)
+        await flapi.post('/skin/' + this.selectedSkin.uuid + '/instant-sell')
         await this.getInventory()
         this.users = await this.getUsers()
         this.user = this.users.find((u) => u.id === this.$route.params.id)
@@ -451,9 +391,7 @@ export default {
       if (!discordId || !this.user || discordId !== this.user.id) return
       this.csSellProcessing = true
       try {
-        await axios.post(
-          import.meta.env.VITE_FLAPI_URL + '/cs-skin/' + this.selectedCsSkin.id + '/instant-sell',
-        )
+        await flapi.post('/cs-skin/' + this.selectedCsSkin.id + '/instant-sell')
         await this.getInventory()
         this.users = await this.getUsers()
         this.user = this.users.find((u) => u.id === this.$route.params.id)
@@ -479,8 +417,7 @@ export default {
       this.skinDetailsDialog = true
       this.fetchingSkinStats = true
       try {
-        const url = import.meta.env.VITE_FLAPI_URL + '/skin-upgrade/' + skin.uuid + '/fetch'
-        const response = await axios.get(url)
+        const response = await flapi.get('/skin-upgrade/' + skin.uuid + '/fetch')
         this.segments = response.data.segments
         this.upgradeCost = response.data.upgradePrice
         console.log(response.data)
@@ -497,8 +434,7 @@ export default {
       this.resultLabel = null
 
       try {
-        const url = import.meta.env.VITE_FLAPI_URL + '/skin-upgrade/' + this.selectedSkin.uuid
-        const response = await axios.post(url)
+        const response = await flapi.post('/skin-upgrade/' + this.selectedSkin.uuid)
         this.users = await this.getUsers()
         this.user = this.users.find((u) => u.id === this.$route.params.id)
         const winningSegmentId = response.data.wonId
@@ -685,131 +621,13 @@ export default {
             </div>
           </v-list-item>
 
-          <v-list-item class="w-100 px-0 pb-3">
-            <v-card class="py-0 text-white" elevation="0" rounded="0" variant="text">
-              <v-card-item class="pa-0">
-                <div
-                  ref="rankBar"
-                  class="w-100 pb-6 pt-13"
-                  style="
-                    position: relative;
-                    overflow-x: scroll;
-                    min-height: 280px;
-                    scrollbar-width: auto;
-                  "
-                >
-                  <div
-                    v-for="(label, i) in [
-                      { elo: 0, name: 'Flop', left: 50 },
-                      { elo: 1200, name: 'Bronze', left: 300 },
-                      { elo: 1400, name: 'Silver', left: 600 },
-                      { elo: 1600, name: 'Gold', left: 900 },
-                      { elo: 1850, name: 'Diamond', left: 1200 },
-                      { elo: 2100, name: 'Master', left: 1500 },
-                    ]"
-                    :key="i"
-                    class="d-flex"
-                    :style="`
-                      position: absolute;
-                      left: ${label.left}px;
-                      top: 20px;
-                      flex-direction: column;
-                      place-items: center;
-                      width: 130px;
-                      transform: translateX(-50%);
-                    `"
-                  >
-                    <v-img
-                      class="mt-3"
-                      :src="label.elo ? rankIcon(label.elo) : ''"
-                      width="64"
-                      height="64"
-                    />
-                    <h2 :style="`color: ${label.elo ? rankColor(label.elo) : '#dddddd'}`">
-                      {{ label.name }}
-                    </h2>
-                    <h3 :style="`color: ${(label.elo ? rankColor(label.elo) : '#dddddd') + '77'}`">
-                      {{ label.elo === 2100 ? '2100+' : label.elo }}&nbsp;Elo
-                    </h3>
-                  </div>
-                  <div
-                    style="
-                      position: absolute;
-                      left: 0;
-                      top: 70px;
-                      z-index: -1;
-                      width: 1600px;
-                      height: 5px;
-                      background: linear-gradient(
-                        90deg,
-                        #dddddd11 0px 300px,
-                        #c58a48 300px 600px,
-                        #bdc3c5 600px 900px,
-                        #fed833 900px 1200px,
-                        #a6d5e9 1200px 1500px,
-                        #77bb77 1500px 1600px
-                      );
-                    "
-                  ></div>
-                  <div
-                    v-for="akhy in users"
-                    :key="akhy.id"
-                    class="cursor-pointer user-rank-point"
-                    :style="`position: absolute;
-                      left: ${playerPositoin(akhy?.elo)}px;
-                      top: 10px;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      z-index: ${akhy.id === user.id ? '10' : '1'};`"
-                    :title="`${akhy?.username} - ${akhy?.elo}`"
-                    @click="goToUser(akhy.id)"
-                  >
-                    <v-img
-                      :src="akhy.avatarUrl"
-                      :width="akhy.id === user.id ? 40 : 30"
-                      :height="akhy.id === user.id ? 40 : 30"
-                      rounded="circle"
-                      :style="`
-                        border: ${akhy.id === user.id ? 4 : 2}px solid ${rankColor(akhy?.elo)};
-                        background: #333;
-                        box-shadow: 0 0 8px #181818;
-                      `"
-                    ></v-img>
-                    <v-icon
-                      class="mdi mdi-chevron-down"
-                      size="20"
-                      :color="rankColor(akhy?.elo)"
-                    ></v-icon>
-                  </div>
-
-                  <div>
-                    <p
-                      v-for="marker in RANK_MARKERS"
-                      :key="marker.elo"
-                      class="cursor-pointer bg-dark opacity-90"
-                      :style="`position: absolute;
-                      color: ${rankColor(marker.elo)} !important;
-                      left: ${playerPositoin(marker.elo)}px;
-                      top: 63px;
-                      transform: translateX(-50%);
-                      display: flex;
-                      flex-direction: column;
-                      place-items: center;
-                      padding: 0 .4em;
-                      font-size: .8em;
-                      border-radius: 5em;
-                      z-index: 10;`"
-                      :title="`${marker.elo} elo`"
-                    >
-                      {{ marker.div }}
-                    </p>
-                  </div>
-                </div>
-              </v-card-item>
-            </v-card>
-          </v-list-item>
+          <flopo-rank-bar
+            ref="flopoRankBar"
+            :users="users"
+            :user="user"
+            :elo="elo"
+            @user-clicked="goToUser"
+          />
         </v-list>
 
         <v-list
@@ -1044,69 +862,12 @@ export default {
         </v-list>
 
         <!-- CS2 Inventory -->
-        <v-list
-          width="100%"
-          class="mt-10 py-0 position-relative"
-          rounded="xl"
-          bg-color="#181818"
-          variant="tonal"
-          style="border: 2px solid #ffffff55; max-height: 570px"
-        >
-          <v-list-item
-            class="pt-4 position-sticky top-0 w-100"
-            rounded="0"
-            style="backdrop-filter: blur(5px); z-index: 2"
-          >
-            <div class="d-flex w-100 justify-space-between flex-wrap ga-3">
-              <h2 style="width: fit-content; white-space: nowrap">
-                Inventaire
-                <span class="ml-4" style="font-size: 0.8em"
-                  >{{ cs_inventory?.length || 0 }} skins</span
-                >
-                <span
-                  v-if="csInventoryValue"
-                  class="ml-4"
-                  style="font-size: 0.7em; color: rgba(255, 255, 255, 0.4)"
-                >
-                  {{ csInventoryValue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;') }}
-                  Flopos
-                </span>
-              </h2>
-              <div class="d-flex ga-2">
-                <v-btn
-                  v-if="isOwnProfile"
-                  color="primary"
-                  rounded="lg"
-                  class="text-none"
-                  prepend-icon="mdi-dots-horizontal"
-                  @click="$router.push('/inventory')"
-                >
-                  Voir plus
-                </v-btn>
-              </div>
-            </div>
-          </v-list-item>
-          <v-list-item
-            v-if="cs_inventory?.length > 0"
-            class="pb-3 px-0"
-            style="z-index: 1; user-select: none"
-          >
-            <div class="inventory px-4">
-              <div class="inventory-grid">
-                <CsSkinCard
-                  v-for="skin in cs_inventory"
-                  :key="'cs-' + skin.id"
-                  :skin="skin"
-                  size="md"
-                  @click="openCsSkinDetails(skin)"
-                />
-              </div>
-            </div>
-          </v-list-item>
-          <v-list-item v-else>
-            <p class="text-center pt-12 pb-16">Aucun skin CS2 dans l'inventaire</p>
-          </v-list-item>
-        </v-list>
+        <cs-inventory-grid
+          :cs-inventory="cs_inventory"
+          :cs-inventory-value="csInventoryValue"
+          :is-own-profile="isOwnProfile"
+          @skin-clicked="openCsSkinDetails"
+        />
       </div>
 
       <div
@@ -1816,14 +1577,6 @@ export default {
   height: 100%;
   background: radial-gradient(circle at 23% 23%, #3eaa3e, #00000000 23%) !important;
   z-index: -1;
-}
-
-.user-rank-point {
-  transition: 0.2s ease-in-out;
-}
-.user-rank-point:hover {
-  z-index: 1000000 !important;
-  transform: scale(1.1) translateX(-45%) !important;
 }
 
 .lose-card {

@@ -1,6 +1,6 @@
 <script>
 /* global localStorage, setTimeout */
-import axios from 'axios'
+import flapi from '@/services/flapi.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import HomeBtn from '@/components/HomeBtn.vue'
 
@@ -59,8 +59,7 @@ export default {
   methods: {
     async getUserGamePathArray() {
       try {
-        const url = `${import.meta.env.VITE_FLAPI_URL}/monke-game/${this.discordId}`
-        const response = await axios.get(url)
+        const response = await flapi.get(`/monke-game/${this.discordId}`)
         return response.data.userGamePath?.reverse() || []
       } catch (error) {
         console.error('Error fetching user game path:', error)
@@ -69,8 +68,9 @@ export default {
     },
     async handleStart() {
       try {
-        const url = `${import.meta.env.VITE_FLAPI_URL}/monke-game/${this.discordId}/start`
-        const response = await axios.post(url, { initialBet: this.betAmount })
+        const response = await flapi.post(`/monke-game/${this.discordId}/start`, {
+          initialBet: this.betAmount,
+        })
         this.userGamePath = response.data.userGamePath?.reverse() || []
       } catch (error) {
         console.error('Error starting game:', error)
@@ -78,8 +78,10 @@ export default {
     },
     async handleClick(step, key) {
       try {
-        const url = `${import.meta.env.VITE_FLAPI_URL}/monke-game/${this.discordId}/play`
-        const response = await axios.post(url, { choice: key, step: step.round })
+        const response = await flapi.post(`/monke-game/${this.discordId}/play`, {
+          choice: key,
+          step: step.round,
+        })
         this.userGamePath = response.data.userGamePath?.reverse() || []
         if (response.data.lost) {
           this.endGameDialog = true
@@ -97,8 +99,7 @@ export default {
     },
     async handleWithdraw() {
       try {
-        const url = `${import.meta.env.VITE_FLAPI_URL}/monke-game/${this.discordId}/stop`
-        const response = await axios.post(url)
+        const response = await flapi.post(`/monke-game/${this.discordId}/stop`)
         console.log('Withdraw response:', response.data)
         this.userGamePath = []
       } catch (error) {

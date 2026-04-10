@@ -1,8 +1,8 @@
 <script>
 /* global localStorage, setInterval, clearInterval */
-import axios from 'axios'
-import { useToastStore } from '@/stores/toastStore.js'
-import { io } from 'socket.io-client'
+import flapi from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
+import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { getRarityColor } from '@/utils/csRarity.js'
 import HomeBtn from '@/components/HomeBtn.vue'
@@ -13,14 +13,10 @@ export default {
   components: { CoinsCounter, HomeBtn },
 
   setup() {
-    const toastStore = useToastStore()
-    const showToast = (msg, warning) => {
-      toastStore.showSuccessOrWarningToast(msg, warning)
-    }
-
+    const toasts = useFlopoToasts()
     return {
-      toastStore: toastStore.$state,
-      showToast,
+      ...toasts,
+      showToast: (msg, warning) => toasts.showSuccessOrWarningToast(msg, warning),
     }
   },
 
@@ -106,27 +102,24 @@ export default {
 
   beforeUnmount() {
     if (this.timer) clearInterval(this.timer)
+    if (this.socket && this._onMarketUpdate) {
+      this.socket.off('market:update', this._onMarketUpdate)
+    }
   },
 
   methods: {
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      this.socket = getSocket()
 
-      this.socket.on('market:update', async () => {
+      this._onMarketUpdate = async () => {
         await this.fetchMarketOffers()
         this.showToast('Marché mis à jour', false)
-      })
+      }
+      this.socket.on('market:update', this._onMarketUpdate)
     },
     async fetchMarketOffers() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/market-place/offers'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/market-place/offers')
         this.marketOffers = response.data.offers
         this.filterOffers()
       } catch (error) {
@@ -135,10 +128,10 @@ export default {
     },
     async getUserInventory() {
       this.loadingInventory = true
-      const fetchUrl =
-        import.meta.env.VITE_FLAPI_URL + '/user/' + localStorage.getItem('discordId') + '/inventory'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get(
+          '/user/' + localStorage.getItem('discordId') + '/inventory',
+        )
         this.userInventory = (response.data.csInventory || []).filter((skin) => {
           return !this.marketOffers.some(
             (marketOffer) => marketOffer.csSkin?.id === skin.id && marketOffer.status !== 'closed',
@@ -174,9 +167,8 @@ export default {
       return level?.displayIcon || skinInfo?.displayIcon || skinInfo?.chromas[0].fullRender
     },
     async getSkinData(skin) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/skin/' + skin.uuid
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/skin/' + skin.uuid)
         this.skinsData[skin.uuid] = response.data
       } catch (e) {
         console.error('flAPI error:', e)
@@ -244,16 +236,14 @@ export default {
       await this.$router.push('/akhy/' + id)
     },
     async confirmBid() {
-      const url =
-        import.meta.env.VITE_FLAPI_URL +
-        '/market-place/offers/' +
-        this.selectedOffer.id +
-        '/place-bid'
       try {
-        const response = await axios.post(url, {
-          bid_amount: this.bidAmount,
-          timestamp: Date.now(),
-        })
+        const response = await flapi.post(
+          '/market-place/offers/' + this.selectedOffer.id + '/place-bid',
+          {
+            bid_amount: this.bidAmount,
+            timestamp: Date.now(),
+          },
+        )
         console.log('Bid placed successfully:', response.data)
         this.placeBidModal = false
         this.seeOffer = false
@@ -287,7 +277,6 @@ export default {
       return offer.skin?.currentPrice || 0
     },
     async handleCreateOffer(skinId) {
-      const url = import.meta.env.VITE_FLAPI_URL + '/market-place/place-offer'
       const payload = {
         cs_skin_id: skinId,
         starting_price: this.createOffer.price,
@@ -296,7 +285,7 @@ export default {
         timestamp: Date.now(),
       }
       try {
-        const response = await axios.post(url, payload)
+        const response = await flapi.post('/market-place/place-offer', payload)
         this.createOfferDialog = false
         this.showToast(response.data.message, false)
         await this.fetchMarketOffers()

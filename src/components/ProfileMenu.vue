@@ -55,7 +55,7 @@
                 </h3>
                 <p style="font-size: 0.9em">
                   <span class="font-weight-bold" style="font-size: 1em">{{
-                    user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+                    formatCoins(user?.coins)
                   }}</span
                   >&nbsp;Coins&nbsp;
                 </p>
@@ -142,8 +142,9 @@
 </template>
 
 <script>
-import axios from 'axios'
-import { rankIcon, rankDiv, rankColor } from '../utils/rank.js'
+import flapi from '@/services/flapi.js'
+import { rankIcon, rankDiv, rankColor } from '@/utils/rank.js'
+import { formatCoins } from '@/utils/format.js'
 
 export default {
   name: 'ProfileMenu',
@@ -173,8 +174,7 @@ export default {
   },
 
   async mounted() {
-    const FLAPI_URL = import.meta.env.VITE_FLAPI_URL
-    const response = await axios.get(FLAPI_URL + '/user/' + this.user.id)
+    const response = await flapi.get('/user/' + this.user.id)
     this.winRate = response.data?.user?.winRate
   },
 
@@ -182,6 +182,7 @@ export default {
     rankIcon,
     rankDiv,
     rankColor,
+    formatCoins,
   },
 }
 </script>

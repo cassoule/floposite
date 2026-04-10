@@ -364,9 +364,9 @@
 /* global localStorage, setInterval, clearInterval, Image */
 import Pile from '../components/solitaire/Pile.vue'
 import api from '../services/api'
-import axios from 'axios'
+import flapi from '@/services/flapi.js'
 import { getAllCardImagePaths } from '../utils/cardImages.js'
-import { io } from 'socket.io-client'
+import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
 
 function getRankValue(rank) {
@@ -428,21 +428,22 @@ export default {
       if (!this.userId) this.$router.push('/')
     }
   },
+  beforeUnmount() {
+    if (this.socket) {
+      if (this._onConnect) this.socket.off('connect', this._onConnect)
+      if (this._onSolitaireUpdate) this.socket.off('solitaire:update', this._onSolitaireUpdate)
+    }
+  },
   methods: {
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      this.socket = getSocket()
 
-      this.socket.on('connect', () => {
+      this._onConnect = () => {
         console.log('Connected to WebSocket server')
-      })
+      }
+      this.socket.on('connect', this._onConnect)
 
-      this.socket.on('solitaire:update', (payload) => {
+      this._onSolitaireUpdate = (payload) => {
         if (payload?.userId === this.userId) {
           if (!payload.moves || payload.moves.length === 0) window.location.reload()
           let i = 0
@@ -455,7 +456,8 @@ export default {
             }
           }, 100)
         }
-      })
+      }
+      this.socket.on('solitaire:update', this._onSolitaireUpdate)
     },
     formatFinishTime(startAt, endAt = null) {
       const start = new Date(startAt)
@@ -508,15 +510,8 @@ export default {
     },
 
     async getAvatar(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/user/' + id + '/avatar')
         return response.data.avatarUrl
       } catch (e) {
         console.error('flAPI error:', e)

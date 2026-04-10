@@ -1,6 +1,6 @@
 <script>
 /* global localStorage, setTimeout */
-import axios from 'axios'
+import flapi from '@/services/flapi.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { getRarityColor } from '@/utils/csRarity.js'
 import HomeBtn from '@/components/HomeBtn.vue'
@@ -61,7 +61,7 @@ export default {
     if (!discordId) this.$router.push('/')
     this.discordId = discordId
     try {
-      const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId)
+      const response = await flapi.get('/user/' + this.discordId)
       this.user = response.data.user
     } catch (e) {
       console.log(e)
@@ -77,12 +77,10 @@ export default {
     async openCase() {
       this.loading = true
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/open-cs-case')
+        const response = await flapi.post('/open-cs-case')
         // Refresh user coins
         try {
-          const userResp = await axios.get(
-            import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId,
-          )
+          const userResp = await flapi.get('/user/' + this.discordId)
           this.user = userResp.data.user
         } catch (e) {
           console.log(e)
@@ -96,6 +94,7 @@ export default {
         if (this.skipAnimation) {
           this.skinResultDialog = true
         } else {
+          await this.preloadRouletteImages()
           this.caseOpeningDialog = true
           await this.sleep(500)
           this.startAnimation()
@@ -107,6 +106,37 @@ export default {
     },
     sleep(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms))
+    },
+
+    async preloadRouletteImages() {
+      const urls = [
+        ...new Set((this.rouletteSkins || []).map((skin) => skin?.imageUrl).filter(Boolean)),
+      ]
+      if (urls.length === 0) return
+
+      const loadImage = (url) =>
+        new Promise((resolve, reject) => {
+          const img = new Image()
+          img.decoding = 'async'
+          img.onload = async () => {
+            try {
+              if (typeof img.decode === 'function') {
+                await img.decode()
+              }
+            } catch {
+              // Decoding failures are non-fatal; onload already confirms the resource is available.
+            }
+            resolve(url)
+          }
+          img.onerror = () => reject(new Error(`Failed to load image: ${url}`))
+          img.src = url
+        })
+
+      const results = await Promise.allSettled(urls.map(loadImage))
+      const failedCount = results.filter((result) => result.status === 'rejected').length
+      if (failedCount > 0) {
+        console.warn(`Roulette preload: ${failedCount}/${urls.length} image(s) failed to load`)
+      }
     },
 
     startAnimation() {
@@ -331,7 +361,14 @@ export default {
               ref="skinCards"
               class="skin-card"
             >
-              <v-img :src="skin.imageUrl" width="100%" max-height="100px" />
+              <img
+                :src="skin.imageUrl"
+                :alt="skin.displayName || skin.weaponType || 'Skin image'"
+                class="roulette-skin-image"
+                loading="eager"
+                decoding="async"
+                draggable="false"
+              />
               <div
                 class="skin-card-bg"
                 :style="`background: radial-gradient(circle at 0% 0%, ${getRarityColor(skin.rarity)}, transparent 80%)`"
@@ -559,8 +596,11 @@ export default {
   opacity: 0.6;
 }
 
-.skin-card .v-img {
+.roulette-skin-image {
   z-index: 2;
+  width: 100%;
+  max-height: 100px;
+  object-fit: contain;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }
 

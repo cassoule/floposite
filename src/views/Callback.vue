@@ -1,21 +1,13 @@
 <script setup>
 /* global localStorage */
-import axios from 'axios'
-import { useToastStore } from '../stores/toastStore'
+import flapi from '@/services/flapi.js'
+import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-const toastStore = useToastStore()
+const { showLoginToast, showSuccessOrWarningToast } = useFlopoToasts()
 const router = useRouter()
 const route = useRoute()
-
-const showLoginToast = () => {
-  toastStore.showLoginToast()
-}
-
-const showSuccessOrWarningToast = (message, warning) => {
-  toastStore.showSuccessOrWarningToast(message, warning)
-}
 
 onMounted(async () => {
   showLoginToast()
@@ -26,13 +18,10 @@ onMounted(async () => {
       throw new Error('No token in URL')
     }
 
-    // Store the JWT token
+    // Store the JWT token — the flapi interceptor will pick it up from localStorage.
     localStorage.setItem('token', token)
 
-    // Fetch user info using the token
-    const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/auth/me', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const response = await flapi.get('/auth/me')
 
     if (!response.data.discordId) {
       throw new Error('No Discord ID in response')

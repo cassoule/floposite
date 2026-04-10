@@ -1,53 +1,51 @@
-import axios from 'axios'
-
-const API_URL = import.meta.env.VITE_FLAPI_URL || 'http://localhost:3000/api'
+import flapi from './flapi.js'
 
 export default {
   getRankings() {
-    return axios.get(`${API_URL}/solitaire/sotd/rankings`)
+    return flapi.get('/solitaire/sotd/rankings')
   },
   startNewGame(userSeed, hardMode = false) {
-    return axios.post(`${API_URL}/solitaire/start`, { userSeed, hardMode })
+    return flapi.post('/solitaire/start', { userSeed, hardMode })
   },
   startSOTD() {
-    return axios.post(`${API_URL}/solitaire/start/sotd`)
+    return flapi.post('/solitaire/start/sotd')
   },
   resetGame() {
-    return axios.post(`${API_URL}/solitaire/reset`)
+    return flapi.post('/solitaire/reset')
   },
   getGameState(userId) {
-    return axios.get(`${API_URL}/solitaire/state/${userId}`)
+    return flapi.get(`/solitaire/state/${userId}`)
   },
   moveCard(moveData) {
-    return axios.post(`${API_URL}/solitaire/move`, moveData)
+    return flapi.post('/solitaire/move', moveData)
   },
   drawCard() {
-    return axios.post(`${API_URL}/solitaire/draw`)
+    return flapi.post('/solitaire/draw')
   },
   undoMove() {
-    return axios.post(`${API_URL}/solitaire/undo`)
+    return flapi.post('/solitaire/undo')
   },
 
   // Sudoku
   getSudokuRankings() {
-    return axios.get(`${API_URL}/sudoku/sotd/rankings`)
+    return flapi.get('/sudoku/sotd/rankings')
   },
   startSudoku(difficulty) {
-    return axios.post(`${API_URL}/sudoku/start`, { difficulty })
+    return flapi.post('/sudoku/start', { difficulty })
   },
   startSudokuSOTD() {
-    return axios.post(`${API_URL}/sudoku/start/sotd`)
+    return flapi.post('/sudoku/start/sotd')
   },
   resetSudoku() {
-    return axios.post(`${API_URL}/sudoku/reset`)
+    return flapi.post('/sudoku/reset')
   },
   getSudokuState(userId) {
-    return axios.get(`${API_URL}/sudoku/state/${userId}`)
+    return flapi.get(`/sudoku/state/${userId}`)
   },
   submitSudoku(grid) {
-    return axios.post(`${API_URL}/sudoku/submit`, { grid })
+    return flapi.post('/sudoku/submit', { grid })
   },
   saveSudokuProgress(grid, notes) {
-    return axios.post(`${API_URL}/sudoku/progress`, { grid, notes })
+    return flapi.post('/sudoku/progress', { grid, notes })
   },
 }

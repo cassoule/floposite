@@ -123,8 +123,8 @@
 
 <script>
 /* global localStorage, setInterval, clearInterval, setTimeout, location, fetch, Blob */
-import { io } from 'socket.io-client'
-import axios from 'axios'
+import flapi, { FLAPI_BASE } from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
 import GameOverDialog from '@/components/GameOverDialog.vue'
 import HomeBtn from '@/components/HomeBtn.vue'
@@ -218,10 +218,6 @@ export default {
     window.addEventListener('beforeunload', this._boundHandleUnload)
     window.addEventListener('pagehide', this._boundHandleUnload)
 
-    if (this.socket) {
-      this.socket.disconnect()
-    }
-
     this.interval = setInterval(() => {
       this.now = Date.now()
     }, 1000)
@@ -232,26 +228,27 @@ export default {
 
     this.leaveQueueSync({ reason: 'component-destroy' })
 
+    if (this.socket) {
+      if (this._onConnect) this.socket.off('connect', this._onConnect)
+      if (this._onQueue) this.socket.off('connect4queue', this._onQueue)
+      if (this._onPlaying) this.socket.off('connect4playing', this._onPlaying)
+      if (this._onGameOver) this.socket.off('connect4gameOver', this._onGameOver)
+    }
+
     clearInterval(this.interval)
   },
   async mounted() {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
-    // Make sure to replace with your actual API URL
     this.elo = await this.getElo(this.discordId)
-    this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-      withCredentials: false,
-      auth: { token: localStorage.getItem('token') },
-      extraHeaders: {
-        'ngrok-skip-browser-warning': 'true',
-      },
-    })
+    this.socket = getSocket()
 
-    this.socket.on('connect', () => {
+    this._onConnect = () => {
       console.log('Connected to server with socket ID:', this.socket.id)
-    })
+    }
+    this.socket.on('connect', this._onConnect)
 
-    this.socket.on('connect4queue', async (data) => {
+    this._onQueue = async (data) => {
       this.queue = data.queue
       const myLobby = data.allPlayers.find(
         (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId,
@@ -264,9 +261,10 @@ export default {
         this.foundLobby = myLobby
         this.board = myLobby.board
       }
-    })
+    }
+    this.socket.on('connect4queue', this._onQueue)
 
-    this.socket.on('connect4playing', (data) => {
+    this._onPlaying = (data) => {
       const myLobby = data.allPlayers.find(
         (lobby) => lobby.p1.id === this.discordId || lobby.p2.id === this.discordId,
       )
@@ -274,9 +272,10 @@ export default {
         this.foundLobby = myLobby
         this.board = myLobby.board
       }
-    })
+    }
+    this.socket.on('connect4playing', this._onPlaying)
 
-    this.socket.on('connect4gameOver', async (data) => {
+    this._onGameOver = async (data) => {
       if (this.foundLobby && this.foundLobby.msgId === data.game.msgId) {
         this.gameOver = true
         this.winner = data.winner
@@ -303,7 +302,8 @@ export default {
           this.endGameDialog = true
         }, 250)
       }
-    })
+    }
+    this.socket.on('connect4gameOver', this._onGameOver)
 
     this.socket.emit('connect4connection', { id: this.discordId })
   },
@@ -324,14 +324,16 @@ export default {
       }
 
       // 1) Fire-and-forget HTTP that survives page close
+      // Note: uses native fetch with keepalive, which axios/flapi can't replicate
       if (!this.inQueue) return
-      const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
+      const url = `${FLAPI_BASE}/queue/leave`
       const token = localStorage.getItem('token')
       try {
         fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(payload),
@@ -380,9 +382,8 @@ export default {
     },
 
     async getElo(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + id + '/elo')
         return response.data.elo
       } catch (e) {
         console.error('flAPI error:', e)

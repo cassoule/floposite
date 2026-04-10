@@ -387,8 +387,9 @@
 
 <script>
 /* global localStorage, setInterval, clearInterval, fetch */
-import axios from 'axios'
-import { io } from 'socket.io-client'
+import flapi, { FLAPI_BASE } from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
+import { formatAmount } from '@/utils/format.js'
 import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
@@ -534,11 +535,18 @@ export default {
   },
 
   async beforeUnmount() {
-    if (this.socket) this.socket.disconnect()
+    if (this.socket) {
+      if (this._onConnect) this.socket.off('connect', this._onConnect)
+      if (this._onReconnect) this.socket.off('reconnect', this._onReconnect)
+      if (this._onConnectError) this.socket.off('connect_error', this._onConnectError)
+      if (this._onBjUpdate) this.socket.off('blackjack:update', this._onBjUpdate)
+      if (this._onBjToast) this.socket.off('blackjack:toast', this._onBjToast)
+      if (this._onBjChat) this.socket.off('blackjack:chat', this._onBjChat)
+    }
     if (this._timer) clearInterval(this._timer)
     if (this._onVis) document.removeEventListener('visibilitychange', this._onVis)
     if (this.isInRoom) {
-      await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave')
+      await flapi.post('/blackjack/leave')
     }
   },
 
@@ -561,13 +569,15 @@ export default {
     handleUnload() {
       if (!this.isInRoom) return
 
-      const url = (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave'
+      // Note: native fetch is needed for keepalive: true (survives page unload)
+      const url = (FLAPI_BASE || '') + '/blackjack/leave'
       const token = localStorage.getItem('token')
 
       fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         keepalive: true,
@@ -579,25 +589,27 @@ export default {
       this.snackbar = { show: true, msg }
     },
 
-    initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
-      this.socket.on('connect', async () => {
-        await this.getRoom()
-      })
-      this.socket.on('reconnect', async () => {
-        await this.getRoom()
-      })
-      this.socket.on('connect_error', (err) => {
-        console.log('socket connect_error', err?.message)
-      })
+    formatAmount,
 
-      this.socket.on('blackjack:update', (payload) => {
+    initSocket() {
+      this.socket = getSocket()
+
+      this._onConnect = async () => {
+        await this.getRoom()
+      }
+      this.socket.on('connect', this._onConnect)
+
+      this._onReconnect = async () => {
+        await this.getRoom()
+      }
+      this.socket.on('reconnect', this._onReconnect)
+
+      this._onConnectError = (err) => {
+        console.log('socket connect_error', err?.message)
+      }
+      this.socket.on('connect_error', this._onConnectError)
+
+      this._onBjUpdate = (payload) => {
         if (payload?.room) {
           this.room = payload.room
           // After room update, ensure activeHandIndex is valid or reset it
@@ -605,8 +617,10 @@ export default {
             this.activeHandIndex = 0
           }
         }
-      })
-      this.socket.on('blackjack:toast', (p) => {
+      }
+      this.socket.on('blackjack:update', this._onBjUpdate)
+
+      this._onBjToast = (p) => {
         if (p.userId) {
           if (p.userId === this.discordId) {
             this.toast(this.humanToast(p))
@@ -614,10 +628,13 @@ export default {
         } else {
           this.toast(this.humanToast(p))
         }
-      })
-      this.socket.on('blackjack:chat', (msg) => {
+      }
+      this.socket.on('blackjack:toast', this._onBjToast)
+
+      this._onBjChat = (msg) => {
         this.chatMsgs.push(msg)
-      })
+      }
+      this.socket.on('blackjack:chat', this._onBjChat)
     },
 
     handleMessageSend() {
@@ -669,7 +686,7 @@ export default {
 
     async getRoom() {
       try {
-        const response = await axios.get((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack', {
+        const response = await flapi.get('/blackjack', {
           headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache', Expires: '0' },
           params: { t: Date.now() },
         })
@@ -687,7 +704,7 @@ export default {
 
     async join() {
       try {
-        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/join')
+        await flapi.post('/blackjack/join')
         await this.getRoom()
         this.toast('Tu as rejoint la table')
       } catch (e) {
@@ -698,7 +715,7 @@ export default {
 
     async leave() {
       try {
-        await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/leave')
+        await flapi.post('/blackjack/leave')
         await this.getRoom()
         this.toast('Tu as quitté la table')
       } catch (e) {
@@ -709,7 +726,7 @@ export default {
 
     async placeBet() {
       try {
-        const r = await axios.post((import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/bet', {
+        const r = await flapi.post('/blackjack/bet', {
           amount: this.bet,
         })
         if (r.status === 200) this.toast('Mise acceptée')
@@ -724,12 +741,9 @@ export default {
 
     async doAction(action, handIndex) {
       try {
-        const r = await axios.post(
-          (import.meta.env.VITE_FLAPI_URL || '') + '/blackjack/action/' + action,
-          {
-            handIndex: handIndex,
-          },
-        )
+        const r = await flapi.post('/blackjack/action/' + action, {
+          handIndex: handIndex,
+        })
         if (r.status !== 200) {
           this.toast(r?.data?.message || 'Action refusée')
         }
@@ -738,23 +752,6 @@ export default {
         const msg = e?.response?.data?.message || 'Action refusée'
         this.toast(msg)
       }
-    },
-
-    formatAmount(amount) {
-      if (amount === null || amount === undefined) return '0'
-      const num = Number(amount)
-      if (isNaN(num)) return '0'
-
-      if (num >= 1000000000) {
-        return (num / 1000000000).toFixed(2).replace(/\.00$/, '') + 'Md'
-      }
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(2).replace(/\.00$/, '') + 'M'
-      }
-      if (num >= 10000) {
-        return (num / 1000).toFixed(2).replace(/\.00$/, '') + 'K'
-      }
-      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
     },
 
     myHandStatusText(hand) {

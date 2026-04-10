@@ -1,29 +1,23 @@
 <script>
-import axios from 'axios'
+/* global localStorage */
+import flapi from '@/services/flapi.js'
 import CsSkinCard from '@/components/CsSkinCard.vue'
 import CoinsCounter from '@/components/CoinsCounter.vue'
-import { useToastStore } from '@/stores/toastStore.js'
+import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import { getRarityColor, TRADE_UP_LADDER } from '@/utils/csRarity.js'
 import HomeBtn from '@/components/HomeBtn.vue'
+import { formatCoins } from '@/utils/format.js'
 
 export default {
   name: 'Inventory',
   components: { CsSkinCard, CoinsCounter, HomeBtn },
 
   setup() {
-    const toastStore = useToastStore()
-
-    const showSuccessToast = (message) => {
-      toastStore.showSuccessOrWarningToast(message, false)
-    }
-    const showErrorToast = (message) => {
-      toastStore.showSuccessOrWarningToast(message, true)
-    }
-
+    const toasts = useFlopoToasts()
     return {
-      toastStore: toastStore.$state,
-      showSuccessToast,
-      showErrorToast,
+      ...toasts,
+      showSuccessToast: (message) => toasts.showSuccessOrWarningToast(message, false),
+      showErrorToast: (message) => toasts.showSuccessOrWarningToast(message, true),
     }
   },
 
@@ -73,13 +67,13 @@ export default {
       return this.selectedSkins.reduce((sum, s) => sum + (s.price || 0), 0)
     },
     formattedSelectedTotal() {
-      return this.selectedTotal.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+      return formatCoins(this.selectedTotal.toFixed(0))
     },
     inventoryValue() {
       return this.csInventory.reduce((sum, s) => sum + (s.price || 0), 0)
     },
     formattedInventoryValue() {
-      return this.inventoryValue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+      return formatCoins(this.inventoryValue.toFixed(0))
     },
   },
 
@@ -99,9 +93,7 @@ export default {
     async fetchInventory() {
       this.loading = true
       try {
-        const response = await axios.get(
-          import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/inventory',
-        )
+        const response = await flapi.get('/user/' + this.discordId + '/inventory')
         this.csInventory = response.data.csInventory || []
       } catch (e) {
         console.error('flAPI error:', e)
@@ -132,7 +124,7 @@ export default {
       let failCount = 0
       for (const skin of this.selectedSkins) {
         try {
-          await axios.post(import.meta.env.VITE_FLAPI_URL + '/cs-skin/' + skin.id + '/instant-sell')
+          await flapi.post('/cs-skin/' + skin.id + '/instant-sell')
           successCount++
         } catch (e) {
           console.error('Sell error for skin ' + skin.id, e)

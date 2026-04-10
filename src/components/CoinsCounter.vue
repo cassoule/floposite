@@ -1,7 +1,8 @@
 <script>
 /* global localStorage, setInterval, clearInterval */
-import axios from 'axios'
-import { io } from 'socket.io-client'
+import flapi from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
+import { formatCoins } from '@/utils/format.js'
 
 export default {
   emits: ['update-coins'],
@@ -21,39 +22,29 @@ export default {
   },
   beforeUnmount() {
     clearInterval(this._timer)
+    if (this.socket && this._onDataUpdated) {
+      this.socket.off('data-updated', this._onDataUpdated)
+    }
   },
   methods: {
+    formatCoins,
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      this.socket = getSocket()
 
-      this.socket.on('connect', () => {
-        console.log('Connected to WebSocket server')
-      })
-
-      this.socket.on('disconnect', () => {
-        console.log('Disconnected from WebSocket server')
-      })
-
-      this.socket.on('data-updated', (data) => {
+      this._onDataUpdated = (data) => {
         if (data.userId === localStorage.getItem('discordId') && data.newCoins !== undefined) {
           const initialCoins = this.displayCoins
           this.$emit('update-coins', data.newCoins)
           this.animateNumber('displayCoins', initialCoins, data.newCoins, 800)
         }
-      })
+      }
+      this.socket.on('data-updated', this._onDataUpdated)
     },
     async fetchUserCoins() {
       const discordId = localStorage.getItem('discordId')
       if (!discordId) return
       try {
-        const url = import.meta.env.VITE_FLAPI_URL + '/user/' + discordId + '/coins'
-        const response = await axios.get(url)
+        const response = await flapi.get('/user/' + discordId + '/coins')
         const initialCoins = this.displayCoins
         this.$emit('update-coins', response.data.coins)
         this.animateNumber('displayCoins', initialCoins, response.data.coins, 800)
@@ -89,9 +80,7 @@ export default {
     :initial="{ opacity: 0 }"
     :enter="{ opacity: 1, transition: { delay: 0, duration: 400 } }"
   >
-    <v-chip style="background: #181818aa">
-      {{ displayCoins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }} Coins
-    </v-chip>
+    <v-chip style="background: #181818aa"> {{ formatCoins(displayCoins) }} Coins </v-chip>
   </div>
 </template>
 
