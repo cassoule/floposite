@@ -369,7 +369,7 @@
 <script>
 /* global localStorage, setInterval, clearInterval */
 import api from '../services/api'
-import { io } from 'socket.io-client'
+import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
 
 export default {
@@ -430,23 +430,20 @@ export default {
   },
   beforeUnmount() {
     if (this.timerInterval) clearInterval(this.timerInterval)
-    if (this.socket) this.socket.disconnect()
+    if (this.socket && this._onSudokuUpdate) {
+      this.socket.off('sudoku:update', this._onSudokuUpdate)
+    }
   },
   methods: {
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      this.socket = getSocket()
 
-      this.socket.on('sudoku:update', (payload) => {
+      this._onSudokuUpdate = (payload) => {
         if (payload?.userId === this.userId) {
           window.location.reload()
         }
-      })
+      }
+      this.socket.on('sudoku:update', this._onSudokuUpdate)
     },
 
     charToNum(char) {

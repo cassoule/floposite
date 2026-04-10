@@ -53,17 +53,13 @@
 
 <script>
 /* global localStorage */
-import { useToastStore } from '@/stores/toastStore.js'
-import axios from 'axios'
-import { io } from 'socket.io-client'
+import flapi, { FLAPI_BASE } from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
+import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 
 export default {
   setup() {
-    const toastStore = useToastStore()
-
-    return {
-      toastStore: toastStore.$state,
-    }
+    return { ...useFlopoToasts() }
   },
 
   data() {
@@ -71,12 +67,13 @@ export default {
       flapi_ready: false,
       discordId: null,
       maintenanceInfo: null,
+      socket: null,
     }
   },
 
   computed: {
     discordAuthUrl() {
-      return import.meta.env.VITE_FLAPI_URL + '/auth/discord'
+      return FLAPI_BASE + '/auth/discord'
     },
   },
 
@@ -85,26 +82,27 @@ export default {
     await this.checkFlapi()
   },
 
+  beforeUnmount() {
+    if (this.socket) {
+      this.socket.off('connect', this._onConnect)
+      this.socket.off('disconnect', this._onDisconnect)
+      this.socket.off('maintenance-update', this._onMaintenanceUpdate)
+      this.socket.off('maintenance-scheduled', this._onMaintenanceScheduled)
+    }
+  },
+
   methods: {
     initSocket() {
-      // Connect to your bot's Socket.IO server
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      this.socket = getSocket()
 
-      // Handle connection events
-      this.socket.on('connect', async () => {
+      this._onConnect = async () => {
         console.log('Connected to WebSocket server')
         await this.checkFlapi()
-      })
-
-      this.socket.on('disconnect', () => {
+      }
+      this._onDisconnect = () => {
         console.log('Disconnected from WebSocket server')
-      })
-
-      this.socket.on('maintenance-update', (data) => {
+      }
+      this._onMaintenanceUpdate = (data) => {
         if (data.active) {
           this.maintenanceInfo = {
             active: true,
@@ -112,15 +110,19 @@ export default {
           }
           this.flapi_ready = false
         }
-      })
-
-      this.socket.on('maintenance-scheduled', (data) => {
+      }
+      this._onMaintenanceScheduled = (data) => {
         if (data?.startsAt) {
           this.maintenanceInfo = { scheduled: true, remaining: this.formatRemaining(data.startsAt) }
         } else {
           this.maintenanceInfo = null
         }
-      })
+      }
+
+      this.socket.on('connect', this._onConnect)
+      this.socket.on('disconnect', this._onDisconnect)
+      this.socket.on('maintenance-update', this._onMaintenanceUpdate)
+      this.socket.on('maintenance-scheduled', this._onMaintenanceScheduled)
     },
 
     handleLogin() {
@@ -144,15 +146,8 @@ export default {
 
     async checkFlapi() {
       console.log('Checking flAPI...')
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/check'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/check')
         console.log('flAPI ready')
         this.flapi_ready = true
         // Check if a maintenance is scheduled

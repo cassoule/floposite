@@ -9,308 +9,21 @@
       @buy-coins="coinsModal = true"
     ></profile-menu>
 
-    <div
-      v-if="!leaderBoardOpen"
-      style="
-        position: fixed;
-        right: 0;
-        top: 50%;
-        height: 70px;
-        width: 25px;
-        background: rgba(255, 255, 255, 0);
-        padding: 1.5em 0.1em;
-        border-radius: 10px 0 0 10px;
-        cursor: pointer;
-        transform: translateY(-50%);
-      "
-      @click="leaderBoardOpen = true"
-    />
-    <v-navigation-drawer
+    <leaderboard-drawer
       v-model="leaderBoardOpen"
-      location="right"
-      :width="350"
-      variant="text"
-      color="transparent"
-      elevation="0"
-      temporary
-      :scrim="false"
-    >
-      <div v-if="users && !mounting" class="leaderboard-container h-100">
-        <TransitionGroup name="leaderboard-list" tag="div" class="leaderboard h-100">
-          <h2
-            class="pa-2 mb-2 w-100 text-white"
-            style="
-              display: flex;
-              place-content: space-between;
-              align-items: center;
-              position: sticky;
-              top: 0;
-              z-index: 100;
-            "
-          >
-            <span
-              class="d-flex justify-center text-white align-center text-capitalize cursor-pointer text-center"
-              style="
-                user-select: none;
-                width: 60px;
-                font-size: 0.75em;
-                height: 25px;
-                padding-bottom: 2px;
-                background: #5865f2;
-                border-radius: 10px;
-              "
-              @click="leaderboardSwitch"
-            >
-              {{ leaderboardType }}
-            </span>
-            <v-btn
-              icon
-              variant="text"
-              density="compact"
-              class="mdi mdi-close"
-              style="font-size: 1em"
-              @click="leaderBoardOpen = false"
-            ></v-btn>
-          </h2>
-          <div
-            v-for="akhy in leaderboardUsers"
-            :key="akhy.id"
-            v-motion
-            :initial="{ opacity: 0, y: -20, scale: 0.9 }"
-            :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 300, delay: 50 } }"
-            :leave="{ opacity: 0, y: 20, scale: 0.9, transition: { duration: 200 } }"
-            style="border-radius: 10px; margin: 0 6px"
-            :style="
-              akhy.id === discordId
-                ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)'
-                : ''
-            "
-          >
-            <div
-              v-if="akhy"
-              style="
-                display: flex;
-                place-content: space-between;
-                min-width: 300px;
-                width: 100%;
-                padding: 0.5em 1em;
-              "
-            >
-              <span style="color: #fff; display: flex; place-items: center; gap: 0.7rem">
-                <v-img
-                  :src="akhy.avatarUrl"
-                  color="transparent"
-                  style="border-radius: 50%; width: 20px; height: 20px"
-                />
-                @{{ akhy?.username }}&nbsp;
-                <i
-                  v-if="akhy?.isAkhy"
-                  class="mdi mdi-check-decagram-outline"
-                  title="Akhy certifié"
-                ></i>
-                <i v-if="akhy.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
-              </span>
-              <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center">
-                {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
-              </div>
-              <div v-else style="display: flex; place-items: center">
-                <template v-if="akhy.isPlacement">
-                  <span style="font-size: 0.8em; opacity: 0.6"
-                    >Placement {{ akhy.gamesPlayed }}/5</span
-                  >
-                </template>
-                <template v-else>
-                  <v-img :src="rankIcon(akhy.elo)" width="20" height="20">
-                    <div
-                      :style="`position: absolute; display: flex; width: 100%; height: 100%; place-items: center; place-content: center; font-size: .8em; color: #222`"
-                    >
-                      <p style="font-weight: 400">{{ rankDiv(akhy?.elo) }}</p>
-                    </div>
-                  </v-img>
-                </template>
-              </div>
-
-              <v-menu activator="parent" location="end" open-on-click transition="scale-transition">
-                <v-list
-                  width="250"
-                  class="mr-2 py-0"
-                  elevation="20"
-                  rounded="xl"
-                  bg-color="#181818"
-                  base-color="white"
-                  variant="tonal"
-                  style="border: 2px solid #ffffff55"
-                >
-                  <v-list-item class="px-2">
-                    <v-list-item-title
-                      style="display: flex; place-content: start; place-items: center; gap: 0.7rem"
-                      class="cursor-pointer"
-                      @click="$router.push('/akhy/' + akhy.id)"
-                    >
-                      <v-img
-                        :src="akhy.avatarUrl"
-                        color="transparent"
-                        max-width="30"
-                        style="border-radius: 50%; width: 20px; height: 30px"
-                      />
-                      {{ akhy?.username }}
-                    </v-list-item-title>
-                  </v-list-item>
-                  <v-list-item>
-                    <v-sparkline
-                      smooth
-                      auto-draw
-                      class="pa-0 ma-0"
-                      color="primary"
-                      line-width="2"
-                      :model-value="
-                        sparklines[akhy.id]?.length > 1
-                          ? sparklines[akhy.id]?.map((entry) => entry.userNewAmount)
-                          : [0, 0]
-                      "
-                      style="position: absolute; left: 0; top: 0"
-                      title="Evolution de FlopoCoins"
-                    />
-                  </v-list-item>
-                  <v-list-item>
-                    <v-list-item-subtitle>
-                      {{
-                        users
-                          .find((u) => u.id === akhy.id)
-                          ?.coins.toString()
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-                      }}
-                      FlopoCoins
-                    </v-list-item-subtitle>
-                  </v-list-item>
-                  <v-list-item>
-                    <v-sparkline
-                      smooth
-                      auto-draw
-                      class="pa-0 ma-0"
-                      color="secondary"
-                      line-width="2"
-                      :model-value="elo_graphs[akhy.id]?.length > 1 ? elo_graphs[akhy.id] : [0, 0]"
-                      style="position: absolute; left: 0; top: 0"
-                      title="Evolution de l'elo"
-                    />
-                  </v-list-item>
-                  <v-list-item>
-                    <v-list-item-subtitle>
-                      {{
-                        elos[akhy.id]?.isPlacement
-                          ? `Placement ${elos[akhy.id]?.gamesPlayed}/5`
-                          : `${elos[akhy.id]?.elo ?? 0} FlopoRank`
-                      }}
-                    </v-list-item-subtitle>
-                  </v-list-item>
-                  <v-list-item class="pb-1 px-3">
-                    <v-btn
-                      class="text-none"
-                      color="primary"
-                      block
-                      rounded
-                      density="comfortable"
-                      @click="$router.push('/akhy/' + akhy.id)"
-                      >Voir plus</v-btn
-                    >
-                  </v-list-item>
-                </v-list>
-              </v-menu>
-            </div>
-          </div>
-        </TransitionGroup>
-      </div>
-      <div
-        style="
-          position: absolute;
-          left: -25px;
-          top: 50%;
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(15px);
-          padding: 1.5em 0.1em;
-          border-radius: 15px 0 0 15px;
-          cursor: pointer;
-          transform: translateY(-50%);
-        "
-        @click="leaderBoardOpen = false"
-      >
-        <v-icon :class="'mdi mdi-chevron-' + (leaderBoardOpen ? 'right' : 'left')"></v-icon>
-      </div>
-    </v-navigation-drawer>
+      :users="users"
+      :users-by-elo="usersByElo"
+      :sparklines="sparklines"
+      :elos="elos"
+      :elo-graphs="elo_graphs"
+      :discord-id="discordId"
+      :dev-id="devId"
+      :mounting="mounting"
+    />
 
     <v-main class="w-100" style="position: relative; min-height: 100vh">
       <div v-if="user && !mounting" class="w-100 user-tab">
-        <div
-          class="w-100 mt-5 d-flex flex-column align-start justify-center"
-          style="gap: 0.5rem; position: relative; place-content: space-between"
-        >
-          <div
-            class="d-flex justify-space-between rounded-xl w-100 px-2 pb-1"
-            style="background: #dddddd22"
-          >
-            <v-chip-group
-              v-model="gameCardsFilter"
-              class="mb-0 pb-0 text-secondary"
-              selected-class="text-white"
-            >
-              <v-chip size="small" :value="'1v1'" filter>1v1</v-chip>
-              <v-chip size="small" :value="'Multi'" filter>Multi</v-chip>
-              <v-chip size="small" :value="'Solo'" filter>Solo</v-chip>
-              <v-chip size="small" :value="'Elo'" filter>Elo</v-chip>
-              <v-chip size="small" :value="'Coins'" filter class="mr-0">Coins</v-chip>
-            </v-chip-group>
-            <v-btn
-              :key="Date.now() + '-daily-reward'"
-              class="text-none mt-2"
-              color="primary"
-              variant="tonal"
-              style="border: 1px solid #5865f2; border-radius: 20px; height: 27px"
-              :disabled="user.dailyQueried"
-              @click="handleDailyQuery"
-            >
-              <span
-                v-if="user.dailyQueried"
-                style="font-size: 12px; font-variant-numeric: tabular-nums; color: white"
-              >
-                {{ dailyCountdown }}
-              </span>
-              <v-icon
-                v-else
-                class="mdi mdi-gift animate__animated animate__heartBeat animate__infinite animate__slow"
-                size="18"
-                color="white"
-              ></v-icon>
-            </v-btn>
-          </div>
-        </div>
-
-        <div
-          class="w-100 mt-2"
-          style="
-            display: flex;
-            flex-direction: column;
-            gap: 0rem;
-            row-gap: 0rem;
-            overflow-x: auto;
-            flex-wrap: wrap;
-            border-radius: 20px;
-          "
-        >
-          <game-card
-            v-for="game in games"
-            :key="game.name"
-            :game="game"
-            :gameCardsFilter="gameCardsFilter"
-            :SOTDRank="
-              game.name === 'Solitaire'
-                ? user?.solitaireOTDRank
-                : game.name === 'Sudoku'
-                  ? user?.sudokuOTDRank
-                  : null
-            "
-          ></game-card>
-        </div>
+        <game-cards-row :user="user" :games="games" @daily-claim="handleDailyQuery" />
 
         <v-tabs
           v-model="tab"
@@ -332,339 +45,23 @@
 
         <v-tabs-window v-model="tab" class="w-100">
           <v-tabs-window-item value="skins">
-            <div class="cases-actions-container">
-              <v-card
-                class="game-action-card bg-black pb-1"
-                variant="tonal"
-                style="display: flex; flex-direction: column; place-content: space-between"
-                @click="$router.push('/cases')"
-              >
-                <v-card-title> Caisses </v-card-title>
-                <v-card-subtitle style="text-wrap: wrap">
-                  <p>Ouvre des caisses pour obtenir des skins rares et uniques.</p>
-                </v-card-subtitle>
-                <v-card-item class="d-flex justify-end">
-                  <v-btn
-                    text="Caisses"
-                    class="text-none"
-                    append-icon="mdi-gift-open-outline"
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    block
-                    style="border-radius: 10px !important"
-                    @click="$router.push('/cases')"
-                  />
-                </v-card-item>
-              </v-card>
-
-              <v-card
-                class="game-action-card bg-black pb-1"
-                variant="tonal"
-                style="display: flex; flex-direction: column; place-content: space-between"
-                @click="$router.push('/market')"
-              >
-                <v-card-title> FlopoMarket </v-card-title>
-                <v-card-subtitle style="text-wrap: wrap">
-                  <p>Vends tes skins au enchères ou achètes-en de nouveaux pour ta collection.</p>
-                </v-card-subtitle>
-                <v-card-item class="d-flex justify-end">
-                  <v-btn
-                    text="Market"
-                    class="text-none"
-                    append-icon="mdi-cart-variant"
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    block
-                    style="border-radius: 10px !important"
-                    @click="$router.push('/market')"
-                  />
-                </v-card-item>
-              </v-card>
-
-              <v-card
-                class="game-action-card bg-black pb-1"
-                variant="tonal"
-                style="display: flex; flex-direction: column; place-content: space-between"
-                @click="$router.push('/inventory')"
-              >
-                <v-card-title> Inventaire </v-card-title>
-                <v-card-subtitle style="text-wrap: wrap">
-                  <p>Gère, revend ou échange tes skins.</p>
-                </v-card-subtitle>
-                <v-card-item class="d-flex justify-end">
-                  <v-btn
-                    text="Inventaire"
-                    class="text-none"
-                    append-icon="mdi-bookshelf"
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    block
-                    style="border-radius: 10px !important"
-                    @click="$router.push('/inventory')"
-                  />
-                </v-card-item>
-              </v-card>
-            </div>
+            <cs-skins-tab />
           </v-tabs-window-item>
 
           <v-tabs-window-item v-if="user?.isAkhy" value="commandes">
-            <div class="actions-container">
-              <v-card class="action-card" variant="tonal">
-                <v-card-title>Modif Pseudo</v-card-title>
-                <v-card-subtitle>
-                  <p>Modifie le pseudo de quelqu'un</p>
-                </v-card-subtitle>
-                <v-card-text class="d-flex justify-end">
-                  <v-btn
-                    text="1K FlopoCoins"
-                    class="text-none"
-                    append-icon="mdi-play"
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    style="border-radius: 10px !important"
-                    :disabled="user?.coins < 1000"
-                    @click="nicknameModal = true"
-                  />
-                </v-card-text>
-              </v-card>
-
-              <v-card class="action-card" variant="tonal">
-                <v-card-title>Spam Ping</v-card-title>
-                <v-card-subtitle>
-                  <p>Spam quelqu'un pendant 30 secondes</p>
-                </v-card-subtitle>
-                <v-card-text class="d-flex justify-end">
-                  <v-btn
-                    text="5K FlopoCoins"
-                    class="text-none"
-                    append-icon="mdi-play"
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    style="border-radius: 10px !important"
-                    :disabled="user?.coins < 5000"
-                    @click="spamPingModal = true"
-                  />
-                </v-card-text>
-              </v-card>
-
-              <v-card class="action-card" variant="tonal">
-                <v-card-title>Slow Mode</v-card-title>
-                <v-card-subtitle>
-                  <p>1 message par minute pendant 1 heure</p>
-                </v-card-subtitle>
-                <v-card-text class="d-flex justify-end">
-                  <v-btn
-                    text="10K FlopoCoins"
-                    class="text-none"
-                    append-icon="mdi-play"
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    style="border-radius: 10px !important"
-                    :disabled="user?.coins < 10000"
-                    @click="slowmodeModal = true"
-                  />
-                </v-card-text>
-              </v-card>
-
-              <v-card class="action-card" variant="tonal">
-                <v-card-title>Time-Out</v-card-title>
-                <v-card-subtitle>
-                  <p>Time-out quelqu'un pendant 12 heures</p>
-                </v-card-subtitle>
-                <v-card-text class="d-flex justify-end">
-                  <v-btn
-                    text="100K FlopoCoins"
-                    class="text-none"
-                    append-icon="mdi-play"
-                    color="primary"
-                    variant="flat"
-                    rounded="lg"
-                    style="border-radius: 10px !important"
-                    :disabled="user?.coins < 100000"
-                    @click="timeoutModal = true"
-                  />
-                </v-card-text>
-              </v-card>
-            </div>
+            <akhy-commands-tab :user="user" :users="users" :avatars="avatars" />
           </v-tabs-window-item>
 
           <v-tabs-window-item v-if="user?.isAkhy" value="predictions">
-            <div class="actions-container">
-              <div
-                style="
-                  position: absolute;
-                  z-index: 2;
-                  padding: 0.7em 0.5em;
-                  width: 100%;
-                  display: flex;
-                  place-content: space-between;
-                  backdrop-filter: blur(5px);
-                "
-              >
-                <h2 class="text-white">Prédictions</h2>
-                <v-btn
-                  class="text-none"
-                  variant="flat"
-                  color="primary"
-                  text="Nouvelle Prédi"
-                  style="border-radius: 10px"
-                  @click="prediModal = true"
-                />
-              </div>
-              <div
-                v-if="active_predis"
-                class="predis-containers pt-12"
-                :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
-              >
-                <v-card
-                  v-for="[key, predi] in Object.entries(active_predis)"
-                  :key="key"
-                  class="votes-card"
-                  :variant="
-                    ((predi.endTime - Date.now()) / 1000).toFixed() < 0 || predi.closed
-                      ? 'plain'
-                      : 'tonal'
-                  "
-                >
-                  <div>
-                    <v-img
-                      :src="avatars[predi.creatorId]"
-                      color="transparent"
-                      style="
-                        border-radius: 50%;
-                        width: 25px;
-                        height: 25px;
-                        position: absolute;
-                        right: 1em;
-                        top: 1em;
-                      "
-                    />
-                    <v-card-text class="font-weight-bold pr-0 mr-12">
-                      {{ predi.label }}
-                    </v-card-text>
-                    <v-card-subtitle class="pb-3">
-                      {{ predi.options[0].votes.length + predi.options[1].votes.length }}
-                      vote(s) - Prédi de {{ users.find((u) => u.id === predi.creatorId).username }}
-                    </v-card-subtitle>
-                    <v-card-subtitle class="d-flex pb-2" style="place-content: space-between">
-                      <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
-                        {{ predi.options[0].label }}
-                      </p>
-                      <p style="max-width: 48%; overflow: hidden; text-overflow: ellipsis">
-                        {{ predi.options[1].label }}
-                      </p>
-                    </v-card-subtitle>
-                    <v-card-text class="px-0">
-                      <div
-                        class="animate__animated animate__fadeIn"
-                        style="text-align: right; position: absolute"
-                        :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${predi.options[0].percent - 100}%); background: #5865f2; border: 2px solid #5865f277`"
-                      >
-                        <p class="pr-4" style="transform: translateY(-25px)">
-                          {{ predi.options[0].percent.toFixed(1) }}%
-                        </p>
-                      </div>
-                      <div
-                        class="animate__animated animate__fadeIn"
-                        style="text-align: left; position: absolute"
-                        :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${100 - predi.options[1].percent}%); background: #aa3e3e; border: 2px solid #aa3e3e77`"
-                      >
-                        <p class="pl-4" style="transform: translateY(-25px)">
-                          {{ predi.options[1].percent.toFixed(1) }}%
-                        </p>
-                      </div>
-                    </v-card-text>
-                    <v-card-subtitle class="d-flex justify-space-between pt-2">
-                      <div style="display: flex; place-content: start; gap: 0">
-                        <div
-                          v-for="(vote, index) in predi.options[0].votes"
-                          :key="vote.id + Date.now()"
-                          :style="`transform: translateX(calc(-12px * ${index})); z-index: 1;`"
-                        >
-                          <v-img
-                            :src="avatars[vote.id]"
-                            color="transparent"
-                            style="border-radius: 50%; width: 20px; height: 20px"
-                          />
-                        </div>
-                      </div>
-                      <div
-                        style="
-                          display: flex;
-                          flex-direction: row-reverse;
-                          place-content: start;
-                          gap: 0;
-                        "
-                      >
-                        <div
-                          v-for="(vote, index) in predi.options[1].votes"
-                          :key="vote.id + Date.now()"
-                          :style="`transform: translateX(calc(12px * ${index})); z-index: 1;`"
-                        >
-                          <v-img
-                            :src="avatars[vote.id]"
-                            color="transparent"
-                            style="border-radius: 50%; width: 20px; height: 20px"
-                          />
-                        </div>
-                      </div>
-                    </v-card-subtitle>
-                    <v-card-text class="d-flex align-end">
-                      <p v-if="!predi.closed">
-                        {{
-                          ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
-                            ? ((predi.closingTime - Date.now()) / 1000).toFixed() +
-                              's restantes pour voter'
-                            : ((predi.endTime - Date.now()) / 1000).toFixed() > 0
-                              ? Math.max(((predi.endTime - Date.now()) / 1000).toFixed(), 0) +
-                                's avant les résultats'
-                              : 'Prédi terminée, en attente de validation'
-                        }}
-                      </p>
-                      <p v-else>Prédi terminée, les FlopoCoins ont été distribués</p>
-
-                      <v-spacer />
-                      <div v-if="!predi.options[0].votes.find((v) => v?.voter === discordId)">
-                        <v-btn
-                          :text="
-                            ((predi.closingTime - Date.now()) / 1000).toFixed() > 0
-                              ? 'Voter'
-                              : 'Voir'
-                          "
-                          color="primary"
-                          variant="flat"
-                          rounded="lg"
-                          @click="setSelectedPredi(predi, key)"
-                          @click.stop="prediVoteModal = true"
-                        />
-                      </div>
-                      <div v-else>Tu as voté !</div>
-                    </v-card-text>
-                  </div>
-                </v-card>
-                <div v-if="Object.keys(active_predis)?.length === 0" class="pt-16 pl-5">
-                  <p class="pt-16 w-100 text-center">Aucune prédi en cours</p>
-                </div>
-              </div>
-              <div
-                v-else
-                style="width: 100%; display: flex; place-content: center; place-items: center"
-                :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
-              >
-                <v-progress-circular
-                  :size="70"
-                  :width="10"
-                  color="primary"
-                  indeterminate
-                ></v-progress-circular>
-              </div>
-            </div>
+            <predictions-tab
+              :active-predis="active_predis"
+              :discord-id="discordId"
+              :dev-id="devId"
+              :avatars="avatars"
+              :users="users"
+              :user="user"
+              @refresh="getActivePredis"
+            />
           </v-tabs-window-item>
         </v-tabs-window>
       </div>
@@ -698,57 +95,13 @@
   </v-layout>
 
   <!--  DIALOGS -->
-  <v-dialog
+  <register-welcome-modal
     v-model="isRegistered"
-    class="modals"
-    :max-width="550"
-    scroll-strategy="block"
-    scrollable
-    persistent
-  >
-    <v-card class="modal-card px-6 py-4" variant="tonal">
-      <v-card-title class="pb-0 pt-9">
-        <h1 style="letter-spacing: 0.03em">Salut @{{ anonUsername }} 👋</h1>
-        <v-img
-          src="public/flopobot.webp"
-          style="position: absolute; right: 0; top: 1em"
-          width="150"
-        ></v-img>
-      </v-card-title>
-      <v-card-subtitle class="pb-6">
-        <h2>Bienvenue sur Floposite !</h2>
-      </v-card-subtitle>
-      <v-card-text class="px-4" style="font-size: 1.1em">
-        <p>Il semblerait que ce soit ta première visite ici.</p>
-        <p>Donc <strong>5000</strong> FlopoCoins de bienvenue pour toi ! 🎉</p>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn
-          class="text-none mt-4 px-4"
-          density="default"
-          color="error"
-          variant="flat"
-          rounded="lg"
-          :disabled="loading"
-          @click="logout"
-        >
-          Quitter
-        </v-btn>
-        <v-btn
-          class="text-none mt-4 px-4"
-          density="default"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          :disabled="loading"
-          @click="handleRegister"
-          @click.stop="isRegistered = false"
-        >
-          +5000 FlopoCoins
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+    :anon-username="anonUsername"
+    :loading="loading"
+    @register="handleRegister"
+    @quit="logout"
+  />
 
   <v-dialog v-model="loading" style="backdrop-filter: blur(10px) contrast(0.5)">
     <v-card class="px-6 py-4" variant="text" elevation="0">
@@ -764,831 +117,46 @@
     </v-card>
   </v-dialog>
 
-  <v-dialog
+  <coins-purchase-modal
     v-model="coinsModal"
-    class="modals"
     :max-width="coinsModalMaxWidth"
-    scroll-strategy="reposition"
-    scrollable
-    @update:model-value="
-      () => {
-        acceptedCGV = false
-      }
-    "
-  >
-    <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
-      <v-card-title class="pt-4">
-        Achat de FlopoCoins
-        <v-icon class="mdi mdi-close float-right" size="20" @click="coinsModal = false"></v-icon>
-      </v-card-title>
-      <v-card-subtitle class="pb-1">
-        <p>Recharge tes FlopoCoins !</p>
-      </v-card-subtitle>
-      <v-card-text
-        class="d-flex px-4 pt-4"
-        style="gap: 1em; place-content: start; flex-wrap: wrap; height: fit-content"
-      >
-        <v-card
-          class="article-card"
-          color="transparent"
-          style="border-radius: 12px"
-          :disabled="paymentModal"
-        >
-          <v-card-item>
-            <v-img
-              src="5k.svg"
-              min-height="200px"
-              min-width="200"
-              width="100%"
-              cover
-              rounded="lg"
-            ></v-img>
-          </v-card-item>
-          <v-card-subtitle> +5 000 FlopoCoins </v-card-subtitle>
-          <v-card-actions>
-            <v-btn
-              class="text-none"
-              color="primary"
-              variant="flat"
-              rounded="lg"
-              block
-              :disabled="loading || !acceptedCGV"
-              @click="(buyCoins('offer_5000'), (coinsModal = false))"
-            >
-              0.99€
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card
-          class="article-card"
-          color="transparent"
-          style="border-radius: 12px"
-          :disabled="paymentModal"
-        >
-          <v-card-item>
-            <v-img
-              src="20k.svg"
-              min-height="200px"
-              min-width="200"
-              width="100%"
-              cover
-              rounded="lg"
-            ></v-img>
-          </v-card-item>
-          <v-card-subtitle> +20 000 FlopoCoins </v-card-subtitle>
-          <v-card-actions>
-            <v-btn
-              class="text-none"
-              color="primary"
-              variant="flat"
-              rounded="lg"
-              block
-              :disabled="loading || !acceptedCGV"
-              @click="(buyCoins('offer_20000'), (coinsModal = false))"
-            >
-              2.99€
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card
-          class="article-card"
-          color="transparent"
-          style="border-radius: 12px"
-          :disabled="paymentModal"
-        >
-          <v-card-item>
-            <v-img
-              src="40k.svg"
-              min-height="200px"
-              min-width="200"
-              width="100%"
-              cover
-              rounded="lg"
-            ></v-img>
-          </v-card-item>
-          <v-card-subtitle> +40 000 FlopoCoins </v-card-subtitle>
-          <v-card-actions>
-            <v-btn
-              class="text-none"
-              color="primary"
-              variant="flat"
-              rounded="lg"
-              block
-              :disabled="loading || !acceptedCGV"
-              @click="(buyCoins('offer_40000'), (coinsModal = false))"
-            >
-              4.99€
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card
-          class="article-card"
-          color="transparent"
-          style="border-radius: 12px"
-          :disabled="paymentModal"
-        >
-          <v-card-item>
-            <v-img
-              src="100k.svg"
-              min-height="200px"
-              min-width="200"
-              width="100%"
-              cover
-              rounded="lg"
-            ></v-img>
-          </v-card-item>
-          <v-card-subtitle> +100 000 FlopoCoins </v-card-subtitle>
-          <v-card-actions>
-            <v-btn
-              class="text-none"
-              color="primary"
-              variant="flat"
-              rounded="lg"
-              block
-              :disabled="loading || !acceptedCGV"
-              @click="(buyCoins('offer_100000'), (coinsModal = false))"
-            >
-              9.99€
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-card-text>
-      <v-card-item
-        class="pt-1 pb-4 px-5"
-        style="color: #ddddddaa; text-align: right; overflow: hidden"
-      >
-        <v-checkbox v-model="acceptedCGV" class="pt-0 mt-0" color="white" hide-details>
-          <template #label>
-            <p class="text-left">
-              J'ai lu et j'accepte les
-              <a
-                href="/cgv"
-                target="_blank"
-                style="color: #5865f2 !important; text-decoration: none; font-size: 1em"
-              >
-                Conditions Générales de Vente </a
-              >, ainsi que la
-              <a
-                href="/privacy"
-                target="_blank"
-                style="color: #5865f2 !important; text-decoration: none; font-size: 1em"
-              >
-                Politique de Confidentialité </a
-              >et je renonce expressément à mon droit de rétractation.
-            </p>
-          </template>
-        </v-checkbox>
-      </v-card-item>
-    </v-card>
-  </v-dialog>
-
-  <v-dialog v-model="nicknameModal" class="modals" max-width="800" scroll-strategy="reposition">
-    <v-card class="modal-card" variant="tonal">
-      <v-card-title>Modif Pseudo</v-card-title>
-      <v-card-subtitle>
-        <p>Modifie le pseudo de quelqu'un</p>
-      </v-card-subtitle>
-      <v-card-text>
-        <v-select
-          v-model="nicknameForm.id"
-          placeholder="Akhy"
-          clearable
-          :items="users.filter((u) => u.isAkhy)"
-          item-value="id"
-          item-title="username"
-          variant="outlined"
-          class="text-white w-100"
-          rounded="lg"
-          density="comfortable"
-        >
-          <template #item="{ props, item }">
-            <v-list-item v-bind="props" rounded="lg" color="primary">
-              <template #title>
-                <div style="display: flex; place-items: center; place-content: start; gap: 1em">
-                  <v-img
-                    :src="avatars[item.raw.id]"
-                    color="transparent"
-                    style="border-radius: 50%; max-width: 40px; height: 40px"
-                  />
-                  <p>{{ item.raw.username }}</p>
-                </div>
-              </template>
-            </v-list-item>
-          </template>
-        </v-select>
-
-        <v-text-field
-          v-model="nicknameForm.nickname"
-          clearable
-          placeholder="Nouveau nom"
-          variant="outlined"
-          rounded="lg"
-          density="comfortable"
-          class="text-white w-100"
-          max-length="20"
-          :hint="!nicknameForm.nickname ? 'Nom par défaut' : ''"
-          persistent-hint
-        />
-      </v-card-text>
-      <v-card-text class="d-flex justify-end">
-        <v-btn
-          text="1K FlopoCoins"
-          class="text-none"
-          append-icon="mdi-play"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          :disabled="!nicknameForm.id"
-          @click="changeNickname"
-          @click.stop="nicknameModal = false"
-        />
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-
-  <v-dialog v-model="spamPingModal" class="modals" max-width="800" scroll-strategy="reposition">
-    <v-card class="modal-card" variant="tonal">
-      <v-card-title>Spam Ping</v-card-title>
-      <v-card-subtitle>
-        <p>Spam un akhy pendant 30 secondes</p>
-      </v-card-subtitle>
-      <v-card-text class="d-flex" style="gap: 1em">
-        <v-select
-          v-model="spamPingForm.id"
-          placeholder="Akhy"
-          clearable
-          :items="users.filter((u) => u.isAkhy)"
-          item-value="id"
-          item-title="username"
-          variant="outlined"
-          class="text-white w-50"
-          rounded="lg"
-          density="comfortable"
-        >
-          <template #item="{ props, item }">
-            <v-list-item v-bind="props" rounded="lg" color="primary">
-              <template #title>
-                <div style="display: flex; place-items: center; place-content: start; gap: 1em">
-                  <v-img
-                    :src="avatars[item.raw.id]"
-                    color="transparent"
-                    style="border-radius: 50%; max-width: 40px; height: 40px"
-                  />
-                  <p>{{ item.raw.username }}</p>
-                </div>
-              </template>
-            </v-list-item>
-          </template>
-        </v-select>
-      </v-card-text>
-      <v-card-text class="d-flex justify-end">
-        <v-btn
-          text="5K FlopoCoins"
-          class="text-none"
-          append-icon="mdi-play"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          :disabled="!spamPingForm.id"
-          @click="spamPing"
-          @click.stop="spamPingModal = false"
-        />
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-
-  <v-dialog v-model="slowmodeModal" class="modals" max-width="800" scroll-strategy="reposition">
-    <v-card class="modal-card" variant="tonal">
-      <v-card-title>Slow Mode</v-card-title>
-      <v-card-subtitle>
-        <p>1 message par minute pendant 1 heure</p>
-      </v-card-subtitle>
-      <v-card-text class="d-flex" style="gap: 1em">
-        <v-select
-          v-model="slowmodeForm.id"
-          placeholder="Akhy"
-          clearable
-          :items="users.filter((u) => u.isAkhy)"
-          item-value="id"
-          item-title="username"
-          variant="outlined"
-          class="text-white w-50"
-          rounded="lg"
-          density="comfortable"
-          hint="Tu peux retirer ton slowmode en te mettant toi-même"
-          persistent-hint
-        >
-          <template #item="{ props, item }">
-            <v-list-item v-bind="props" rounded="lg" color="primary">
-              <template #title>
-                <div style="display: flex; place-items: center; place-content: start; gap: 1em">
-                  <v-img
-                    :src="avatars[item.raw.id]"
-                    color="transparent"
-                    style="border-radius: 50%; max-width: 40px; height: 40px"
-                  />
-                  <p>{{ item.raw.username }}</p>
-                </div>
-              </template>
-            </v-list-item>
-          </template>
-        </v-select>
-      </v-card-text>
-      <v-card-text class="d-flex justify-end">
-        <v-btn
-          text="10K FlopoCoins"
-          class="text-none"
-          append-icon="mdi-play"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          :disabled="!slowmodeForm.id"
-          @click="slowmode"
-          @click.stop="slowmodeModal = false"
-        />
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-
-  <v-dialog v-model="timeoutModal" class="modals" max-width="800" scroll-strategy="reposition">
-    <v-card class="modal-card" variant="tonal">
-      <v-card-title>Time-Out</v-card-title>
-      <v-card-subtitle>
-        <p>Time-out quelqu'un pendant 12 heures</p>
-      </v-card-subtitle>
-      <v-card-text class="d-flex" style="gap: 1em">
-        <v-select
-          v-model="timeoutForm.id"
-          placeholder="Akhy"
-          clearable
-          :items="users.filter((u) => u.isAkhy)"
-          item-value="id"
-          item-title="username"
-          variant="outlined"
-          class="text-white w-50"
-          rounded="lg"
-          density="comfortable"
-          hint="Tu peux retirer ton time-out en te mettant toi-même"
-          persistent-hint
-        >
-          <template #item="{ props, item }">
-            <v-list-item v-bind="props" rounded="lg" color="primary">
-              <template #title>
-                <div style="display: flex; place-items: center; place-content: start; gap: 1em">
-                  <v-img
-                    :src="avatars[item.raw.id]"
-                    color="transparent"
-                    style="border-radius: 50%; max-width: 40px; height: 40px"
-                  />
-                  <p>{{ item.raw.username }}</p>
-                </div>
-              </template>
-            </v-list-item>
-          </template>
-        </v-select>
-      </v-card-text>
-      <v-card-text class="d-flex justify-end">
-        <v-btn
-          text="100K FlopoCoins"
-          class="text-none"
-          append-icon="mdi-play"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          :disabled="!timeoutForm.id"
-          @click="timeout"
-          @click.stop="timeoutModal = false"
-        />
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-
-  <v-dialog v-model="prediModal" class="modals" max-width="800" scroll-strategy="reposition">
-    <v-card class="modal-card" variant="tonal">
-      <v-card-title>Prédi</v-card-title>
-      <v-card-subtitle>
-        <p>Crées une nouvelle prédiction</p>
-      </v-card-subtitle>
-      <v-card-text class="d-flex pb-4" style="gap: 1em">
-        <v-select
-          v-model="prediForm.closingTime"
-          label="Fermeture des votes"
-          :items="[
-            { time: 300, label: '5 minutes' },
-            { time: 600, label: '10 minutes' },
-            { time: 1800, label: '30 minutes' },
-            { time: 3600, label: '1 heure' },
-            { time: 7200, label: '2 heures' },
-            { time: 10800, label: '3 heures' },
-            { time: 14400, label: '4 heures' },
-            { time: 18000, label: '5 heures' },
-            { time: 21600, label: '6 heures' },
-            { time: 43200, label: '12 heures' },
-            { time: 86400, label: '24 heures' },
-          ]"
-          item-value="time"
-          item-title="label"
-          variant="outlined"
-          class="text-white w-50"
-          rounded="lg"
-          density="comfortable"
-          hint="Temps pour voter"
-          persistent-hint
-        />
-        <v-select
-          v-model="prediForm.payoutTime"
-          label="Résultats"
-          :items="[
-            { time: 300, label: '5 minutes' },
-            { time: 600, label: '10 minutes' },
-            { time: 1800, label: '30 minutes' },
-            { time: 3600, label: '1 heure' },
-            { time: 7200, label: '2 heures' },
-            { time: 10800, label: '3 heures' },
-            { time: 14400, label: '4 heures' },
-            { time: 18000, label: '5 heures' },
-            { time: 21600, label: '6 heures' },
-            { time: 43200, label: '12 heures' },
-            { time: 86400, label: '24 heures' },
-          ]"
-          item-value="time"
-          item-title="label"
-          variant="outlined"
-          class="text-white w-50"
-          rounded="lg"
-          density="comfortable"
-          hint="Fin de la prédi"
-          persistent-hint
-        />
-      </v-card-text>
-      <v-card-text class="d-flex pt-0 pb-4" style="gap: 1em">
-        <v-text-field
-          v-model="prediForm.label"
-          label="Titre de la prédi"
-          max-length="64"
-          clearable
-          variant="outlined"
-          class="text-white w-50"
-          rounded="lg"
-          density="comfortable"
-          hide-details
-        />
-      </v-card-text>
-      <v-card-text class="d-flex pt-0" style="gap: 1em">
-        <v-text-field
-          v-model="prediForm.options[0]"
-          label="Option 1"
-          max-length="32"
-          clearable
-          variant="outlined"
-          class="text-white w-50"
-          rounded="lg"
-          density="comfortable"
-        />
-        <v-text-field
-          v-model="prediForm.options[1]"
-          label="Option 2"
-          max-length="32"
-          clearable
-          variant="outlined"
-          class="text-white w-50"
-          rounded="lg"
-          density="comfortable"
-        />
-      </v-card-text>
-      <v-card-text class="d-flex justify-end">
-        <v-btn
-          text="100 FlopoCoins"
-          class="text-none"
-          append-icon="mdi-play"
-          color="primary"
-          variant="flat"
-          rounded="lg"
-          :disabled="!prediForm.label || !prediForm.options[0] || !prediForm.options[1]"
-          @click="startPredi"
-          @click.stop="prediModalClose"
-        />
-      </v-card-text>
-    </v-card>
-  </v-dialog>
-
-  <v-dialog
-    v-model="prediVoteModal"
-    class="modals"
-    max-width="800"
-    scroll-strategy="reposition"
-    scrollable
-  >
-    <v-card v-if="selectedPredi" :key="Date.now()" class="modal-card" variant="tonal">
-      <v-card-title>{{ selectedPredi.label }}</v-card-title>
-      <v-card-subtitle>
-        <p>Choisis un montant à parier</p>
-      </v-card-subtitle>
-      <v-card-text class="pa-0">
-        <v-card-text v-if="!processingVote" class="w-100 d-flex predi-vote-options pb-4 px-4">
-          <v-card
-            class="predi-option-card"
-            variant="text"
-            rounded="xl"
-            :style="
-              selectedPredi.options[0].votes.find((v) => v.id === discordId) ||
-              (selectedOption === 0 &&
-                !selectedPredi.options[1].votes.find((v) => v.id === discordId))
-                ? 'box-shadow: 0 0 10px 0 #ddddddaa !important; border: 2px solid #5865f2 !important'
-                : ''
-            "
-            @click="
-              ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 &&
-              !selectedPredi.options[1].votes.find((v) => v.id === discordId) &&
-              !selectedPredi.closed
-                ? (selectedOption = 0)
-                : ''
-            "
-          >
-            <v-card-text class="font-weight-bold">{{ selectedPredi.options[0].label }}</v-card-text>
-            <v-card-subtitle>Option 1</v-card-subtitle>
-            <v-card-text class="d-flex justify-center">
-              <h1>{{ formatAmount(selectedPredi.options[0].total) }}</h1>
-            </v-card-text>
-            <v-card-item class="pr-0">
-              <div style="width: 100%; display: flex; flex-direction: column; place-items: end">
-                <p class="pr-4">{{ selectedPredi.options[0].percent.toFixed(1) }}%</p>
-                <div
-                  class="animate__animated animate__fadeIn"
-                  :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${100 - selectedPredi.options[0].percent}%); background: #5865f2; border-radius: 20px 0 0 20px; border: 2px solid #5865f2`"
-                ></div>
-              </div>
-            </v-card-item>
-            <v-card-text class="pb-1">
-              <p>
-                {{ selectedPredi.options[0].votes.length }} vote(s) - Côte
-                {{
-                  (selectedPredi.options[0].total > 0
-                    ? 1 + selectedPredi.options[1].total / selectedPredi.options[0].total
-                    : 1
-                  ).toFixed(2)
-                }}
-              </p>
-            </v-card-text>
-            <v-card-text class="d-flex justify-space-between pt-0 pb-3">
-              <div
-                style="
-                  display: flex;
-                  place-content: start;
-                  gap: 0;
-                  width: 100%;
-                  overflow: hidden;
-                  border-radius: 10px;
-                "
-              >
-                <div
-                  v-for="(vote, index) in selectedPredi.options[0].votes"
-                  :key="vote.id + Date.now()"
-                  :style="`transform: translateX(calc(-10px * ${index})); z-index: 1;`"
-                >
-                  <v-img
-                    :src="avatars[vote.id]"
-                    color="transparent"
-                    style="border-radius: 50%; width: 20px; height: 20px"
-                  />
-                </div>
-              </div>
-            </v-card-text>
-          </v-card>
-          <v-card
-            class="predi-option-card"
-            variant="text"
-            rounded="xl"
-            :style="
-              selectedPredi.options[1].votes.find((v) => v.id === discordId) ||
-              (selectedOption === 1 &&
-                !selectedPredi.options[0].votes.find((v) => v.id === discordId))
-                ? 'box-shadow: 0 0 10px 0 #ddddddaa !important; border: 2px solid #aa3e3e !important'
-                : ''
-            "
-            @click="
-              ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 &&
-              !selectedPredi.options[0].votes.find((v) => v.id === discordId) &&
-              !selectedPredi.closed
-                ? (selectedOption = 1)
-                : ''
-            "
-          >
-            <v-card-text class="font-weight-bold">{{ selectedPredi.options[1].label }}</v-card-text>
-            <v-card-subtitle>Option 2</v-card-subtitle>
-            <v-card-text class="d-flex justify-center">
-              <h1>{{ formatAmount(selectedPredi.options[1].total) }}</h1>
-            </v-card-text>
-            <v-card-item class="pl-0">
-              <div style="width: 100%; display: flex; flex-direction: column; place-items: start">
-                <p class="pl-4">{{ selectedPredi.options[1].percent.toFixed(1) }}%</p>
-                <div
-                  class="animate__animated animate__fadeIn"
-                  :style="`height: 15px; width: 100%; transition: 1s ease-in-out; transform: translateX(${selectedPredi.options[1].percent - 100}%); background: #aa3e3e; border-radius: 0 20px 20px 0; border: 2px solid #aa3e3e77`"
-                ></div>
-              </div>
-            </v-card-item>
-            <v-card-text class="pb-1">
-              <p>
-                {{ selectedPredi.options[1].votes.length }} vote(s) - Côte
-                {{
-                  (selectedPredi.options[1].total > 0
-                    ? 1 + selectedPredi.options[0].total / selectedPredi.options[1].total
-                    : 1
-                  ).toFixed(2)
-                }}
-              </p>
-            </v-card-text>
-            <v-card-text class="d-flex justify-space-between pt-0 pb-3">
-              <div
-                style="
-                  display: flex;
-                  place-content: start;
-                  gap: 0;
-                  width: 100%;
-                  overflow: hidden;
-                  border-radius: 10px;
-                "
-              >
-                <div
-                  v-for="(vote, index) in selectedPredi.options[1].votes"
-                  :key="vote.id + Date.now()"
-                  :style="`transform: translateX(calc(-10px * ${index})); z-index: 1;`"
-                >
-                  <v-img
-                    :src="avatars[vote.id]"
-                    color="transparent"
-                    style="border-radius: 50%; width: 20px; height: 20px"
-                  />
-                </div>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-card-text>
-        <v-card-item
-          v-if="!processingVote"
-          v-show="
-            ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0 && !selectedPredi.closed
-          "
-        >
-          <v-number-input
-            v-model="prediVoteForm.amount"
-            class="pt-1"
-            clearable
-            variant="outlined"
-            control-variant="hidden"
-            density="compact"
-            rounded="lg"
-            label="Montant du paris"
-            :hint="`${formatAmount(Math.min(user.coins, 250000))} FlopoCoins max (10 minimum)`"
-            :max="Math.min(user.coins, 250000)"
-          >
-            <template #append>
-              <v-btn
-                variant="flat"
-                text="Prédir"
-                :color="selectedOption === 1 ? '#aa3e3e' : '#5865f2'"
-                class="text-none"
-                :disabled="
-                  selectedOption === null ||
-                  !prediVoteForm.amount ||
-                  prediVoteForm.amount < 10 ||
-                  prediVoteForm > 250000
-                "
-                @click="prediVote"
-                @click.stop="prediVoteModal = false"
-              ></v-btn>
-            </template>
-          </v-number-input>
-        </v-card-item>
-        <v-card-subtitle
-          v-if="
-            selectedPredi.options[0].votes.find((v) => v.id === discordId) ||
-            selectedPredi.options[1].votes.find((v) => v.id === discordId)?.amount
-          "
-        >
-          Tu as misé
-          {{
-            formatAmount(
-              selectedPredi.options[0].votes.find((v) => v.id === discordId)?.amount ??
-                selectedPredi.options[1].votes.find((v) => v.id === discordId)?.amount,
-            )
-          }}
-          FlopoCoins sur
-          <span class="font-weight-bold font-italic"
-            >'{{
-              selectedPredi.options[0].votes.find((v) => v.id === discordId)
-                ? selectedPredi.options[0].label
-                : selectedPredi.options[1].label
-            }}'</span
-          >
-        </v-card-subtitle>
-        <v-card-text class="px-4">
-          <p v-if="!selectedPredi.closed">
-            {{
-              ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() > 0
-                ? ((selectedPredi.closingTime - Date.now()) / 1000).toFixed() +
-                  's restantes pour voter'
-                : ((selectedPredi.endTime - Date.now()) / 1000).toFixed() > 0
-                  ? Math.max(((selectedPredi.endTime - Date.now()) / 1000).toFixed(), 0) +
-                    's avant les résultats'
-                  : 'Prédi terminée, en attente de validation'
-            }}
-          </p>
-          <p v-else-if="selectedPredi.cancelledTime === null">
-            Prédi terminée, les FlopoCoins ont été distribués - Résultat :
-            <span class="font-weight-bold font-italic"
-              >'{{ selectedPredi.options[selectedPredi.winning].label }}'</span
-            >
-          </p>
-          <p v-else>Prédi annulée, les FlopoCoins ont été remboursés</p>
-        </v-card-text>
-        <v-card-item v-if="discordId === devId" class="px-4">
-          <v-btn
-            color="primary"
-            text="Valider option 1"
-            rounded="lg"
-            class="mr-3"
-            :disabled="selectedPredi.closingTime > Date.now() || selectedPredi.closed"
-            @click="endPredi(true, 0)"
-            @click.stop="prediVoteModal = false"
-          />
-          <v-btn
-            color="primary"
-            text="Valider option 2"
-            rounded="lg"
-            class="mr-3"
-            :disabled="selectedPredi.closingTime > Date.now() || selectedPredi.closed"
-            @click="endPredi(true, 1)"
-            @click.stop="prediVoteModal = false"
-          />
-          <v-btn
-            color="primary"
-            text="Annuler la prédi"
-            rounded="lg"
-            variant="outlined"
-            :disabled="selectedPredi.closed"
-            @click="endPredi(false, null)"
-            @click.stop="prediVoteModal = false"
-          />
-        </v-card-item>
-      </v-card-text>
-    </v-card>
-  </v-dialog>
+    :payment-modal="paymentModal"
+    :loading="loading"
+    @buy="buyCoins"
+  />
 </template>
 
 <script>
 /* global localStorage */
-import axios from 'axios'
-import { io } from 'socket.io-client'
-import { useToastStore } from '../stores/toastStore.js'
+import flapi from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
+import { formatAmount } from '@/utils/format.js'
+import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import { rankIcon, rankDiv, rankColor } from '../utils/rank.js'
 import 'animate.css'
 import ProfileMenu from '../components/ProfileMenu.vue'
-import GameCard from '../components/GameCard.vue'
+import RegisterWelcomeModal from '../components/dashboard/RegisterWelcomeModal.vue'
+import CoinsPurchaseModal from '../components/dashboard/CoinsPurchaseModal.vue'
+import CsSkinsTab from '../components/dashboard/CsSkinsTab.vue'
+import AkhyCommandsTab from '../components/dashboard/AkhyCommandsTab.vue'
+import PredictionsTab from '../components/dashboard/PredictionsTab.vue'
+import GameCardsRow from '../components/dashboard/GameCardsRow.vue'
+import LeaderboardDrawer from '../components/dashboard/LeaderboardDrawer.vue'
 
 export default {
   components: {
     ProfileMenu,
-    GameCard,
+    RegisterWelcomeModal,
+    CoinsPurchaseModal,
+    CsSkinsTab,
+    AkhyCommandsTab,
+    PredictionsTab,
+    GameCardsRow,
+    LeaderboardDrawer,
   },
 
   setup() {
-    const toastStore = useToastStore()
-
-    const showLogoutToast = () => {
-      toastStore.showLogoutToast()
-    }
-
-    const showSendingToast = () => {
-      toastStore.showSendingToast()
-    }
-
-    const showSentToast = () => {
-      toastStore.showSentToast()
-    }
-
-    const showCommandToast = (message) => {
-      toastStore.showCommandToast(message)
-    }
-
-    const showSuccessOrWarningToast = (message, warning) => {
-      toastStore.showSuccessOrWarningToast(message, warning)
-    }
-
-    const showErrorToast = (message) => {
-      toastStore.showErrorToast(message)
-    }
-
-    return {
-      toastStore: toastStore.$state,
-      showLogoutToast,
-      showSentToast,
-      showSendingToast,
-      showCommandToast,
-      showSuccessOrWarningToast,
-      showErrorToast,
-    }
+    return { ...useFlopoToasts() }
   },
 
   data() {
@@ -1610,25 +178,12 @@ export default {
       user_inventory: null,
       user_isTimedOut: false,
 
-      leaderboardUsers: null,
-      leaderboardType: 'coins',
-
       active_polls: null,
       active_slowmodes: null,
       active_predis: null,
-      processingVote: false,
-      selectedPrediKey: null,
-      selectedPredi: null,
-      selectedOption: null,
 
       coinsModal: false,
       paymentModal: false,
-      nicknameModal: false,
-      spamPingModal: false,
-      slowmodeModal: false,
-      timeoutModal: false,
-      prediModal: false,
-      prediVoteModal: false,
 
       avatars: {},
       sparklines: {},
@@ -1638,39 +193,12 @@ export default {
         price: null,
         coins: null,
       },
-      nicknameForm: {
-        id: null,
-        nickname: null,
-      },
-      spamPingForm: {
-        id: null,
-      },
-      slowmodeForm: {
-        id: null,
-      },
-      timeoutForm: {
-        id: null,
-      },
-      prediForm: {
-        label: null,
-        options: [],
-        closingTime: 300,
-        payoutTime: 300,
-      },
-      prediVoteForm: {
-        amount: null,
-      },
 
       loading: false,
       error: null,
       stripePromise: null,
 
-      gameCardsFilter: null,
-
-      acceptedCGV: false,
-
-      dailyCountdown: '',
-      dailyCountdownInterval: null,
+      user: null,
 
       games: [
         {
@@ -1735,11 +263,6 @@ export default {
   },
 
   computed: {
-    user() {
-      const filtered = this.users?.filter((u) => u.id === this.discordId)
-      if (filtered?.length < 1) return null
-      return this.users?.filter((u) => u.id === this.discordId)[0]
-    },
     inventoryValue() {
       if (!this.user_inventory) return 0
       let sum = 0
@@ -1767,36 +290,6 @@ export default {
         return 1005
       }
     },
-    percentages() {
-      if (!this.selectedPredi) return
-      let res1 = 0
-      let res2 = 0
-      if (
-        this.selectedPredi.options[0].votes.length === 0 &&
-        this.selectedPredi.options[1].votes.length === 0
-      )
-        return {
-          res1,
-          res2,
-        }
-
-      res1 =
-        this.selectedPredi.options[1].votes.length === 0
-          ? 100
-          : (this.prediOptionStats(this.selectedPredi.options[0].votes, 'amount') /
-              this.prediOptionStats(this.selectedPredi.options[1].votes, 'amount')) *
-            100
-      res2 = 100 - res1
-
-      return { res1, res2 }
-    },
-  },
-
-  watch: {
-    prediVoteModal(newValue) {
-      this.selectedOption = !newValue ? null : this.selectedOption
-      this.getActivePredis()
-    },
   },
 
   async mounted() {
@@ -1804,55 +297,46 @@ export default {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) this.$router.push('/')
 
-    await this.getUsers()
-    if (!this.users) this.$router.push('/')
-    this.leaderboardUsers = this.users
+    await this.getCurrentUser().then(() => {
+      if (!this.user) {
+        this.isRegistered = true
+      }
+    })
 
     this.avatar = await this.getAvatar(this.discordId)
     this.anonUsername = await this.fetchUsername(this.discordId)
-    await this.fetchAvatars()
-    await this.fetchSparklines()
-    await this.fetchElos()
-    await this.fetchEloGraphs()
-    //await this.getInventory()
-    await this.getActivePolls()
-    await this.getActiveSlowmodes()
-    await this.getActivePredis()
-    await this.isTimedOut()
 
-    this.isRegistered = !this.users?.find((u) => u.id === this.discordId)
+    await this.getActiveSlowmodes()
+
+    await this.isTimedOut()
 
     this.initSocket()
     window.addEventListener('resize', this.updateWindowWidth)
-    this.startDailyCountdown()
     this.mounting = false
+
+    await this.getUsers()
+    await this.fetchSparklines()
+    await this.fetchElos()
+    await this.fetchEloGraphs()
+
+    await this.getActivePolls()
+    await this.getActivePredis()
   },
 
   beforeUnmount() {
-    // Clean up socket connection when component is destroyed
+    // Clean up socket listeners when component is destroyed (keep shared socket alive)
     if (this.socket) {
-      this.socket.disconnect()
-    }
-    if (this.dailyCountdownInterval) {
-      clearInterval(this.dailyCountdownInterval)
+      if (this._onConnect) this.socket.off('connect', this._onConnect)
+      if (this._onDataUpdated) this.socket.off('data-updated', this._onDataUpdated)
+      if (this._onNewPoll) this.socket.off('new-poll', this._onNewPoll)
+      if (this._onNewSlowmode) this.socket.off('new-slowmode', this._onNewSlowmode)
+      if (this._onNewPredi) this.socket.off('new-predi', this._onNewPredi)
+      if (this._onDisconnect) this.socket.off('disconnect', this._onDisconnect)
+      if (this._onDailyQueried) this.socket.off('daily-queried', this._onDailyQueried)
     }
   },
 
   methods: {
-    startDailyCountdown() {
-      const update = () => {
-        const now = new Date()
-        const midnight = new Date(now)
-        midnight.setHours(24, 0, 0, 0)
-        const diff = midnight - now
-        const h = String(Math.floor(diff / 3600000)).padStart(2, '0')
-        const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0')
-        const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0')
-        this.dailyCountdown = `${h}:${m}:${s}`
-      }
-      update()
-      this.dailyCountdownInterval = setInterval(update, 1000)
-    },
     updateWindowWidth() {
       this.windowWidth = window.innerWidth
     },
@@ -1862,11 +346,6 @@ export default {
       this.showSuccessOrWarningToast('Paiement effectué !', false)
       this.buyCoins()
     },
-    leaderboardSwitch() {
-      this.leaderboardType = this.leaderboardType === 'coins' ? 'rank' : 'coins'
-      this.leaderboardUsers = this.leaderboardType === 'coins' ? this.users : this.usersByElo
-    },
-
     updateUserCoinsLocally(userId, newCoins) {
       // Update coins in the users array (sorted by coins)
       if (this.users) {
@@ -1886,33 +365,20 @@ export default {
           // Keep the ELO sorting intact, only update the coins value
         }
       }
-
-      // Trigger reactivity by reassigning the current leaderboard
-      // This will cause the TransitionGroup to animate the position changes
-      if (this.leaderboardType === 'coins') {
-        this.leaderboardUsers = [...this.users]
-      } else {
-        this.leaderboardUsers = [...this.usersByElo]
-      }
     },
 
     initSocket() {
-      // Connect to your bot's Socket.IO server
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      // Use the shared singleton socket
+      this.socket = getSocket()
 
       // Handle connection events
-      this.socket.on('connect', () => {
+      this._onConnect = () => {
         console.log('Connected to WebSocket server')
-      })
+      }
+      this.socket.on('connect', this._onConnect)
 
       // Listen for data updates
-      this.socket.on('data-updated', async (data) => {
+      this._onDataUpdated = async (data) => {
         // If we have userId and newCoins, update locally with animation
         if (data.userId && data.newCoins !== undefined) {
           this.updateUserCoinsLocally(data.userId, data.newCoins)
@@ -1923,40 +389,43 @@ export default {
           this.getUsers()
           this.fetchSparklines()
         }
-      })
+      }
+      this.socket.on('data-updated', this._onDataUpdated)
 
-      this.socket.on('new-poll', (data) => {
+      this._onNewPoll = (data) => {
         console.log('New Poll:', data.action)
         this.getActivePolls()
-      })
+      }
+      this.socket.on('new-poll', this._onNewPoll)
 
-      this.socket.on('new-slowmode', (data) => {
+      this._onNewSlowmode = (data) => {
         console.log('New Slowmode:', data.action)
         this.getActiveSlowmodes()
-      })
+      }
+      this.socket.on('new-slowmode', this._onNewSlowmode)
 
-      this.socket.on('new-predi', async (data) => {
+      this._onNewPredi = async (data) => {
         console.log('New predi:', data.action)
         await this.getActivePredis()
-        this.selectedPredi = this.active_predis[this.selectedPrediKey]
-        this.processingVote = false
-      })
+      }
+      this.socket.on('new-predi', this._onNewPredi)
 
-      this.socket.on('disconnect', () => {
+      this._onDisconnect = () => {
         console.log('Disconnected from WebSocket server')
-      })
+      }
+      this.socket.on('disconnect', this._onDisconnect)
 
-      this.socket.on('daily-queried', async (data) => {
+      this._onDailyQueried = async (data) => {
         if (data.userId === this.discordId)
           this.showSuccessOrWarningToast('+500 FlopoCoins, récompense journalière récupérée', false)
         await this.getUsers()
-      })
+      }
+      this.socket.on('daily-queried', this._onDailyQueried)
     },
 
     async handleRegister() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/register-user'
       try {
-        const response = await axios.post(fetchUrl)
+        const response = await flapi.post('/register-user')
         this.showSuccessOrWarningToast(response.data.message, false)
         await this.getUsers()
         this.avatar = await this.getAvatar(this.discordId)
@@ -1976,15 +445,8 @@ export default {
     },
 
     async fetchUsername(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/username'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/user/' + id + '/username')
         return response.data?.user?.username
       } catch (e) {
         console.log(e)
@@ -1992,15 +454,8 @@ export default {
     },
 
     async fetchAvatars() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users/avatars'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/users/avatars')
         this.users.forEach((user) => {
           this.avatars[user.id] = response.data.avatars[user.id]
         })
@@ -2010,9 +465,8 @@ export default {
     },
 
     async fetchSparklines() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users/sparklines'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/users/sparklines')
         this.users.forEach(async (user) => {
           this.sparklines[user.id] = response.data.sparklines[user.id]
         })
@@ -2022,9 +476,8 @@ export default {
     },
 
     async fetchElos() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users/elos'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/users/elos')
         this.users.forEach(async (user) => {
           this.elos[user.id] = response.data.elos[user.id]
         })
@@ -2034,9 +487,8 @@ export default {
     },
 
     async fetchEloGraphs() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users/elo-graphs'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/users/elo-graphs')
         this.users.forEach(async (user) => {
           this.elo_graphs[user.id] = response.data.eloGraphs[user.id]
         })
@@ -2052,29 +504,26 @@ export default {
       this.$router.push('/')
     },
 
-    async getUsers() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
+    async getCurrentUser() {
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/user/' + this.discordId)
+        this.user = response.data.user
+      } catch (e) {
+        this.user = null
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async getUsers() {
+      try {
+        const response = await flapi.get('/users')
         this.users = response.data
       } catch (e) {
         console.error('flAPI error:', e)
       }
 
       try {
-        const response = await axios.get(fetchUrl + '/by-elo', {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/users/by-elo')
         this.usersByElo = response.data
       } catch (e) {
         console.error('flAPI error:', e)
@@ -2082,15 +531,8 @@ export default {
     },
 
     async getAvatar(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/avatar'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/user/' + id + '/avatar')
         return response.data.avatarUrl
       } catch (e) {
         console.error('flAPI error:', e)
@@ -2098,9 +540,8 @@ export default {
     },
 
     async getSparkline(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/sparkline'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + id + '/sparkline')
         return response.data.sparkline
       } catch (e) {
         console.error('flAPI error:', e)
@@ -2108,9 +549,8 @@ export default {
     },
 
     async getElo(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + id + '/elo')
         return response.data
       } catch (e) {
         console.error('flAPI error:', e)
@@ -2118,9 +558,8 @@ export default {
     },
 
     async getEloGraph(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo-graph'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + id + '/elo-graph')
         return response.data.eloGraph
       } catch (e) {
         console.error('flAPI error:', e)
@@ -2128,15 +567,8 @@ export default {
     },
 
     async getInventory() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/inventory'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/user/' + this.discordId + '/inventory')
         this.user_inventory = response.data.inventory
       } catch (e) {
         console.error('flAPI error:', e)
@@ -2144,15 +576,8 @@ export default {
     },
 
     async getActivePolls() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/polls'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/polls')
         this.active_polls = response.data.activePolls
       } catch (e) {
         console.error('flAPI error:', e)
@@ -2160,50 +585,18 @@ export default {
     },
 
     async getActiveSlowmodes() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/slowmodes'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/slowmodes')
         this.active_slowmodes = response.data.slowmodes
       } catch (e) {
         console.error('flAPI error:', e)
       }
     },
 
-    async changeNickname() {
-      this.showCommandToast('Changement du pseudo...')
-      try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/change-nickname', {
-          userId: this.nicknameForm.id,
-          nickname: this.nicknameForm.nickname,
-        })
-        this.showSuccessOrWarningToast(response.data.message, false)
-      } catch (e) {
-        this.showErrorToast(e.response.data.message)
-      }
-    },
-
-    async spamPing() {
-      this.showCommandToast('Envoi de la commande')
-      try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/spam-ping', {
-          userId: this.spamPingForm.id,
-        })
-        this.showSuccessOrWarningToast(response.data.message, false)
-      } catch (e) {
-        this.showErrorToast(e.response.data.message)
-      }
-    },
-
     async timeoutVote(voteKey, voteFor) {
       this.showCommandToast('Envoi du vote...')
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout/vote', {
+        const response = await flapi.post('/timeout/vote', {
           voteKey: voteKey,
           voteFor: voteFor,
         })
@@ -2213,97 +606,18 @@ export default {
       }
     },
 
-    async slowmode() {
-      this.showCommandToast('Envoi de la commande...')
-      try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/slowmode', {
-          userId: this.slowmodeForm.id,
-        })
-        this.showSuccessOrWarningToast(response.data.message, false)
-      } catch (e) {
-        this.showErrorToast(e.response.data.message)
-      }
-    },
-
-    async timeout() {
-      this.showCommandToast('Envoi de la commande...')
-      try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timeout', {
-          userId: this.timeoutForm.id,
-        })
-        this.showSuccessOrWarningToast(response.data.message, false)
-      } catch (e) {
-        this.showErrorToast(e.response.data.message)
-      }
-    },
-
-    async startPredi() {
-      this.showCommandToast('Création de la prédiction...')
-      try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/start-predi', {
-          label: this.prediForm.label,
-          options: this.prediForm.options,
-          closingTime: this.prediForm.closingTime,
-          payoutTime: this.prediForm.payoutTime,
-        })
-        this.showSuccessOrWarningToast(response.data.message, false)
-      } catch (e) {
-        this.showErrorToast(e.response.data.message)
-      }
-    },
-
     async getActivePredis() {
       try {
-        const response = await axios.get(import.meta.env.VITE_FLAPI_URL + '/predis', {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/predis')
         this.active_predis = response.data.predis
       } catch (e) {
         console.error('flAPI error:', e)
       }
     },
 
-    async prediVote() {
-      this.showCommandToast('Prise en compte du vote...')
-      try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/vote-predi', {
-          predi: this.selectedPrediKey,
-          amount: this.prediVoteForm.amount,
-          option: this.selectedOption,
-        })
-        this.showSuccessOrWarningToast(response.data.message, false)
-      } catch (e) {
-        this.showErrorToast(e.response.data.message)
-      }
-    },
-
-    async endPredi(confirm, winningOption) {
-      this.showCommandToast('Fermeture de la prédiction...')
-      if (this.discordId !== this.devId) {
-        this.showErrorToast("Tu n'as pas les permissions requises")
-        return
-      }
-      try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/end-predi', {
-          predi: this.selectedPrediKey,
-          confirm: confirm,
-          winningOption: winningOption,
-        })
-        this.showSuccessOrWarningToast(response.data.message, false)
-      } catch (e) {
-        this.showErrorToast(e.response.data.message)
-      }
-
-      await this.getActivePredis()
-    },
-
     async addCoins() {
       try {
-        await axios.post(import.meta.env.VITE_FLAPI_URL + '/add-coins')
+        await flapi.post('/add-coins')
       } catch (e) {
         console.log(e)
       }
@@ -2314,12 +628,9 @@ export default {
         this.loading = true
 
         // Call the new checkout session endpoint
-        const response = await axios.post(
-          import.meta.env.VITE_FLAPI_URL + '/create-checkout-session',
-          {
-            offerId: offerId,
-          },
-        )
+        const response = await flapi.post('/create-checkout-session', {
+          offerId: offerId,
+        })
 
         const { url } = response.data
 
@@ -2335,65 +646,21 @@ export default {
 
     async handleDailyQuery() {
       try {
-        await axios.get(import.meta.env.VITE_FLAPI_URL + '/user/' + this.discordId + '/daily')
+        await flapi.get('/user/' + this.discordId + '/daily')
         this.user.dailyQueried = true
       } catch (e) {
         console.log(e)
       }
     },
 
-    formatAmount(amount) {
-      if (amount >= 1000000000) {
-        amount /= 1000000000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'Md'
-        )
-      }
-      if (amount >= 1000000) {
-        amount /= 1000000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'M'
-        )
-      }
-      if (amount >= 10000) {
-        amount /= 1000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'K'
-        )
-      }
-      return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-    },
+    formatAmount,
 
     async isTimedOut() {
       try {
-        const response = await axios.post(import.meta.env.VITE_FLAPI_URL + '/timedout')
+        const response = await flapi.post('/timedout')
         this.user_isTimedOut = response.data.isTimedOut
       } catch (e) {
         console.log(e)
-      }
-    },
-
-    setSelectedPredi(predi, key) {
-      this.selectedPredi = predi
-      this.selectedPrediKey = key
-    },
-
-    prediModalClose() {
-      this.prediModal = false
-      this.prediForm = {
-        label: null,
-        options: [],
-        closingTime: 300,
-        payoutTime: 300,
       }
     },
 

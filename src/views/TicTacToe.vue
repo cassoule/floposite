@@ -1,7 +1,7 @@
 <script>
 /* global localStorage, setInterval, clearInterval, Blob, fetch, location */
-import { io } from 'socket.io-client'
-import axios from 'axios'
+import flapi, { FLAPI_BASE } from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
 import GameOverDialog from '@/components/GameOverDialog.vue'
 import HomeBtn from '@/components/HomeBtn.vue'
@@ -95,6 +95,12 @@ export default {
 
     this.leaveQueueSync({ reason: 'component-destroy' })
 
+    if (this.socket) {
+      if (this._onQueue) this.socket.off('tictactoequeue', this._onQueue)
+      if (this._onPlaying) this.socket.off('tictactoeplaying', this._onPlaying)
+      if (this._onGameOver) this.socket.off('tictactoegameOver', this._onGameOver)
+    }
+
     clearInterval(this.interval)
   },
 
@@ -110,13 +116,14 @@ export default {
       }
 
       if (!this.inQueue) return
-      const url = `${import.meta.env.VITE_FLAPI_URL}/queue/leave`
+      const url = `${FLAPI_BASE}/queue/leave`
       const token = localStorage.getItem('token')
       try {
         fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(payload),
@@ -136,17 +143,11 @@ export default {
     },
 
     initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+      this.socket = getSocket()
 
       this.socket.emit('tictactoeconnection', { id: this.discordId })
 
-      this.socket.on('tictactoequeue', async (e) => {
+      this._onQueue = async (e) => {
         this.allPlayersArray = e.allPlayers
         this.queue = e.queue
 
@@ -189,9 +190,10 @@ export default {
           document.getElementById(`btn${o}`).disabled = true
           document.getElementById(`btn${o}`).style.color = 'black'
         })
-      })
+      }
+      this.socket.on('tictactoequeue', this._onQueue)
 
-      this.socket.on('tictactoeplaying', (e) => {
+      this._onPlaying = (e) => {
         this.foundLobby = e.allPlayers.find(
           (obj) => obj.p1.id === this.discordId || obj.p2.id === this.discordId,
         )
@@ -212,9 +214,10 @@ export default {
         }
 
         this.check(this.discordId, this.foundLobby.sum)
-      })
+      }
+      this.socket.on('tictactoeplaying', this._onPlaying)
 
-      this.socket.on('tictactoegameOver', (data) => {
+      this._onGameOver = (data) => {
         if (!this.foundLobby) return
         if (data.eloChanges && data.eloChanges[this.discordId]) {
           const myElo = data.eloChanges[this.discordId]
@@ -238,13 +241,13 @@ export default {
           }
         }
         this.endGameDialog = true
-      })
+      }
+      this.socket.on('tictactoegameOver', this._onGameOver)
     },
 
     async getElo(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + id + '/elo')
         return response.data.elo
       } catch (e) {
         console.error('flAPI error:', e)
@@ -252,9 +255,8 @@ export default {
     },
 
     async getEloGraph(id) {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/user/' + id + '/elo-graph'
       try {
-        const response = await axios.get(fetchUrl)
+        const response = await flapi.get('/user/' + id + '/elo-graph')
         return response.data.eloGraph
       } catch (e) {
         console.error('flAPI error:', e)

@@ -1,8 +1,9 @@
 <script>
 /* global localStorage */
-import { io } from 'socket.io-client'
-import axios from 'axios'
-import { useToastStore } from '@/stores/toastStore.js'
+import flapi from '@/services/flapi.js'
+import { getSocket } from '@/services/socket.js'
+import { formatAmount } from '@/utils/format.js'
+import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import HomeBtn from '@/components/HomeBtn.vue'
 
@@ -10,41 +11,7 @@ export default {
   components: { CoinsCounter, HomeBtn },
 
   setup() {
-    const toastStore = useToastStore()
-
-    const showLogoutToast = () => {
-      toastStore.showLogoutToast()
-    }
-
-    const showSendingToast = () => {
-      toastStore.showSendingToast()
-    }
-
-    const showSentToast = () => {
-      toastStore.showSentToast()
-    }
-
-    const showCommandToast = (message) => {
-      toastStore.showCommandToast(message)
-    }
-
-    const showSuccessOrWarningToast = (message, warning) => {
-      toastStore.showSuccessOrWarningToast(message, warning)
-    }
-
-    const showErrorToast = (message) => {
-      toastStore.showErrorToast(message)
-    }
-
-    return {
-      toastStore: toastStore.$state,
-      showLogoutToast,
-      showSentToast,
-      showSendingToast,
-      showCommandToast,
-      showSuccessOrWarningToast,
-      showErrorToast,
-    }
+    return { ...useFlopoToasts() }
   },
 
   data() {
@@ -89,25 +56,27 @@ export default {
     this.roomFakeMoney = this.users.find((u) => u.id === this.discordId)?.coins ? false : true
   },
 
-  methods: {
-    initSocket() {
-      this.socket = io(import.meta.env.VITE_FLAPI_URL.replace(/\/api$/, ''), {
-        withCredentials: false,
-        auth: { token: localStorage.getItem('token') },
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true',
-        },
-      })
+  beforeUnmount() {
+    if (this.socket && this._onPokerUpdate) {
+      this.socket.off('poker-update', this._onPokerUpdate)
+    }
+  },
 
-      this.socket.on('poker-update', async () => {
+  methods: {
+    formatAmount,
+
+    initSocket() {
+      this.socket = getSocket()
+
+      this._onPokerUpdate = async () => {
         await this.getRooms()
-      })
+      }
+      this.socket.on('poker-update', this._onPokerUpdate)
     },
 
     async createRoom() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker/create'
       try {
-        const response = await axios.post(url, {
+        const response = await flapi.post('/poker/create', {
           minBet: this.formattedRoomMinBet,
           fakeMoney: this.roomFakeMoney,
         })
@@ -118,9 +87,8 @@ export default {
     },
 
     async getRooms() {
-      const url = import.meta.env.VITE_FLAPI_URL + '/poker'
       try {
-        const response = await axios.get(url)
+        const response = await flapi.get('/poker')
         this.rooms = response.data.rooms
       } catch (e) {
         console.log(e)
@@ -128,63 +96,19 @@ export default {
     },
 
     async getUsers() {
-      const fetchUrl = import.meta.env.VITE_FLAPI_URL + '/users'
       try {
-        const response = await axios.get(fetchUrl, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/users')
         this.users = response.data
       } catch (e) {
         console.error('flAPI error:', e)
       }
 
       try {
-        const response = await axios.get(fetchUrl + '/by-elo', {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-            'Content-Type': 'application/json',
-          },
-          withCredentials: false,
-        })
+        const response = await flapi.get('/users/by-elo')
         this.usersByElo = response.data
       } catch (e) {
         console.error('flAPI error:', e)
       }
-    },
-
-    formatAmount(amount) {
-      if (amount >= 1000000000) {
-        amount /= 1000000000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'Md'
-        )
-      }
-      if (amount >= 1000000) {
-        amount /= 1000000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'M'
-        )
-      }
-      if (amount >= 10000) {
-        amount /= 1000
-        return (
-          amount
-            .toFixed(2)
-            .toString()
-            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + 'K'
-        )
-      }
-      return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
     },
   },
 }
