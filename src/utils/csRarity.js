@@ -5,7 +5,7 @@ export const CS_RARITY_COLORS = {
   Restricted: '#8847ff',
   Classified: '#d32ce6',
   Covert: '#eb4b4b',
-  Gold: '#ffd700',
+  Extraordinary: '#ffd700',
 }
 
 export const TRADE_UP_LADDER = [
@@ -15,6 +15,7 @@ export const TRADE_UP_LADDER = [
   'Restricted',
   'Classified',
   'Covert',
+  'Extraordinary',
 ]
 
 export function getRarityColor(rarity) {

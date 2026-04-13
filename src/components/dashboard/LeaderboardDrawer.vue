@@ -48,7 +48,7 @@
                 width: 60px;
                 font-size: 0.75em;
                 height: 25px;
-                padding-bottom: 2px;
+                padding-top: 2px;
                 background: #5865f2;
                 border-radius: 10px;
               "
@@ -205,7 +205,7 @@
                     </v-list-item-subtitle>
                   </v-list-item>
                   <v-list-item v-if="featuredSkinsMap[akhy.id]?.length" class="px-2 pb-1">
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: space-around;">
+                    <div style="display: flex; gap: 2px; flex-wrap: wrap; justify-content: space-around;">
                       <div
                         v-for="entry in featuredSkinsMap[akhy.id]"
                         :key="entry.csSkin.id"
@@ -213,23 +213,13 @@
                           display: flex;
                           flex-direction: column;
                           align-items: center;
-                          width: 60px;
+                          width: 72px;
+                          border-radius: 15px;
                         "
+                        :style="'background: radial-gradient(circle at 50% 200%, ' + getRarityColor(entry.csSkin.rarity) + '55, transparent 100%);'"
                         :title="entry.csSkin.displayName + ' - ' + formatAmount(entry.csSkin.price) + ' Coins'"
                       >
-                        <v-img :src="entry.csSkin.imageUrl" width="60" height="40" contain />
-                        <span
-                          style="
-                            font-size: 9px;
-                            opacity: 0.5;
-                            text-align: center;
-                            overflow: hidden;
-                            white-space: nowrap;
-                            width: 100%;
-                          "
-                        >
-                          {{ entry.csSkin.displayName }}
-                        </span>
+                        <v-img :src="entry.csSkin.imageUrl" width="70" height="70" contain />
                       </div>
                     </div>
                   </v-list-item>
@@ -319,6 +309,7 @@
 <script>
 import { formatAmount } from '@/utils/format.js'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
+import { getRarityColor } from '@/utils/csRarity.js'
 
 export default {
   name: 'LeaderboardDrawer',
@@ -349,11 +340,12 @@ export default {
     },
   },
   methods: {
+    getRarityColor,
     formatAmount,
     rankIcon,
     rankDiv,
     leaderboardSwitch() {
-      const order = ['coins', 'rank', 'loadout']
+      const order = ['coins', 'rank', 'équi.']
       const idx = order.indexOf(this.leaderboardType)
       this.leaderboardType = order[(idx + 1) % order.length]
     },

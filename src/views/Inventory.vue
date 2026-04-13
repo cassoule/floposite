@@ -182,10 +182,10 @@ export default {
             <span style="opacity: 0.4">Flopos</span>
           </span>
           <v-btn
-            variant="outlined"
+            variant="tonal"
             size="small"
             prepend-icon="mdi-shield-half-full"
-            class="ml-2"
+            class="ml-2 rounded-lg"
             @click="$router.push('/loadout')"
           >
             Équipement

@@ -271,25 +271,25 @@ export default {
   <CoinsCounter />
 
   <v-layout class="w-100">
-    <v-main class="d-flex pt-16" style="min-height: 100vh">
+    <v-main class="d-flex pt-16 text-white" style="min-height: 100vh">
       <div class="loadout-page w-100">
 
         <!-- Header -->
         <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
           <div>
-            <h1 style="font-size: 1.6em">Équipement</h1>
+            <h1 style="font-size: 1.6em; color: white;">Équipement</h1>
             <div class="text-grey" style="font-size: 0.9em">
               Valeur :
               <span class="text-white font-weight-bold">{{ formatCoins(loadoutValue) }}</span>
               <span style="opacity: 0.4"> Flopos</span>
             </div>
           </div>
-          <v-btn variant="tonal" size="small" prepend-icon="mdi-package-variant" @click="$router.push('/inventory')">
+          <v-btn class="rounded-lg" variant="tonal" size="small" prepend-icon="mdi-package-variant" @click="$router.push('/inventory')">
             Inventaire
           </v-btn>
         </div>
 
-        <v-skeleton-loader v-if="loading" type="card,card,card" />
+        <v-skeleton-loader v-if="loading" type="card" color="transparent" />
 
         <template v-else>
 
@@ -409,8 +409,8 @@ export default {
   </v-layout>
 
   <!-- Skin detail dialog -->
-  <v-dialog v-model="detailDialog" max-width="420">
-    <v-card v-if="detailSkin" class="pa-4">
+  <v-dialog v-model="detailDialog" class="modals" max-width="420">
+    <v-card v-if="detailSkin" class="pa-4 modal-card text-white">
       <div class="d-flex align-center justify-space-between mb-3">
         <span class="text-subtitle-1 font-weight-bold">{{ detailSkin.displayName }}</span>
         <v-btn icon="mdi-close" variant="text" size="small" @click="detailDialog = false" />
@@ -422,14 +422,16 @@ export default {
           :prepend-icon="isFeatured(detailSkin) ? 'mdi-star' : 'mdi-star-outline'"
           variant="outlined"
           size="small"
+          class="rounded-lg"
           @click="toggleFeatured(detailSkin)"
         >
-          {{ isFeatured(detailSkin) ? 'Retirer des mis en avant' : 'Mettre en avant' }}
+          {{ isFeatured(detailSkin) ? 'Retirer des favoris' : 'Mettre en avant' }}
         </v-btn>
         <v-btn
           color="red"
           variant="tonal"
           size="small"
+          class="rounded-lg"
           prepend-icon="mdi-shield-off"
           :loading="processing"
           @click="unequipSkin(detailSkin)"
@@ -441,8 +443,8 @@ export default {
   </v-dialog>
 
   <!-- Slot picker dialog (click on empty loadout slot) -->
-  <v-dialog v-model="pickerDialog" max-width="700" scrollable>
-    <v-card>
+  <v-dialog v-model="pickerDialog" class="modals" max-width="700" scrollable>
+    <v-card class="modal-card text-white">
       <v-card-title class="d-flex align-center justify-space-between">
         <span>Équiper — {{ pickerSlot }}</span>
         <v-btn icon="mdi-close" variant="text" size="small" @click="pickerDialog = false" />
@@ -461,8 +463,8 @@ export default {
   </v-dialog>
 
   <!-- Featured skin picker dialog -->
-  <v-dialog v-model="featuredPickerDialog" max-width="700" scrollable>
-    <v-card>
+  <v-dialog v-model="featuredPickerDialog" class="modals" max-width="700" scrollable>
+    <v-card class="modal-card text-white">
       <v-card-title class="d-flex align-center justify-space-between">
         <span>Choisir un skin mis en avant (slot {{ featuredPickerPosition }})</span>
         <v-btn icon="mdi-close" variant="text" size="small" @click="featuredPickerDialog = false" />
@@ -472,7 +474,7 @@ export default {
           Équipez des skins d'abord pour les mettre en avant.
         </div>
         <div v-else class="d-flex flex-wrap ga-3 justify-center">
-          <div v-for="skin in loadout" :key="skin.id" class="picker-item" @click="pickFeatured(skin)">
+          <div v-for="skin in loadout.filter((s) => !isFeatured(s))" :key="skin.id" class="picker-item" @click="pickFeatured(skin)">
             <CsSkinCard :skin="skin" size="sm" :show-price="true" />
           </div>
         </div>
