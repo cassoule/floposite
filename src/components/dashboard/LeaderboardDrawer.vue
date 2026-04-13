@@ -104,9 +104,12 @@
                 <i v-if="akhy.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
               </span>
               <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center">
-                {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
+                {{ formatAmount(akhy.coins) }}
               </div>
-              <div v-else style="display: flex; place-items: center">
+              <div
+                v-else-if="leaderboardType === 'rank'"
+                style="display: flex; place-items: center"
+              >
                 <template v-if="akhy.isPlacement">
                   <span style="font-size: 0.8em; opacity: 0.6"
                     >Placement {{ akhy.gamesPlayed }}/5</span
@@ -121,6 +124,10 @@
                     </div>
                   </v-img>
                 </template>
+              </div>
+              <div v-else style="display: flex; place-items: center; gap: 3px; font-size: 0.85em">
+                {{ formatCoins(akhy.loadoutValue || 0) }}
+                <v-icon size="11">mdi-circle-multiple</v-icon>
               </div>
 
               <v-menu activator="parent" location="end" open-on-click transition="scale-transition">
@@ -196,6 +203,35 @@
                           : `${elos[akhy.id]?.elo ?? 0} FlopoRank`
                       }}
                     </v-list-item-subtitle>
+                  </v-list-item>
+                  <v-list-item v-if="featuredSkinsMap[akhy.id]?.length" class="px-2 pb-1">
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: space-around;">
+                      <div
+                        v-for="entry in featuredSkinsMap[akhy.id]"
+                        :key="entry.csSkin.id"
+                        style="
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          width: 60px;
+                        "
+                        :title="entry.csSkin.displayName + ' - ' + formatAmount(entry.csSkin.price) + ' Coins'"
+                      >
+                        <v-img :src="entry.csSkin.imageUrl" width="60" height="40" contain />
+                        <span
+                          style="
+                            font-size: 9px;
+                            opacity: 0.5;
+                            text-align: center;
+                            overflow: hidden;
+                            white-space: nowrap;
+                            width: 100%;
+                          "
+                        >
+                          {{ entry.csSkin.displayName }}
+                        </span>
+                      </div>
+                    </div>
                   </v-list-item>
                   <v-list-item class="pb-1 px-3">
                     <v-btn
@@ -290,9 +326,11 @@ export default {
     modelValue: { type: Boolean, default: false },
     users: { type: Array, default: null },
     usersByElo: { type: Array, default: null },
+    usersByLoadoutValue: { type: Array, default: null },
     sparklines: { type: Object, default: () => ({}) },
     elos: { type: Object, default: () => ({}) },
     eloGraphs: { type: Object, default: () => ({}) },
+    featuredSkinsMap: { type: Object, default: () => ({}) },
     discordId: { type: String, default: null },
     devId: { type: String, default: null },
     mounting: { type: Boolean, default: false },
@@ -305,8 +343,9 @@ export default {
   },
   computed: {
     leaderboardUsers() {
-      const src = this.leaderboardType === 'coins' ? this.users : this.usersByElo
-      return src ? [...src] : []
+      if (this.leaderboardType === 'coins') return this.users ? [...this.users] : []
+      if (this.leaderboardType === 'rank') return this.usersByElo ? [...this.usersByElo] : []
+      return this.usersByLoadoutValue ? [...this.usersByLoadoutValue] : []
     },
   },
   methods: {
@@ -314,7 +353,12 @@ export default {
     rankIcon,
     rankDiv,
     leaderboardSwitch() {
-      this.leaderboardType = this.leaderboardType === 'coins' ? 'rank' : 'coins'
+      const order = ['coins', 'rank', 'loadout']
+      const idx = order.indexOf(this.leaderboardType)
+      this.leaderboardType = order[(idx + 1) % order.length]
+    },
+    formatCoins(n) {
+      return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
     },
   },
 }

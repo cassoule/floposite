@@ -13,3 +13,12 @@
     </v-btn>
   </v-btn-group>
 </template>
+
+<style scoped>
+.back-btn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  border-radius: 12px;
+}
+</style>

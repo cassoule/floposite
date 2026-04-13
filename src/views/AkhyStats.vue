@@ -4,6 +4,7 @@ import flapi from '@/services/flapi.js'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
 import HomeBtn from '@/components/HomeBtn.vue'
 import CsInventoryGrid from '@/components/akhy-stats/CsInventoryGrid.vue'
+import CsLoadoutShowcase from '@/components/akhy-stats/CsLoadoutShowcase.vue'
 import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import { getRarityColor } from '@/utils/csRarity.js'
 import { rankIcon, rankDiv, rankText, rankColor } from '@/utils/rank.js'
@@ -12,7 +13,7 @@ import FlopoRankBar from '@/components/akhy-stats/FlopoRankBar.vue'
 export default {
   name: 'AkhyStats',
 
-  components: { HomeBtn, CsInventoryGrid, FlopoRankBar },
+  components: { HomeBtn, CsInventoryGrid, FlopoRankBar, CsLoadoutShowcase },
 
   setup() {
     return { ...useFlopoToasts() }
@@ -27,6 +28,7 @@ export default {
       eloGraph: null,
       user_inventory: null,
       cs_inventory: null,
+      featured_skins: [],
       skinsVideoUrls: {},
       skinsData: {},
       active_slowmodes: null,
@@ -208,9 +210,13 @@ export default {
 
     async getInventory() {
       try {
-        const response = await flapi.get('/user/' + this.$route.params.id + '/inventory')
-        this.user_inventory = response.data.inventory
-        this.cs_inventory = response.data.csInventory || []
+        const [inventoryRes, featuredRes] = await Promise.all([
+          flapi.get('/user/' + this.$route.params.id + '/inventory'),
+          flapi.get('/user/' + this.$route.params.id + '/featured-skins'),
+        ])
+        this.user_inventory = inventoryRes.data.inventory
+        this.cs_inventory = inventoryRes.data.csInventory || []
+        this.featured_skins = featuredRes.data.featuredSkins || []
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -860,6 +866,9 @@ export default {
             <p class="text-center pt-12 pb-16">Aucune partie classée</p>
           </v-list-item>
         </v-list>
+
+        <!-- CS2 Loadout Showcase -->
+        <cs-loadout-showcase :featured-skins="featured_skins" :is-own-profile="isOwnProfile" />
 
         <!-- CS2 Inventory -->
         <cs-inventory-grid
