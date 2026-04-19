@@ -248,6 +248,7 @@
                 >
                   <v-col
                     cols="12"
+                    class="d-flex flex-column justify-center align-center ga-6"
                     style="
                       width: 25%;
                       overflow: hidden;
@@ -257,6 +258,36 @@
                     "
                   >
                     Personne n'a complété le SOTD aujourd'hui
+                    <v-card-text
+                      v-if="!resetVotes.locked && !isLoading"
+                      class="py-0 text-secondary"
+                      style="font-size: 1em"
+                    >
+                      <div class="d-flex flex-column align-center" style="gap: 1.2em">
+                        <v-btn
+                          size="small"
+                          variant="flat"
+                          color="error"
+                          rounded="lg"
+                          class="text-none"
+                          :disabled="resetVotes.hasVoted || resetVoteLoading"
+                          :loading="resetVoteLoading"
+                          @click="handleVoteReset"
+                        >
+                          {{ resetVotes.hasVoted ? 'Vote envoyé' : 'Voter pour réinitialiser' }}
+                        </v-btn>
+                        <span>
+                          {{ resetVotes.count }}/{{ resetVotes.threshold }}
+                          <span
+                            class="d-none d-sm-inline"
+                            style="opacity: 0.7"
+                            title="Si le tableau du jour est injouable"
+                          >
+                            (mélange impossible)
+                          </span>
+                        </span>
+                      </div>
+                    </v-card-text>
                   </v-col>
                 </v-row>
               </v-card-text>
@@ -348,6 +379,22 @@
           </v-card-text>
         </v-card>
       </v-dialog>
+      <v-snackbar
+        v-model="resetSnackbar"
+        :timeout="2000"
+        color="primary"
+        rounded="xl"
+        location="top"
+        closable
+      >
+        <v-icon class="mdi mdi-restart mr-2" />
+        Le SOTD a été reset par vote.
+        <template #actions>
+          <v-btn size="small" icon variant="text" @click="resetSnackbar = false">
+            <v-icon class="mdi mdi-close" />
+          </v-btn>
+        </template>
+      </v-snackbar>
     </v-main>
 
     <v-btn
@@ -404,6 +451,10 @@ export default {
       userSeed: null,
       rankings: null,
 
+      resetVotes: { count: 0, threshold: 3, hasVoted: false, locked: false },
+      resetVoteLoading: false,
+      resetSnackbar: false,
+
       avatars: {},
     }
   },
@@ -417,6 +468,7 @@ export default {
       this.isLoading = true
       await this.preloadImages()
       await this.getRankings()
+      await this.fetchResetVotes()
       await this.fetchGameState(this.userId)
       this.isLoading = false
       //this.fetchAvatars()
@@ -432,6 +484,9 @@ export default {
     if (this.socket) {
       if (this._onConnect) this.socket.off('connect', this._onConnect)
       if (this._onSolitaireUpdate) this.socket.off('solitaire:update', this._onSolitaireUpdate)
+      if (this._onSotdResetVoteUpdate)
+        this.socket.off('sotd-reset-vote-update', this._onSotdResetVoteUpdate)
+      if (this._onSotdReset) this.socket.off('sotd-reset', this._onSotdReset)
     }
   },
   methods: {
@@ -458,6 +513,28 @@ export default {
         }
       }
       this.socket.on('solitaire:update', this._onSolitaireUpdate)
+
+      this._onSotdResetVoteUpdate = (payload) => {
+        this.resetVotes = {
+          ...this.resetVotes,
+          count: payload.count,
+          threshold: payload.threshold,
+          locked: payload.locked,
+        }
+      }
+      this.socket.on('sotd-reset-vote-update', this._onSotdResetVoteUpdate)
+
+      this._onSotdReset = () => {
+        this.resetVotes = {
+          count: 0,
+          threshold: this.resetVotes.threshold,
+          hasVoted: false,
+          locked: false,
+        }
+        this.resetSnackbar = true
+        this.getRankings()
+      }
+      this.socket.on('sotd-reset', this._onSotdReset)
     },
     formatFinishTime(startAt, endAt = null) {
       const start = new Date(startAt)
@@ -500,6 +577,44 @@ export default {
         this.rankings = response.data.rankings
       } catch (error) {
         console.error('Failed to fetch rankings:', error)
+      }
+    },
+
+    async fetchResetVotes() {
+      try {
+        const response = await api.getSotdResetVotes()
+        this.resetVotes = response.data
+      } catch (error) {
+        console.error('Failed to fetch SOTD reset votes:', error)
+      }
+    },
+
+    async handleVoteReset() {
+      if (this.resetVoteLoading || this.resetVotes.hasVoted || this.resetVotes.locked) return
+      this.resetVoteLoading = true
+      try {
+        const response = await api.voteSotdReset()
+        if (response.data.reset) {
+          this.resetVotes = {
+            count: 0,
+            threshold: response.data.threshold,
+            hasVoted: false,
+            locked: false,
+          }
+          this.resetSnackbar = true
+          await this.getRankings()
+        } else {
+          this.resetVotes = {
+            count: response.data.count,
+            threshold: response.data.threshold,
+            hasVoted: true,
+            locked: false,
+          }
+        }
+      } catch (error) {
+        console.error('Failed to vote to reset SOTD:', error)
+      } finally {
+        this.resetVoteLoading = false
       }
     },
 

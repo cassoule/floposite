@@ -48,7 +48,7 @@
 
         <!-- Game board -->
         <div v-if="gameState" class="sudoku-container pb-16">
-          <div class="sudoku-board" @keydown="handleKeyPress" tabindex="0" ref="board">
+          <div ref="board" class="sudoku-board" tabindex="0" @keydown="handleKeyPress">
             <div
               v-for="(_, index) in 81"
               :key="index"
@@ -78,8 +78,8 @@
                 :color="notesMode ? 'primary' : 'grey'"
                 rounded="lg"
                 class="text-none"
-                @click="notesMode = !notesMode"
                 prepend-icon="mdi-pencil-outline"
+                @click="notesMode = !notesMode"
               >
                 Notes
               </v-btn>
@@ -88,8 +88,8 @@
                 color="grey"
                 rounded="lg"
                 class="text-none"
-                @click="eraseCell"
                 prepend-icon="mdi-eraser"
+                @click="eraseCell"
               >
                 Effacer
               </v-btn>
@@ -180,7 +180,7 @@
                     class="mt-3"
                     hide-details
                   >
-                    <template v-slot:item="{ props: itemProps, item }">
+                    <template #item="{ props: itemProps, item }">
                       <v-list-item v-bind="itemProps" :subtitle="item.props.subtitle"></v-list-item>
                     </template>
                   </v-select>

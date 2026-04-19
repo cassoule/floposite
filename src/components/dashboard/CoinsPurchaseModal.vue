@@ -1,11 +1,11 @@
 <template>
   <v-dialog
     :model-value="modelValue"
-    @update:model-value="onUpdate"
     class="modals"
     :max-width="maxWidth"
     scroll-strategy="reposition"
     scrollable
+    @update:model-value="onUpdate"
   >
     <v-card class="modal-card overflow-scroll coins-modal" variant="tonal">
       <v-card-title class="pt-4">

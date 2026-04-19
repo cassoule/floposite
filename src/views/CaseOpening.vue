@@ -1,5 +1,5 @@
 <script>
-/* global localStorage, setTimeout */
+/* global localStorage, setTimeout, Image */
 import flapi from '@/services/flapi.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { getRarityColor } from '@/utils/csRarity.js'

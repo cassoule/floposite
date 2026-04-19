@@ -9,8 +9,9 @@ export default {
     gameCardsFilter: {
       type: String,
       required: false,
+      default: null,
     },
-    SOTDRank: {
+    sotdRank: {
       type: Number,
       default: null,
     },
@@ -39,7 +40,7 @@ export default {
     <v-card-title>
       {{ game.name }}
       <v-chip-group style="float: right; pointer-events: none">
-        <v-chip v-for="chip in game.chips" size="small">{{ chip }}</v-chip>
+        <v-chip v-for="chip in game.chips" :key="chip" size="small">{{ chip }}</v-chip>
       </v-chip-group>
     </v-card-title>
     <v-card-subtitle class="mb-4" style="text-wrap: wrap; white-space: normal; flex-grow: 1">
@@ -48,19 +49,19 @@ export default {
     <v-card-item class="w-100">
       <div class="w-100 d-flex justify-space-between">
         <v-chip
-          v-if="SOTDRank"
+          v-if="sotdRank"
           :class="
-            SOTDRank === 1
+            sotdRank === 1
               ? 'gold-chip'
-              : SOTDRank === 2
+              : sotdRank === 2
                 ? 'silver-chip'
-                : SOTDRank === 3
+                : sotdRank === 3
                   ? 'bronze-chip'
                   : ''
           "
           :title="'Classement ' + game.name + ' of the day'"
         >
-          <span style="text-shadow: 1px 1px 1px #181818">#{{ SOTDRank }}</span>
+          <span style="text-shadow: 1px 1px 1px #181818">#{{ sotdRank }}</span>
         </v-chip>
         <v-chip v-else style="opacity: 0"></v-chip>
         <v-btn
