@@ -254,6 +254,7 @@
 
           <v-skeleton-loader
             v-for="akhy in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
+            :key="akhy"
             type="heading"
             color="transparent"
             class="w-100 px-1 my-0 py-0"

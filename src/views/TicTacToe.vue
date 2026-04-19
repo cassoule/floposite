@@ -1,5 +1,5 @@
 <script>
-/* global localStorage, setInterval, clearInterval, Blob, fetch, location */
+/* global localStorage, setInterval, clearInterval, fetch, location */
 import flapi, { FLAPI_BASE } from '@/services/flapi.js'
 import { getSocket } from '@/services/socket.js'
 import { rankIcon, rankDiv } from '@/utils/rank.js'

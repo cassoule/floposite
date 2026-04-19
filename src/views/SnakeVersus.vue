@@ -824,8 +824,8 @@ export default {
           this.oppScore === (this.canvasWidth / this.gridSize) ** 2 - 3
             ? `${this.oppName} a rempli la grille en premier`
             : `Tu as abandonné !`
-        const winnerId =
-          this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
+        // const winnerId =
+        //   this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
       } else if (this.myGameOver && this.oppGameOver) {
         // Both lost, higher score wins
         if (this.myScore > this.oppScore) {
@@ -834,8 +834,8 @@ export default {
         } else if (this.oppScore > this.myScore) {
           this.title = 'Défaite'
           this.message = `${this.oppName} a marqué plus de points (${this.oppScore} pts)`
-          const winnerId =
-            this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
+          // const winnerId =
+          //   this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
         } else {
           this.title = 'Égalité'
           this.message = `Même score ! (${this.myScore})`
@@ -843,8 +843,8 @@ export default {
       } else if (this.myGameOver && !this.oppGameOver) {
         this.title = 'Défaite'
         this.message = 'Tu as perdu !'
-        const winnerId =
-          this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
+        // const winnerId =
+        //   this.foundLobby.p1.id === this.discordId ? this.foundLobby.p2.id : this.foundLobby.p1.id
       } else if (this.oppGameOver && !this.myGameOver) {
         this.title = 'Victoire'
         this.message = `${this.oppName} a perdu !`

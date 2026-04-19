@@ -62,7 +62,7 @@
               </div>
             </div>
           </v-card-item>
-          <template v-slot:actions="{ expanded }">
+          <template #actions="{ expanded }">
             <div
               v-if="elos[user.id]?.elo && !elos[user.id]?.isPlacement && !expanded"
               class="px-3"
@@ -94,8 +94,8 @@
                 </v-img>
               </div>
               {{ elos[user.id]?.elo }} FlopoElo
-              <span v-if="elo_graphs[user.id]" style="color: rgba(255, 255, 255, 0.3)">{{
-                'Best : ' + Math.max(...elo_graphs[user.id], 0) + ' Elo'
+              <span v-if="eloGraphs[user.id]" style="color: rgba(255, 255, 255, 0.3)">{{
+                'Best : ' + Math.max(...eloGraphs[user.id], 0) + ' Elo'
               }}</span>
             </template>
           </div>
@@ -158,7 +158,7 @@ export default {
       type: Object,
       required: true,
     },
-    elo_graphs: {
+    eloGraphs: {
       type: Object,
       required: true,
     },

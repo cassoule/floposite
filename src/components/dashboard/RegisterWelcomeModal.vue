@@ -1,12 +1,12 @@
 <template>
   <v-dialog
     :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
     class="modals"
     :max-width="550"
     scroll-strategy="block"
     scrollable
     persistent
+    @update:model-value="$emit('update:modelValue', $event)"
   >
     <v-card class="modal-card px-6 py-4" variant="tonal">
       <v-card-title class="pb-0 pt-9">

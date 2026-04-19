@@ -4,6 +4,12 @@ export default {
   getRankings() {
     return flapi.get('/solitaire/sotd/rankings')
   },
+  getSotdResetVotes() {
+    return flapi.get('/solitaire/sotd/reset-votes')
+  },
+  voteSotdReset() {
+    return flapi.post('/solitaire/sotd/reset-vote')
+  },
   startNewGame(userSeed, hardMode = false) {
     return flapi.post('/solitaire/start', { userSeed, hardMode })
   },

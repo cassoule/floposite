@@ -203,10 +203,10 @@ export default {
           />
 
           <div class="d-flex">
-            <v-chip-group filter v-model="filterStattrak">
+            <v-chip-group v-model="filterStattrak" filter>
               <v-chip text="StatTrak" :value="true"></v-chip>
             </v-chip-group>
-            <v-chip-group filter v-model="filterSouvenir" class="mr-3">
+            <v-chip-group v-model="filterSouvenir" filter class="mr-3">
               <v-chip text="Souvenir" :value="true"></v-chip>
             </v-chip-group>
           </div>
@@ -309,8 +309,8 @@ export default {
         <div v-else class="inventory-grid w-100">
           <CsSkinCard
             v-for="skin in filteredAndSortedSkins"
-            class="w-100"
             :key="skin.id"
+            class="w-100"
             :skin="skin"
             size="md"
             :show-price="true"

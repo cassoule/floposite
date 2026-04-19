@@ -60,8 +60,8 @@
         v-for="game in games"
         :key="game.name"
         :game="game"
-        :gameCardsFilter="gameCardsFilter"
-        :SOTDRank="
+        :game-cards-filter="gameCardsFilter"
+        :sotd-rank="
           game.name === 'Solitaire'
             ? user?.solitaireOTDRank
             : game.name === 'Sudoku'
@@ -74,6 +74,7 @@
 </template>
 
 <script>
+/* global setInterval, clearInterval */
 import GameCard from '../GameCard.vue'
 import 'animate.css'
 
