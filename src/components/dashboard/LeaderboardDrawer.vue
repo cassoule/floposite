@@ -48,7 +48,7 @@
                 width: 60px;
                 font-size: 0.75em;
                 height: 25px;
-                padding-bottom: 2px;
+                padding-top: 2px;
                 background: #5865f2;
                 border-radius: 10px;
               "
@@ -104,9 +104,12 @@
                 <i v-if="akhy.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
               </span>
               <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center">
-                {{ leaderboardType === 'coins' ? formatAmount(akhy.coins) : akhy.elo }}
+                {{ formatAmount(akhy.coins) }}
               </div>
-              <div v-else style="display: flex; place-items: center">
+              <div
+                v-else-if="leaderboardType === 'rank'"
+                style="display: flex; place-items: center"
+              >
                 <template v-if="akhy.isPlacement">
                   <span style="font-size: 0.8em; opacity: 0.6"
                     >Placement {{ akhy.gamesPlayed }}/5</span
@@ -121,6 +124,9 @@
                     </div>
                   </v-img>
                 </template>
+              </div>
+              <div v-else style="display: flex; place-items: center; gap: 3px; font-size: 0.85em">
+                {{ formatAmount(akhy.loadoutValue || 0) }}
               </div>
 
               <v-menu activator="parent" location="end" open-on-click transition="scale-transition">
@@ -195,6 +201,55 @@
                           ? `Placement ${elos[akhy.id]?.gamesPlayed}/5`
                           : `${elos[akhy.id]?.elo ?? 0} FlopoRank`
                       }}
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                  <v-list-item v-if="featuredSkinsMap[akhy.id]?.length" class="px-2 pb-0 mb-0">
+                    <div
+                      style="
+                        display: flex;
+                        gap: 2px;
+                        flex-wrap: wrap;
+                        justify-content: space-around;
+                      "
+                    >
+                      <div
+                        v-for="entry in featuredSkinsMap[akhy.id]"
+                        :key="entry.csSkin.id"
+                        style="
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          width: 72px;
+                          border-radius: 15px;
+                        "
+                        :style="
+                          'background: radial-gradient(circle at 50% -80%, ' +
+                          getRarityColor(entry.csSkin.rarity) +
+                          '55, transparent 100%);'
+                        "
+                        :title="
+                          entry.csSkin.displayName +
+                          ' - ' +
+                          formatAmount(entry.csSkin.price) +
+                          ' Coins'
+                        "
+                      >
+                        <v-img :src="entry.csSkin.imageUrl" width="70" height="70" contain />
+                      </div>
+                    </div>
+                  </v-list-item>
+                  <v-list-item
+                    v-if="usersByLoadoutValue.filter((u) => u.id === akhy.id)[0]?.loadoutValue > 0"
+                  >
+                    <v-list-item-subtitle title="Valeur de l'équipement">
+                      {{
+                        usersByLoadoutValue.filter((u) => u.id === akhy.id)[0]?.loadoutValue
+                          ? formatAmount(
+                              usersByLoadoutValue.filter((u) => u.id === akhy.id)[0].loadoutValue,
+                            )
+                          : 0
+                      }}
+                      FlopoCoins
                     </v-list-item-subtitle>
                   </v-list-item>
                   <v-list-item class="pb-1 px-3">
@@ -284,6 +339,7 @@
 <script>
 import { formatAmount } from '@/utils/format.js'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
+import { getRarityColor } from '@/utils/csRarity.js'
 
 export default {
   name: 'LeaderboardDrawer',
@@ -291,9 +347,11 @@ export default {
     modelValue: { type: Boolean, default: false },
     users: { type: Array, default: null },
     usersByElo: { type: Array, default: null },
+    usersByLoadoutValue: { type: Array, default: null },
     sparklines: { type: Object, default: () => ({}) },
     elos: { type: Object, default: () => ({}) },
     eloGraphs: { type: Object, default: () => ({}) },
+    featuredSkinsMap: { type: Object, default: () => ({}) },
     discordId: { type: String, default: null },
     devId: { type: String, default: null },
     mounting: { type: Boolean, default: false },
@@ -306,16 +364,23 @@ export default {
   },
   computed: {
     leaderboardUsers() {
-      const src = this.leaderboardType === 'coins' ? this.users : this.usersByElo
-      return src ? [...src] : []
+      if (this.leaderboardType === 'coins') return this.users ? [...this.users] : []
+      if (this.leaderboardType === 'rank') return this.usersByElo ? [...this.usersByElo] : []
+      return this.usersByLoadoutValue ? [...this.usersByLoadoutValue] : []
     },
   },
   methods: {
+    getRarityColor,
     formatAmount,
     rankIcon,
     rankDiv,
     leaderboardSwitch() {
-      this.leaderboardType = this.leaderboardType === 'coins' ? 'rank' : 'coins'
+      const order = ['coins', 'rank', 'équi.']
+      const idx = order.indexOf(this.leaderboardType)
+      this.leaderboardType = order[(idx + 1) % order.length]
+    },
+    formatCoins(n) {
+      return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
     },
   },
 }

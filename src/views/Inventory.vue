@@ -29,6 +29,7 @@ export default {
       loading: true,
       sellProcessing: false,
       sellConfirmDialog: false,
+      equipProcessingSkinId: null,
       filterRarity: null,
       filterWeaponType: null,
       filterStattrak: false,
@@ -148,6 +149,20 @@ export default {
       this.filterStattrak = false
       this.filterSouvenir = false
     },
+
+    async equipSkin(skin, event) {
+      event.stopPropagation()
+      this.equipProcessingSkinId = skin.id
+      try {
+        await flapi.post('/cs-skin/' + skin.id + '/equip')
+        this.showSuccessToast(skin.displayName + ' équipé !')
+        await this.fetchInventory()
+      } catch (e) {
+        const msg = e.response?.data?.error || "Erreur lors de l'équipement."
+        this.showErrorToast(msg)
+      }
+      this.equipProcessingSkinId = null
+    },
   },
 }
 </script>
@@ -166,6 +181,15 @@ export default {
             {{ formattedInventoryValue }}
             <span style="opacity: 0.4">Flopos</span>
           </span>
+          <v-btn
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-shield-half-full"
+            class="ml-2 rounded-lg"
+            @click="$router.push('/loadout')"
+          >
+            Équipement
+          </v-btn>
         </div>
 
         <!-- Toolbar -->
@@ -307,17 +331,32 @@ export default {
 
         <!-- Skin grid -->
         <div v-else class="inventory-grid w-100">
-          <CsSkinCard
+          <div
             v-for="skin in filteredAndSortedSkins"
             :key="skin.id"
-            class="w-100"
-            :skin="skin"
-            size="md"
-            :show-price="true"
-            :selectable="true"
-            :selected="selectedIds.has(skin.id)"
-            @click="toggleSkin(skin)"
-          />
+            class="skin-card-wrapper w-100"
+          >
+            <CsSkinCard
+              class="w-100"
+              :skin="skin"
+              size="md"
+              :show-price="true"
+              :selectable="true"
+              :selected="selectedIds.has(skin.id)"
+              @click="toggleSkin(skin)"
+            />
+            <v-btn
+              class="equip-btn"
+              size="x-small"
+              variant="flat"
+              color="#2a2a2a"
+              prepend-icon="mdi-shield-half-full"
+              :loading="equipProcessingSkinId === skin.id"
+              @click="equipSkin(skin, $event)"
+            >
+              Équiper
+            </v-btn>
+          </div>
         </div>
       </div>
     </v-main>
@@ -408,6 +447,24 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 0.75em;
+}
+
+.skin-card-wrapper {
+  position: relative;
+}
+
+.equip-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+  text-transform: none;
+}
+
+.skin-card-wrapper:hover .equip-btn {
+  opacity: 1;
 }
 
 @media (max-width: 550px) {

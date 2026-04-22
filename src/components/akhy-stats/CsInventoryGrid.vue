@@ -78,6 +78,11 @@ export default {
 </script>
 
 <style scoped>
+.inventory {
+  overflow-x: scroll;
+  overflow-y: hidden;
+  scrollbar-width: auto;
+}
 .inventory-grid {
   display: grid;
   grid-auto-flow: column;

@@ -217,7 +217,7 @@ export default {
         style="
           position: fixed;
           bottom: 10px;
-          right: 0;
+          right: 10px;
           transform: scale(0.75);
           width: 150px;
           z-index: 10;
