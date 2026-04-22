@@ -864,19 +864,16 @@ export default {
           </v-list-item>
         </v-list>
 
-        
-
-        
         <v-list
           width="100%"
-          class="mt-10 py-0 graphs-list"
+          class="mt-10 py-0 px-0 graphs-list"
           rounded="xl"
           bg-color="#181818"
           base-color="white"
           variant="tonal"
           style="border: 2px solid #ffffff55"
         >
-          <v-list-item class="w-100">
+          <v-list-item class="w-100 px-0">
             <!-- CS2 Loadout Showcase -->
             <cs-loadout-showcase
               :loadout="cs_loadout"
@@ -893,7 +890,6 @@ export default {
           :is-own-profile="isOwnProfile"
           @skin-clicked="openCsSkinDetails"
         />
-        
       </div>
 
       <div

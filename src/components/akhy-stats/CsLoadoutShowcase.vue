@@ -1,28 +1,10 @@
 <script>
 import { getRarityColor } from '@/utils/csRarity.js'
 import { formatCoins } from '@/utils/format.js'
+import { LOADOUT_STRUCTURE, SIDES, SIDE_LABELS, getSlotsForSide } from '@/utils/csLoadout.js'
 
-const WEAPON_CATEGORIES = [
-  {
-    label: 'Pistolets',
-    slots: ['Glock-18', 'USP-S', 'Desert Eagle', 'P250', 'Five-SeveN', 'Tec-9', 'CZ75-Auto', 'Dual Berettas', 'R8 Revolver', 'P2000'],
-  },
-  { label: 'Snipers', slots: ['AWP', 'SSG 08', 'G3SG1', 'SCAR-20'] },
-  { label: 'Fusils à pompe', slots: ['Nova', 'XM1014', 'MAG-7', 'Sawed-Off'] },
-  { label: 'Mitrailleuses', slots: ['M249', 'Negev'] },
-  { label: 'SMGs', slots: ['MAC-10', 'MP5-SD', 'MP7', 'MP9', 'PP-Bizon', 'P90', 'UMP-45'] },
-  { label: 'Rifles', slots: ['AK-47', 'M4A4', 'M4A1-S', 'FAMAS', 'Galil AR', 'SG 553', 'AUG'] },
-  { label: 'Couteau', slots: ['knife'] },
-  { label: 'Gants', slots: ['gloves'] },
-]
-
-function getSkinSlot(skin) {
-  const name = skin.marketHashName || ''
-  const lower = name.toLowerCase()
-  if (lower.includes('gloves') || lower.includes('wraps') || lower.includes('hand wrap')) return 'gloves'
-  if (name.startsWith('★')) return 'knife'
-  const sep = name.indexOf(' | ')
-  return sep !== -1 ? name.slice(0, sep) : name
+function categoryLabel(category) {
+  return LOADOUT_STRUCTURE.find((s) => s.category === category)?.label || category
 }
 
 export default {
@@ -33,12 +15,20 @@ export default {
     isOwnProfile: { type: Boolean, default: false },
   },
   computed: {
-    WEAPON_CATEGORIES: () => WEAPON_CATEGORIES,
+    SIDES: () => SIDES,
+    SIDE_LABELS: () => SIDE_LABELS,
+    CATEGORIES: () => ['starting', 'other_pistol', 'mid', 'rifle', 'knife', 'gloves'],
 
     equippedBySlot() {
       const map = {}
-      for (const s of this.loadout) map[getSkinSlot(s)] = s
+      for (const s of this.loadout) if (s.loadoutSlot) map[s.loadoutSlot] = s
       return map
+    },
+
+    slotsBySide() {
+      const out = {}
+      for (const side of SIDES) out[side] = getSlotsForSide(side)
+      return out
     },
 
     loadoutValue() {
@@ -52,6 +42,16 @@ export default {
   methods: {
     getRarityColor,
     formatCoins,
+    categoryLabel,
+    slotsForCategory(side, category) {
+      return this.slotsBySide[side].filter((s) => s.category === category)
+    },
+  },
+
+  data() {
+    return {
+      tSide: true,
+    }
   },
 }
 </script>
@@ -59,51 +59,71 @@ export default {
 <template>
   <div v-if="loadout.length > 0 || isOwnProfile" class="loadout-showcase">
     <div class="showcase-header">
-      <span><v-icon size="14" class="mr-1 mb-1">mdi-shield-half-full</v-icon>Équipement</span>
-      <span v-if="loadoutValue > 0" class="ml-2 text-white" style="font-size: 15px; opacity: 0.7">
-        {{ formatCoins(loadoutValue) }}
-        <v-icon size="9">mdi-circle-multiple</v-icon>
-      </span>
-      <v-btn
-        v-if="isOwnProfile"
-        variant="tonal"
-        size="small"
-        class="ml-2 rounded-lg"
-        @click="$router.push('/loadout')"
-      >
-        Gérer
-      </v-btn>
+      <span>Équipement</span>
+      <div class="d-flex ga-4 align-center mt-1">
+        <span
+          v-if="loadoutValue > 0"
+          class="text-white text-none"
+          style="font-size: 15px; opacity: 0.7; white-space: nowrap"
+        >
+          {{ formatCoins(loadoutValue) }} Flopos
+        </span>
+        <v-btn
+          v-if="isOwnProfile"
+          variant="tonal"
+          size="small"
+          class="rounded-lg text-none"
+          @click="$router.push('/loadout')"
+        >
+          Gérer
+        </v-btn>
+      </div>
     </div>
 
-    <div class="d-flex flex-wrap justify-space-between ga-2" style="row-gap: 0 !important;">
-      <div v-for="cat in WEAPON_CATEGORIES" :key="cat.label" class="mb-3" style="flex-grow: 1;">
-        <div class="category-label">{{ cat.label }}</div>
-        <div class="d-flex flex-wrap ga-2">
-          <div
-            v-for="slot in cat.slots"
-            :key="slot"
-            class="weapon-slot"
-            :class="equippedBySlot[slot] ? 'equipped' : 'empty'"
-            :style="equippedBySlot[slot] ? { borderColor: getRarityColor(equippedBySlot[slot].rarity) } : {}"
-          >
-            <template v-if="equippedBySlot[slot]">
-              <v-icon
-                v-if="featuredIds.has(equippedBySlot[slot].id)"
-                class="featured-star"
-                size="11"
-                color="amber"
-              >mdi-star</v-icon>
-              <v-img :src="equippedBySlot[slot].imageUrl" height="100" width="100" contain />
-              <div class="slot-name text-truncate">{{ equippedBySlot[slot].displayName }}</div>
-              <div class="slot-price">
-                {{ formatCoins(equippedBySlot[slot].price || 0) }}
-                <v-icon size="8">mdi-circle-multiple</v-icon>
+    <div class="loadout-grid">
+      <div
+        v-for="side in SIDES"
+        :key="side"
+        class="loadout-side"
+        :style="`background: radial-gradient(circle at 50% -150%, #${side === 't' ? 'F89E1B' : '262E70'} 1%, transparent 90%)`"
+      >
+        <div class="side-header">{{ SIDE_LABELS[side] }}</div>
+        <div class="d-flex flex-wrap ga-2" style="row-gap: 0 !important">
+          <div v-for="cat in CATEGORIES" :key="cat" class="mb-2">
+            <div class="category-label">{{ categoryLabel(cat) }}</div>
+            <div class="d-flex flex-wrap ga-2">
+              <div
+                v-for="slot in slotsForCategory(side, cat)"
+                :key="slot.id"
+                class="weapon-slot"
+                :class="equippedBySlot[slot.id] ? 'equipped' : 'empty'"
+                :style="
+                  equippedBySlot[slot.id]
+                    ? { borderColor: getRarityColor(equippedBySlot[slot.id].rarity) }
+                    : {}
+                "
+              >
+                <template v-if="equippedBySlot[slot.id]">
+                  <v-icon
+                    v-if="featuredIds.has(equippedBySlot[slot.id].id)"
+                    class="featured-star"
+                    size="11"
+                    color="amber"
+                    >mdi-star</v-icon
+                  >
+                  <v-img :src="equippedBySlot[slot.id].imageUrl" height="100" width="100" contain />
+                  <div class="slot-name text-truncate">
+                    {{ equippedBySlot[slot.id].displayName }}
+                  </div>
+                  <div class="slot-price">
+                    {{ formatCoins(equippedBySlot[slot.id].price || 0) }}
+                  </div>
+                </template>
+                <template v-else>
+                  <v-icon size="18" color="rgba(255,255,255,0.1)">mdi-minus</v-icon>
+                </template>
               </div>
-            </template>
-            <template v-else>
-              <v-icon size="18" color="rgba(255,255,255,0.1)">mdi-minus</v-icon>
-              <div class="slot-weapon-name">{{ slot }}</div>
-            </template>
+            </div>
           </div>
         </div>
       </div>
@@ -113,35 +133,70 @@ export default {
 
 <style scoped>
 .loadout-showcase {
-  padding: 12px 16px;
+  padding: 0;
   margin: 8px 0;
 }
 
 .showcase-header {
-  font-size: 20px;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
   letter-spacing: 0.08em;
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  column-gap: 20px;
   margin-bottom: 12px;
+  padding: 0 16px;
+}
+
+.loadout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  overflow-x: scroll;
+  scrollbar-width: auto;
+  padding: 0 16px 0 16px;
+}
+
+@media (max-width: 900px) {
+  .loadout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.loadout-side {
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 660px;
+}
+
+.side-header {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .category-label {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.5);
   margin-bottom: 5px;
 }
 
 .weapon-slot {
-  width: 99px;
-  min-height: 150px;
+  width: 120px;
+  height: 150px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
   padding: 2px 4px 4px;
   display: flex;
   flex-direction: column;
@@ -169,23 +224,18 @@ export default {
 
 .slot-name {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
   width: 100%;
   text-align: center;
 }
 
 .slot-price {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 2px;
-}
-
-.slot-weapon-name {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.18);
-  text-align: center;
-  padding: 0 4px;
 }
 </style>

@@ -15,7 +15,6 @@ export const TRADE_UP_LADDER = [
   'Restricted',
   'Classified',
   'Covert',
-  'Extraordinary',
 ]
 
 export function getRarityColor(rarity) {

@@ -126,8 +126,7 @@
                 </template>
               </div>
               <div v-else style="display: flex; place-items: center; gap: 3px; font-size: 0.85em">
-                {{ formatCoins(akhy.loadoutValue || 0) }}
-                <v-icon size="11">mdi-circle-multiple</v-icon>
+                {{ formatAmount(akhy.loadoutValue || 0) }}
               </div>
 
               <v-menu activator="parent" location="end" open-on-click transition="scale-transition">
@@ -204,8 +203,15 @@
                       }}
                     </v-list-item-subtitle>
                   </v-list-item>
-                  <v-list-item v-if="featuredSkinsMap[akhy.id]?.length" class="px-2 pb-1">
-                    <div style="display: flex; gap: 2px; flex-wrap: wrap; justify-content: space-around;">
+                  <v-list-item v-if="featuredSkinsMap[akhy.id]?.length" class="px-2 pb-0 mb-0">
+                    <div
+                      style="
+                        display: flex;
+                        gap: 2px;
+                        flex-wrap: wrap;
+                        justify-content: space-around;
+                      "
+                    >
                       <div
                         v-for="entry in featuredSkinsMap[akhy.id]"
                         :key="entry.csSkin.id"
@@ -216,12 +222,35 @@
                           width: 72px;
                           border-radius: 15px;
                         "
-                        :style="'background: radial-gradient(circle at 50% 200%, ' + getRarityColor(entry.csSkin.rarity) + '55, transparent 100%);'"
-                        :title="entry.csSkin.displayName + ' - ' + formatAmount(entry.csSkin.price) + ' Coins'"
+                        :style="
+                          'background: radial-gradient(circle at 50% -80%, ' +
+                          getRarityColor(entry.csSkin.rarity) +
+                          '55, transparent 100%);'
+                        "
+                        :title="
+                          entry.csSkin.displayName +
+                          ' - ' +
+                          formatAmount(entry.csSkin.price) +
+                          ' Coins'
+                        "
                       >
                         <v-img :src="entry.csSkin.imageUrl" width="70" height="70" contain />
                       </div>
                     </div>
+                  </v-list-item>
+                  <v-list-item
+                    v-if="usersByLoadoutValue.filter((u) => u.id === akhy.id)[0]?.loadoutValue > 0"
+                  >
+                    <v-list-item-subtitle title="Valeur de l'équipement">
+                      {{
+                        usersByLoadoutValue.filter((u) => u.id === akhy.id)[0]?.loadoutValue
+                          ? formatAmount(
+                              usersByLoadoutValue.filter((u) => u.id === akhy.id)[0].loadoutValue,
+                            )
+                          : 0
+                      }}
+                      FlopoCoins
+                    </v-list-item-subtitle>
                   </v-list-item>
                   <v-list-item class="pb-1 px-3">
                     <v-btn
