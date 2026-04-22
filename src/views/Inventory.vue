@@ -227,10 +227,10 @@ export default {
           />
 
           <div class="d-flex">
-            <v-chip-group filter v-model="filterStattrak">
+            <v-chip-group v-model="filterStattrak" filter>
               <v-chip text="StatTrak" :value="true"></v-chip>
             </v-chip-group>
-            <v-chip-group filter v-model="filterSouvenir" class="mr-3">
+            <v-chip-group v-model="filterSouvenir" filter class="mr-3">
               <v-chip text="Souvenir" :value="true"></v-chip>
             </v-chip-group>
           </div>

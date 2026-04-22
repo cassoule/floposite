@@ -4,7 +4,7 @@
       v-if="user && !mounting"
       :user="user"
       :elos="elos"
-      :elo_graphs="elo_graphs"
+      :elo-graphs="elo_graphs"
       @logout="logout"
       @buy-coins="coinsModal = true"
     ></profile-menu>

@@ -122,7 +122,7 @@
 </template>
 
 <script>
-/* global localStorage, setInterval, clearInterval, setTimeout, location, fetch, Blob */
+/* global localStorage, setInterval, clearInterval, setTimeout, location, fetch */
 import flapi, { FLAPI_BASE } from '@/services/flapi.js'
 import { getSocket } from '@/services/socket.js'
 import { rankIcon, rankDiv } from '@/utils/rank.js'
