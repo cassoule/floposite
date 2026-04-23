@@ -21,7 +21,7 @@ import CGV from '../views/CGV.vue'
 import Privacy from '../views/Privacy.vue'
 import TradeUp from '../views/TradeUp.vue'
 import Inventory from '../views/Inventory.vue'
-
+import Sicbo from '../views/SicboRoom.vue'
 const routes = [
   { path: '/', component: Home },
   { path: '/dashboard', component: Dashboard },
@@ -46,6 +46,7 @@ const routes = [
   //{ path: '/erynies', component: EryniesHome },
   { path: '/cgv', component: CGV },
   { path: '/privacy', component: Privacy },
+  {path: '/sicbo', component: Sicbo },
 ]
 
 const router = createRouter({
