@@ -203,8 +203,8 @@
                   variant="outlined"
                   rounded="lg"
                   append-icon="mdi-call-split"
-                  @click="doAction('split', index)"
                   :disabled="!canSplit(hand)"
+                  @click="doAction('split', index)"
                 >
                   Split
                 </v-btn>

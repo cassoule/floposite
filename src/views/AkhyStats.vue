@@ -4,6 +4,7 @@ import flapi from '@/services/flapi.js'
 import { frenchColorToHex } from '@/utils/colorToHex.js'
 import HomeBtn from '@/components/HomeBtn.vue'
 import CsInventoryGrid from '@/components/akhy-stats/CsInventoryGrid.vue'
+import CsLoadoutShowcase from '@/components/akhy-stats/CsLoadoutShowcase.vue'
 import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import { getRarityColor } from '@/utils/csRarity.js'
 import { rankIcon, rankDiv, rankText, rankColor } from '@/utils/rank.js'
@@ -12,7 +13,7 @@ import FlopoRankBar from '@/components/akhy-stats/FlopoRankBar.vue'
 export default {
   name: 'AkhyStats',
 
-  components: { HomeBtn, CsInventoryGrid, FlopoRankBar },
+  components: { HomeBtn, CsInventoryGrid, FlopoRankBar, CsLoadoutShowcase },
 
   setup() {
     return { ...useFlopoToasts() }
@@ -27,6 +28,8 @@ export default {
       eloGraph: null,
       user_inventory: null,
       cs_inventory: null,
+      cs_loadout: [],
+      featured_skins: [],
       skinsVideoUrls: {},
       skinsData: {},
       active_slowmodes: null,
@@ -53,12 +56,6 @@ export default {
       resultLabel: null,
       wheelRotation: 0,
       upgradeCost: null,
-      // Configuration for the 3 parts (This should come from props or API)
-      segments: [
-        { id: 'upgrade', color: '5865f2', percent: 0.2, label: 'SUCCESS' }, // 10%
-        { id: 'destroy', color: 'f26558', percent: 0.05, label: 'DESTROY' }, // 40%
-        { id: 'nothing', color: '18181818', percent: 0.75, label: 'FAIL' }, // 50%
-      ],
 
       // Constants
       radius: 40,
@@ -208,9 +205,15 @@ export default {
 
     async getInventory() {
       try {
-        const response = await flapi.get('/user/' + this.$route.params.id + '/inventory')
-        this.user_inventory = response.data.inventory
-        this.cs_inventory = response.data.csInventory || []
+        const [inventoryRes, featuredRes, loadoutRes] = await Promise.all([
+          flapi.get('/user/' + this.$route.params.id + '/inventory'),
+          flapi.get('/user/' + this.$route.params.id + '/featured-skins'),
+          flapi.get('/user/' + this.$route.params.id + '/loadout'),
+        ])
+        this.user_inventory = inventoryRes.data.inventory
+        this.cs_inventory = inventoryRes.data.csInventory || []
+        this.featured_skins = featuredRes.data.featuredSkins || []
+        this.cs_loadout = loadoutRes.data.loadout || []
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -858,6 +861,25 @@ export default {
           </v-list-item>
           <v-list-item v-if="games.length === 0">
             <p class="text-center pt-12 pb-16">Aucune partie classée</p>
+          </v-list-item>
+        </v-list>
+
+        <v-list
+          width="100%"
+          class="mt-10 py-0 px-0 graphs-list"
+          rounded="xl"
+          bg-color="#181818"
+          base-color="white"
+          variant="tonal"
+          style="border: 2px solid #ffffff55"
+        >
+          <v-list-item class="w-100 px-0">
+            <!-- CS2 Loadout Showcase -->
+            <cs-loadout-showcase
+              :loadout="cs_loadout"
+              :featured-skins="featured_skins"
+              :is-own-profile="isOwnProfile"
+            />
           </v-list-item>
         </v-list>
 

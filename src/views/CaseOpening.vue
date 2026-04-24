@@ -1,5 +1,5 @@
 <script>
-/* global localStorage, setTimeout */
+/* global localStorage, setTimeout, Image */
 import flapi from '@/services/flapi.js'
 import CoinsCounter from '@/components/CoinsCounter.vue'
 import { getRarityColor } from '@/utils/csRarity.js'
@@ -217,7 +217,7 @@ export default {
         style="
           position: fixed;
           bottom: 10px;
-          right: 0;
+          right: 10px;
           transform: scale(0.75);
           width: 150px;
           z-index: 10;

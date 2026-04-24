@@ -22,6 +22,8 @@ import Privacy from '../views/Privacy.vue'
 import TradeUp from '../views/TradeUp.vue'
 import Inventory from '../views/Inventory.vue'
 import Sicbo from '../views/SicboRoom.vue'
+import Loadout from '../views/Loadout.vue'
+
 const routes = [
   { path: '/', component: Home },
   { path: '/dashboard', component: Dashboard },
@@ -39,6 +41,7 @@ const routes = [
   { path: '/cases', component: CaseOpening },
   { path: '/trade-up', component: TradeUp },
   { path: '/inventory', component: Inventory },
+  { path: '/loadout', component: Loadout },
   { path: '/snake', component: SnakeMenu },
   { path: '/snake/solo', component: SnakeSolo },
   { path: '/snake/versus', component: SnakeVersus },

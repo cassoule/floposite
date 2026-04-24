@@ -1,3 +1,4 @@
+/* global localStorage*/
 import './assets/main.css'
 
 import { createApp } from 'vue'

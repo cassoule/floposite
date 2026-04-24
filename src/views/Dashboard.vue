@@ -4,7 +4,7 @@
       v-if="user && !mounting"
       :user="user"
       :elos="elos"
-      :elo_graphs="elo_graphs"
+      :elo-graphs="elo_graphs"
       @logout="logout"
       @buy-coins="coinsModal = true"
     ></profile-menu>
@@ -13,9 +13,11 @@
       v-model="leaderBoardOpen"
       :users="users"
       :users-by-elo="usersByElo"
+      :users-by-loadout-value="usersByLoadoutValue"
       :sparklines="sparklines"
       :elos="elos"
       :elo-graphs="elo_graphs"
+      :featured-skins-map="featuredSkinsMap"
       :discord-id="discordId"
       :dev-id="devId"
       :mounting="mounting"
@@ -173,6 +175,8 @@ export default {
       discordId: null,
       users: null,
       usersByElo: null,
+      usersByLoadoutValue: null,
+      featuredSkinsMap: {},
       avatar: null,
       socket: null,
       user_inventory: null,
@@ -535,6 +539,17 @@ export default {
         this.usersByElo = response.data
       } catch (e) {
         console.error('flAPI error:', e)
+      }
+
+      try {
+        const [loadoutRes, featuredRes] = await Promise.all([
+          flapi.get('/leaderboard/loadout-value'),
+          flapi.get('/users/featured-skins'),
+        ])
+        this.usersByLoadoutValue = loadoutRes.data.leaderboard
+        this.featuredSkinsMap = featuredRes.data
+      } catch (e) {
+        console.error('flAPI error (loadout):', e)
       }
     },
 

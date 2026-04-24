@@ -76,6 +76,7 @@
 </template>
 
 <script>
+/* global setTimeout */
 import { rankIcon, rankDiv, rankText, rankColor } from '@/utils/rank.js'
 
 export default {
