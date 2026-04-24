@@ -196,7 +196,9 @@
         {{ snackbar.msg }}
         <template #actions><v-icon>mdi-dice-multiple</v-icon></template>
       </v-snackbar>
+
     </v-main>
+    <home-btn />
   </v-layout>
 </template>
 
@@ -206,12 +208,14 @@ import { getSocket } from '@/services/socket.js'
 import { formatAmount } from '@/utils/format.js'
 import Dice3D from '@/components/Dice3D.vue'
 import SicBoBoard from '@/components/SicBoBoard.vue'
+import HomeBtn from '@/components/HomeBtn.vue'
 
 export default {
   name: 'SicBoView',
   components: {
     Dice3D,
     SicBoBoard,
+    HomeBtn,
   },
   data: () => ({
     discordId: null,
@@ -567,5 +571,12 @@ export default {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.back-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  border-radius: 10px;
 }
 </style>

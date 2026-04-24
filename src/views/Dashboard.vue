@@ -258,6 +258,14 @@ export default {
           class: 'snake-action-card',
           chips: ['Solo', 'Coins'],
         },
+        {
+          name: 'Sic-Bo',
+          description:
+            "Plonge dans l'ambiance des casinos de Macao : parie sur le destin des trois dés et multiplie tes FlopoCoins.",
+          route: 'sicbo',
+          class: 'sicbo-action-card',
+          chips: ['Solo', 'Coins'],
+        },
       ],
     }
   },
@@ -998,6 +1006,11 @@ button:disabled {
 }
 .sudoku-action-card::after {
   background: url('/game_illu_sudoku.png') no-repeat center center;
+  background-size: 50% auto;
+}
+
+.sicbo-action-card::after {
+  background: url('/game_illu_sicbo.png') no-repeat center center;
   background-size: 50% auto;
 }
 
