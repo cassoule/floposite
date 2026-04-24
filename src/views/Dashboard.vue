@@ -235,18 +235,19 @@ export default {
           chips: ['Multi', 'Coins'],
         },
         {
+          name: 'Sic-Bo',
+          description:
+            "Plonge dans l'ambiance des casinos de Macao : parie sur le destin des trois dés et multiplie tes FlopoCoins.",
+          route: 'sicbo',
+          class: 'sicbo-action-card',
+          chips: ['Multi', 'Coins'],
+        },
+        {
           name: 'Flopoker',
           description: 'Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.',
           route: 'flopoker',
           class: 'poker-action-card',
           chips: ['Multi', 'Coins'],
-        },
-        {
-          name: 'Morpion',
-          description: 'Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.',
-          route: 'tic-tac-toe',
-          class: 'ttt-action-card',
-          chips: ['1v1', 'Elo'],
         },
         {
           name: 'Monke',
@@ -261,6 +262,13 @@ export default {
           route: 'snake/solo',
           class: 'snake-action-card',
           chips: ['Solo', 'Coins'],
+        },
+        {
+          name: 'Morpion',
+          description: 'Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.',
+          route: 'tic-tac-toe',
+          class: 'ttt-action-card',
+          chips: ['1v1', 'Elo'],
         },
       ],
     }
@@ -1013,6 +1021,11 @@ button:disabled {
 }
 .sudoku-action-card::after {
   background: url('/game_illu_sudoku.png') no-repeat center center;
+  background-size: 50% auto;
+}
+
+.sicbo-action-card::after {
+  background: url('/game_illu_sicbo.png') no-repeat center center;
   background-size: 50% auto;
 }
 
