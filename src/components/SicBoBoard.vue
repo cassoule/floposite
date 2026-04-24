@@ -1,5 +1,5 @@
 <template>
-  <v-card class="smooth-cards mb-4" variant="tonal" rounded="xl" style="overflow: hidden">
+  <v-card class="smooth-cards mb-4" variant="tonal" rounded="xl">
     <div class="sicbo-wrapper w-100 h-100">
       <svg style="display: none">
         <defs>
@@ -49,8 +49,8 @@
         <div class="top-row">
           <div class="bet-zone side-zone zone-small" @click="$emit('place-bet', 'small')">
             <div class="title text-lg mb-1">SMALL</div>
-            <div class="hide-mobile desc text-sm-dark mb-1">TOTAL 4 TO 10</div>
-            <div class="hide-mobile payout text-sm mb-3">1 TO 1</div>
+            <div class="hide-mobile desc text-sm-dark mb-1">4 TO 10</div>
+            <div class="hide-mobile payout payout-text text-sm mb-3">x1</div>
             <div class="dice-preview">
               <svg class="die-icon" viewBox="0 0 24 24"><use href="#d1" /></svg>
               <svg class="die-icon" viewBox="0 0 24 24"><use href="#d2" /></svg>
@@ -62,15 +62,15 @@
             <div class="grid-3-inline even-odd-row">
               <div class="bet-zone py-2 zone-even" @click="$emit('place-bet', 'even')">
                 <div class="title text-md mb-1">EVEN</div>
-                <div class="hide-mobile payout text-xs">1 TO 1</div>
+                <div class="hide-mobile payout payout-text text-xs">x1</div>
               </div>
               <div class="bet-zone py-2 zone-any-triple" @click="$emit('place-bet', 'any_triple')">
                 <div class="title text-md mb-1">ANY TRIPLE</div>
-                <div class="hide-mobile payout text-xs">30 TO 1</div>
+                <div class="hide-mobile payout payout-text text-xs">x30</div>
               </div>
               <div class="bet-zone py-2 zone-odd" @click="$emit('place-bet', 'odd')">
                 <div class="title text-md mb-1">ODD</div>
-                <div class="hide-mobile payout text-xs">1 TO 1</div>
+                <div class="hide-mobile payout payout-text text-xs">x1</div>
               </div>
             </div>
 
@@ -81,7 +81,7 @@
                 class="bet-zone py-2"
                 @click="$emit('place-bet', `triple_${i}`)"
               >
-                <div class="hide-mobile payout text-xs mb-2">180 TO 1</div>
+                <div class="hide-mobile payout payout-text text-xs mb-2">x180</div>
                 <div class="dice-preview mb-2">
                   <svg class="die-icon" viewBox="0 0 24 24"><use :href="'#d' + i" /></svg>
                   <svg class="die-icon" viewBox="0 0 24 24"><use :href="'#d' + i" /></svg>
@@ -98,7 +98,7 @@
                 class="bet-zone py-2"
                 @click="$emit('place-bet', `double_${i}`)"
               >
-                <div class="hide-mobile payout text-xs mb-2">10 TO 1</div>
+                <div class="hide-mobile payout payout-text text-xs mb-2">x10</div>
                 <div class="dice-preview mb-2">
                   <svg class="die-icon" viewBox="0 0 24 24"><use :href="'#d' + i" /></svg>
                   <svg class="die-icon" viewBox="0 0 24 24"><use :href="'#d' + i" /></svg>
@@ -110,8 +110,8 @@
 
           <div class="bet-zone side-zone zone-big" @click="$emit('place-bet', 'big')">
             <div class="title text-lg mb-1">BIG</div>
-            <div class="hide-mobile desc text-sm-dark mb-1">TOTAL 11 TO 17</div>
-            <div class="hide-mobile payout text-sm mb-3">1 TO 1</div>
+            <div class="hide-mobile desc text-sm-dark mb-1">11 TO 17</div>
+            <div class="hide-mobile payout payout-text text-sm mb-3">x1</div>
             <div class="dice-preview">
               <svg class="die-icon" viewBox="0 0 24 24"><use href="#d4" /></svg>
               <svg class="die-icon" viewBox="0 0 24 24"><use href="#d5" /></svg>
@@ -128,7 +128,7 @@
             @click="$emit('place-bet', `total_${total.val}`)"
           >
             <div class="title text-lg mb-1">{{ total.val }}</div>
-            <div class="hide-mobile payout text-xs">{{ total.payout }} TO 1</div>
+            <div class="hide-mobile payout payout-text text-xs">x{{ total.payout }}</div>
           </div>
         </div>
 
@@ -163,14 +163,12 @@ export default {
 </script>
 
 <style scoped>
-/* =========================================
-   STYLE ORIGINAL (PC & THEME)
-   ========================================= */
 .sicbo-wrapper {
   background: linear-gradient(180deg, #1a202c 0%, #2d3748 100%);
   padding: 16px;
   font-family: sans-serif;
   box-sizing: border-box;
+  border-radius: 24px;
 }
 
 .sicbo-board {
@@ -213,6 +211,11 @@ export default {
   font-weight: bold;
   color: #cbd5e0;
   line-height: 1.1;
+}
+
+.payout-text {
+  color: #a5adf8 !important;
+  letter-spacing: 0.05em;
 }
 
 .mb-1 {
@@ -261,7 +264,6 @@ export default {
   transform: scale(0.98);
 }
 
-/* Grilles PC */
 .top-row {
   display: grid;
   grid-template-columns: 1.5fr 7fr 1.5fr;
@@ -308,33 +310,28 @@ export default {
   height: 56px;
 }
 
-/* =========================================
-   MODE MOBILE
-   ========================================= */
 @media (max-width: 1024px) {
   .hide-mobile {
     display: none !important;
   }
 
   .sicbo-wrapper {
-    padding: 8px;
+    padding: 10px;
+    border-radius: 20px;
   }
 
-  /* On transforme le plateau en grille globale et on "casse" les wrappers */
   .sicbo-board {
     display: grid;
     grid-template-columns: 1.5fr 0.8fr 1.8fr 0.8fr 1.5fr;
     gap: 6px;
   }
 
-  /* display: contents permet d'ignorer ces divs pour placer leurs enfants directement sur la grille parente */
   .top-row,
   .center-column,
   .grid-3-inline.even-odd-row {
     display: contents;
   }
 
-  /* 1. Placement de la ligne du haut */
   .zone-small {
     order: 1;
     grid-column: span 1;
@@ -366,7 +363,6 @@ export default {
     min-height: 60px;
   }
 
-  /* Ajustement vertical du texte ODD et EVEN */
   .zone-odd .title,
   .zone-even .title {
     writing-mode: vertical-rl;
@@ -382,7 +378,6 @@ export default {
     font-size: 14px;
   }
 
-  /* 2. Les Doubles */
   .doubles-row {
     order: 6;
     grid-column: 1 / -1;
@@ -391,7 +386,6 @@ export default {
     gap: 4px;
   }
 
-  /* 3. Les Triples */
   .triples-row {
     order: 7;
     grid-column: 1 / -1;
@@ -400,13 +394,11 @@ export default {
     gap: 4px;
   }
 
-  /* Rendre les dés des triples verticaux sur mobile ! */
   .triples-row .dice-preview {
     flex-direction: column;
     gap: 2px;
   }
 
-  /* 4. Les Totaux */
   .grid-totaux {
     order: 8;
     grid-column: 1 / -1;
@@ -415,7 +407,6 @@ export default {
     margin-top: 4px;
   }
 
-  /* 5. Les Dés simples */
   .single-dice-row {
     order: 9;
     grid-column: 1 / -1;
@@ -424,14 +415,12 @@ export default {
     margin-top: 4px;
   }
 
-  /* Ajustement des tailles des blocs internes pour mobile */
   .doubles-row .bet-zone,
   .zone-any-triple {
     padding: 6px 0 !important;
     min-height: 40px;
   }
 
-  /* Hauteur spécifique pour les triples car les 3 dés sont empilés */
   .triples-row .bet-zone {
     padding: 8px 0 !important;
     min-height: 80px;

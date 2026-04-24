@@ -46,7 +46,7 @@ const routes = [
   //{ path: '/erynies', component: EryniesHome },
   { path: '/cgv', component: CGV },
   { path: '/privacy', component: Privacy },
-  {path: '/sicbo', component: Sicbo },
+  { path: '/sicbo', component: Sicbo },
 ]
 
 const router = createRouter({

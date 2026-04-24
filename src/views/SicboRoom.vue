@@ -43,33 +43,62 @@
               style="width: 100%; min-height: unset; flex-shrink: 0"
             />
 
-            <div
-              v-if="room.dice && room.dice.length === 3"
-              class="mt-2 mt-lg-5 text-center dice-result"
-            >
-              <span class="dice-values">{{ room.dice.join(' - ') }}</span>
-              <span class="dice-sep"> | </span>
-              <span class="dice-oddeven">{{ diceSum % 2 === 0 ? 'Even' : 'Odd' }}</span>
-              <span class="dice-sep"> | </span>
-              <span class="dice-bigsmall">{{ diceSum >= 11 ? 'Big' : 'Small' }}</span>
+            <div class="dice-result-wrapper mt-2 mt-lg-5 w-100 text-center">
+              <transition name="fade" mode="out-in">
+                <div
+                  v-if="showDelayedResult && room.dice && room.dice.length === 3"
+                  class="dice-result"
+                  key="result"
+                >
+                  <span class="dice-values">{{ room.dice.join(' - ') }}</span>
+                  <span class="dice-sep"> | </span>
+                  <span class="dice-oddeven">{{ diceSum % 2 === 0 ? 'Even' : 'Odd' }}</span>
+                  <span class="dice-sep"> | </span>
+                  <span class="dice-bigsmall">{{ diceSum >= 11 ? 'Big' : 'Small' }}</span>
+                </div>
+                <div v-else class="dice-placeholder" key="placeholder">En attente du lancer...</div>
+              </transition>
             </div>
-            <div v-else class="mt-2 mt-lg-5 dice-placeholder">En attente du lancer...</div>
+
+            <template v-if="$vuetify.display.lgAndUp && isInRoom && room.status === 'betting'">
+              <v-divider class="my-3 w-100" />
+              <div class="d-flex align-center flex-nowrap w-100" style="gap: 8px">
+                <span class="font-weight-bold text-no-wrap">Mise :</span>
+                <v-slider
+                  v-model="betAmount"
+                  :min="room.minBet || 10"
+                  :max="maxAllowedBet"
+                  :step="10"
+                  color="primary"
+                  hide-details
+                  thumb-label
+                  class="flex-grow-1 mx-2"
+                />
+                <v-text-field
+                  v-model.number="betAmount"
+                  :max="maxAllowedBet"
+                  variant="outlined"
+                  rounded="lg"
+                  base-color="primary"
+                  type="number"
+                  density="compact"
+                  style="max-width: 110px"
+                  hide-details
+                  class="centered-input"
+                />
+              </div>
+            </template>
           </v-card>
         </v-col>
 
         <v-col
           v-if="isInRoom && room.status === 'betting'"
           cols="12"
-          lg="8"
-          class="mb-4 pr-lg-4 mobile-order-2 desktop-order-minus1"
+          class="mb-4 d-lg-none mobile-order-2"
         >
           <v-card class="px-4 py-2 smooth-cards" variant="tonal" rounded="xl">
             <div class="d-flex align-center flex-nowrap" style="gap: 8px">
-              <span class="font-weight-bold text-no-wrap">
-                <span class="d-sm-none">Mise :</span>
-                <span class="d-none d-sm-inline">Choisis ta mise :</span>
-              </span>
-
+              <span class="font-weight-bold text-no-wrap">Mise :</span>
               <v-slider
                 v-model="betAmount"
                 :min="room.minBet || 10"
@@ -79,9 +108,8 @@
                 hide-details
                 thumb-label
                 class="flex-grow-1 mx-2"
-                :style="$vuetify.display.xs ? 'min-width: 50px' : 'min-width: 150px'"
+                style="min-width: 50px"
               />
-
               <v-text-field
                 v-model.number="betAmount"
                 :max="maxAllowedBet"
@@ -90,8 +118,9 @@
                 base-color="primary"
                 type="number"
                 density="compact"
-                style="max-width: 85px"
+                style="max-width: 110px"
                 hide-details
+                class="centered-input"
               />
             </div>
           </v-card>
@@ -192,6 +221,9 @@ export default {
     nowTick: Date.now(),
     socket: null,
 
+    showDelayedResult: false,
+    diceTimer: null,
+
     totalsData: [
       { val: 4, payout: 50 },
       { val: 5, payout: 18 },
@@ -239,6 +271,27 @@ export default {
     },
   },
 
+  watch: {
+    'room.dice': {
+      handler(newVal, oldVal) {
+        if (newVal && newVal.length === 3) {
+          if (!oldVal || oldVal.length !== 3) {
+            this.showDelayedResult = false
+            clearTimeout(this.diceTimer)
+
+            this.diceTimer = setTimeout(() => {
+              this.showDelayedResult = true
+            }, 3000)
+          }
+        } else {
+          this.showDelayedResult = false
+          clearTimeout(this.diceTimer)
+        }
+      },
+      immediate: true,
+    },
+  },
+
   async mounted() {
     this.discordId = localStorage.getItem('discordId')
     if (!this.discordId) return this.$router.push('/')
@@ -263,6 +316,7 @@ export default {
       this.socket.off('sicbo-new-round', this._onSicboUpdate)
     }
     if (this._timer) clearInterval(this._timer)
+    if (this.diceTimer) clearTimeout(this.diceTimer)
     if (this.isInRoom) {
       await flapi.post('/sicbo/leave').catch(() => {})
     }
@@ -296,55 +350,28 @@ export default {
       this.socket = getSocket()
 
       this._onConnect = async () => {
-        console.log('[SicBo] socket connected')
         await this.getRoom()
       }
       this.socket.on('connect', this._onConnect)
 
       this._onSicboUpdate = (payload) => {
-        console.log('[SicBo] _onSicboUpdate received:', payload)
-        // Gère le cas où le payload est directement la room, ou un objet { room, allRes }
         if (payload) {
           this.room = payload.room ? payload.room : payload
         }
       }
 
-      this.socket.on('sicbo-update', (payload) => {
-        console.log('[SicBo] sicbo-update event:', payload)
-        this._onSicboUpdate(payload)
-      })
-
-      this.socket.on('sicbo-player-joined', (payload) => {
-        console.log('[SicBo] sicbo-player-joined event:', payload)
-        this._onSicboUpdate(payload)
-      })
-
-      this.socket.on('sicbo-player-left', (payload) => {
-        console.log('[SicBo] sicbo-player-left event:', payload)
-        this._onSicboUpdate(payload)
-      })
-
-      this.socket.on('sicbo-bet-placed', (payload) => {
-        console.log('[SicBo] sicbo-bet-placed event:', payload)
-        this._onSicboUpdate(payload)
-      })
-
-      this.socket.on('sicbo-rolling', (payload) => {
-        console.log('[SicBo] 🎲 sicbo-rolling event received. dice values:', payload?.dice)
-        this._onSicboUpdate(payload)
-      })
+      this.socket.on('sicbo-update', this._onSicboUpdate)
+      this.socket.on('sicbo-player-joined', this._onSicboUpdate)
+      this.socket.on('sicbo-player-left', this._onSicboUpdate)
+      this.socket.on('sicbo-bet-placed', this._onSicboUpdate)
+      this.socket.on('sicbo-rolling', this._onSicboUpdate)
 
       this.socket.on('sicbo-payout', (payload) => {
-        console.log('[SicBo] sicbo-payout event:', payload)
-
-        // 1. Mise à jour de l'affichage de la table
         this._onSicboUpdate(payload)
 
-        // 2. Calcul et affichage des gains
         const allRes = payload?.allRes
         if (allRes && allRes[this.discordId]) {
           let totalDelta = 0
-
           allRes[this.discordId].forEach((bet) => {
             totalDelta += bet.delta || 0
           })
@@ -358,10 +385,7 @@ export default {
         }
       })
 
-      this.socket.on('sicbo-new-round', (payload) => {
-        console.log('[SicBo] sicbo-new-round event:', payload)
-        this._onSicboUpdate(payload)
-      })
+      this.socket.on('sicbo-new-round', this._onSicboUpdate)
     },
 
     async getRoom() {
@@ -419,6 +443,20 @@ export default {
 </script>
 
 <style scoped>
+.centered-input :deep(input) {
+  text-align: center;
+}
+
+.centered-input :deep(input[type='number']::-webkit-inner-spin-button),
+.centered-input :deep(input[type='number']::-webkit-outer-spin-button) {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.centered-input :deep(input[type='number']) {
+  -moz-appearance: textfield;
+}
+
 .dice-3d-wrapper {
   height: 120px;
 }
@@ -429,38 +467,39 @@ export default {
   }
 }
 
+.dice-result-wrapper {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .dice-result {
-  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: 0.05em;
   line-height: 1.5;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .dice-values {
   color: #ffffff;
-  font-size: 2.2rem;
+  font-size: 1.8rem;
 }
 
 .dice-sep {
   color: #4a5568;
   font-weight: 400;
-  margin: 0 10px;
-  font-size: 1.4rem;
+  margin: 0 6px;
+  font-size: 1.2rem;
 }
 
-.dice-oddeven {
-  color: #818cf8;
-  font-size: 1.7rem;
-  text-transform: uppercase;
-}
-
+.dice-oddeven,
 .dice-bigsmall {
-  color: #e2e8f0;
-  font-size: 1.7rem;
+  font-size: 1.4rem;
   text-transform: uppercase;
 }
 
@@ -472,16 +511,19 @@ export default {
 }
 
 @media (max-width: 600px) {
+  .dice-result-wrapper {
+    min-height: 40px;
+  }
   .dice-values {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
   }
   .dice-oddeven,
   .dice-bigsmall {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
   }
   .dice-sep {
-    margin: 0 6px;
-    font-size: 1.2rem;
+    margin: 0 4px;
+    font-size: 1rem;
   }
 }
 
@@ -515,5 +557,15 @@ export default {
 
 .time-left {
   opacity: 0.85;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
