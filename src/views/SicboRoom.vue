@@ -196,7 +196,6 @@
         {{ snackbar.msg }}
         <template #actions><v-icon>mdi-dice-multiple</v-icon></template>
       </v-snackbar>
-
     </v-main>
     <home-btn />
   </v-layout>

@@ -231,18 +231,19 @@ export default {
           chips: ['Multi', 'Coins'],
         },
         {
+          name: 'Sic-Bo',
+          description:
+            "Plonge dans l'ambiance des casinos de Macao : parie sur le destin des trois dés et multiplie tes FlopoCoins.",
+          route: 'sicbo',
+          class: 'sicbo-action-card',
+          chips: ['Multi', 'Coins'],
+        },
+        {
           name: 'Flopoker',
           description: 'Mise tes FlopoCoins dans ce poker de 2 à 8 joueurs par table.',
           route: 'flopoker',
           class: 'poker-action-card',
           chips: ['Multi', 'Coins'],
-        },
-        {
-          name: 'Morpion',
-          description: 'Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.',
-          route: 'tic-tac-toe',
-          class: 'ttt-action-card',
-          chips: ['1v1', 'Elo'],
         },
         {
           name: 'Monke',
@@ -259,12 +260,11 @@ export default {
           chips: ['Solo', 'Coins'],
         },
         {
-          name: 'Sic-Bo',
-          description:
-            "Plonge dans l'ambiance des casinos de Macao : parie sur le destin des trois dés et multiplie tes FlopoCoins.",
-          route: 'sicbo',
-          class: 'sicbo-action-card',
-          chips: ['Solo', 'Coins'],
+          name: 'Morpion',
+          description: 'Joue au morpion contre un autre joueur, mais attention à ton FlopoRank.',
+          route: 'tic-tac-toe',
+          class: 'ttt-action-card',
+          chips: ['1v1', 'Elo'],
         },
       ],
     }
