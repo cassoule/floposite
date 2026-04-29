@@ -7,6 +7,7 @@ import CsInventoryGrid from '@/components/akhy-stats/CsInventoryGrid.vue'
 import CsLoadoutShowcase from '@/components/akhy-stats/CsLoadoutShowcase.vue'
 import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
 import { getRarityColor } from '@/utils/csRarity.js'
+import { formatCoins } from '@/utils/format.js'
 import { rankIcon, rankDiv, rankText, rankColor } from '@/utils/rank.js'
 import FlopoRankBar from '@/components/akhy-stats/FlopoRankBar.vue'
 
@@ -47,6 +48,9 @@ export default {
       csSkinDetailsDialog: false,
       selectedCsSkin: null,
       csSellProcessing: false,
+      csPriceHistory: [],
+      csPriceHistoryLoading: false,
+      csPriceHistoryHover: null,
 
       flopoRankDialog: false,
 
@@ -128,6 +132,51 @@ export default {
 
     formattedDisplayPrice() {
       return this.displayPrice.toFixed(0)
+    },
+
+    csPriceHistoryChart() {
+      const pts = this.csPriceHistory
+      if (!pts || pts.length < 2) return null
+      const xs = pts.map((p) => new Date(p.createdAt).getTime())
+      const ys = pts.map((p) => p.price)
+      const xMin = xs[0]
+      const xMax = xs[xs.length - 1]
+      const yMin = Math.min(...ys)
+      const yMax = Math.max(...ys)
+      const W = 360
+      const H = 90
+      const PAD_X = 6
+      const PAD_Y = 10
+      const xSpan = xMax - xMin || 1
+      const ySpan = yMax - yMin || 1
+      const toX = (x) => PAD_X + ((x - xMin) / xSpan) * (W - 2 * PAD_X)
+      const toY = (y) => H - PAD_Y - ((y - yMin) / ySpan) * (H - 2 * PAD_Y)
+      const coords = pts.map((p, i) => ({
+        x: toX(xs[i]),
+        y: toY(ys[i]),
+        price: p.price,
+        createdAt: p.createdAt,
+      }))
+      const linePath = coords
+        .map((c, i) => (i === 0 ? 'M' : 'L') + c.x.toFixed(1) + ',' + c.y.toFixed(1))
+        .join(' ')
+      const areaPath =
+        linePath +
+        ` L${coords[coords.length - 1].x.toFixed(1)},${H - PAD_Y} L${coords[0].x.toFixed(1)},${H - PAD_Y} Z`
+      const first = ys[0]
+      const last = ys[ys.length - 1]
+      const delta = last - first
+      const deltaPct = first > 0 ? (delta / first) * 100 : 0
+      return { W, H, coords, linePath, areaPath, yMin, yMax, first, last, delta, deltaPct }
+    },
+  },
+
+  watch: {
+    csSkinDetailsDialog(open) {
+      if (!open) {
+        this.csPriceHistory = []
+        this.csPriceHistoryHover = null
+      }
     },
   },
 
@@ -385,9 +434,33 @@ export default {
       }
     },
     getRarityColor,
+    formatCoins,
+    formatHistoryDate(iso) {
+      const d = new Date(iso)
+      return d.toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    },
     openCsSkinDetails(skin) {
       this.selectedCsSkin = skin
       this.csSkinDetailsDialog = true
+      this.fetchCsPriceHistory(skin.id)
+    },
+    async fetchCsPriceHistory(skinId) {
+      this.csPriceHistoryLoading = true
+      this.csPriceHistory = []
+      try {
+        const res = await flapi.get('/cs-skin/' + skinId + '/price-history?days=7')
+        if (this.selectedCsSkin && this.selectedCsSkin.id === skinId) {
+          this.csPriceHistory = res.data.history || []
+        }
+      } catch (e) {
+        console.error('Error fetching price history:', e)
+      }
+      this.csPriceHistoryLoading = false
     },
     async handleCsInstantSell() {
       const discordId = localStorage.getItem('discordId')
@@ -879,6 +952,7 @@ export default {
               :loadout="cs_loadout"
               :featured-skins="featured_skins"
               :is-own-profile="isOwnProfile"
+              @skin-clicked="openCsSkinDetails"
             />
           </v-list-item>
         </v-list>
@@ -907,46 +981,6 @@ export default {
 
     <home-btn />
   </v-layout>
-
-  <v-dialog
-    v-model="skinVideoDialog"
-    class="modals"
-    max-width="800"
-    scroll-strategy="reposition"
-    scrollable
-  >
-    <v-card
-      class="mr-2 py-0"
-      elevation="20"
-      rounded="xl"
-      :color="`#${selectedSkin.tierColor}77`"
-      bg-color="#181818"
-      base-color="white"
-      variant="flat"
-      :style="`border: 2px solid #${selectedSkin.tierColor}`"
-    >
-      <v-card-item class="pa-0">
-        <v-video
-          class="skin-video w-100"
-          :volume="25"
-          theme="dark"
-          :color="`#${selectedSkin.tierColor}`"
-          autoplay
-          floating
-          controls-variant="hidden"
-          elevation="0"
-          :src="skinsVideoUrls[selectedSkin.uuid]"
-          style="user-select: none"
-        ></v-video>
-      </v-card-item>
-      <div style="position: absolute; top: 10px; right: 10px; cursor: pointer">
-        <v-icon
-          class="mdi mdi-close video-close-icon text-white"
-          @click="skinVideoDialog = false"
-        />
-      </div>
-    </v-card>
-  </v-dialog>
 
   <v-dialog
     v-model="skinHistoryDialog"
@@ -1490,11 +1524,122 @@ export default {
             ></div>
           </div>
         </div>
+
+        <!-- Price evolution -->
+        <div class="w-100 mt-4 px-2 text-left" style="z-index: 2">
+          <div class="d-flex align-center justify-space-between mb-1">
+            <span
+              class="text-caption"
+              style="
+                color: rgba(255, 255, 255, 0.55);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+              "
+            >
+              Évolution du prix (7j)
+            </span>
+            <span
+              v-if="csPriceHistoryChart"
+              class="text-caption"
+              :class="csPriceHistoryChart.delta >= 0 ? 'text-green' : 'text-red'"
+            >
+              {{ csPriceHistoryChart.delta >= 0 ? '+' : ''
+              }}{{ formatCoins(csPriceHistoryChart.delta) }} ({{
+                csPriceHistoryChart.deltaPct >= 0 ? '+' : ''
+              }}{{ csPriceHistoryChart.deltaPct.toFixed(1) }}%)
+            </span>
+          </div>
+          <div
+            v-if="csPriceHistoryLoading"
+            class="text-caption py-6 text-center"
+            style="color: rgba(255, 255, 255, 0.4)"
+          >
+            Chargement…
+          </div>
+          <div
+            v-else-if="!csPriceHistoryChart"
+            class="text-caption py-6 text-center"
+            style="color: rgba(255, 255, 255, 0.4)"
+          >
+            Pas assez de données.
+          </div>
+          <div v-else class="price-chart-wrapper">
+            <svg
+              :viewBox="'0 0 ' + csPriceHistoryChart.W + ' ' + csPriceHistoryChart.H"
+              class="price-chart"
+              @mouseleave="csPriceHistoryHover = null"
+            >
+              <defs>
+                <linearGradient
+                  :id="'cs-pchart-grad-' + selectedCsSkin.id"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="0%"
+                    :stop-color="getRarityColor(selectedCsSkin.rarity)"
+                    stop-opacity="0.35"
+                  />
+                  <stop
+                    offset="100%"
+                    :stop-color="getRarityColor(selectedCsSkin.rarity)"
+                    stop-opacity="0"
+                  />
+                </linearGradient>
+              </defs>
+              <path
+                :d="csPriceHistoryChart.areaPath"
+                :fill="'url(#cs-pchart-grad-' + selectedCsSkin.id + ')'"
+              />
+              <path
+                :d="csPriceHistoryChart.linePath"
+                fill="none"
+                :stroke="getRarityColor(selectedCsSkin.rarity)"
+                stroke-width="1.5"
+                stroke-linejoin="round"
+              />
+              <circle
+                v-for="(c, i) in csPriceHistoryChart.coords"
+                :key="i"
+                :cx="c.x"
+                :cy="c.y"
+                :r="csPriceHistoryHover === i ? 3 : 1.5"
+                :fill="getRarityColor(selectedCsSkin.rarity)"
+                @mouseenter="csPriceHistoryHover = i"
+              />
+            </svg>
+            <div
+              class="d-flex justify-space-between px-1 mt-1"
+              style="font-size: 10px; color: rgba(255, 255, 255, 0.4)"
+            >
+              <span
+                v-if="
+                  csPriceHistoryHover !== null && csPriceHistoryChart.coords[csPriceHistoryHover]
+                "
+              >
+                {{ formatHistoryDate(csPriceHistoryChart.coords[csPriceHistoryHover].createdAt) }}
+                —
+                <span style="color: rgba(255, 255, 255, 0.8)">{{
+                  formatCoins(csPriceHistoryChart.coords[csPriceHistoryHover].price)
+                }}</span>
+              </span>
+              <template v-else>
+                <span>min {{ formatCoins(csPriceHistoryChart.yMin) }}</span>
+                <span>max {{ formatCoins(csPriceHistoryChart.yMax) }}</span>
+              </template>
+            </div>
+          </div>
+        </div>
       </v-card-item>
 
       <v-divider></v-divider>
 
-      <v-card-actions v-if="isOwnProfile" class="pa-4 d-flex ga-2">
+      <v-card-actions
+        v-if="isOwnProfile && !cs_loadout.includes(selectedCsSkin)"
+        class="pa-4 d-flex ga-2"
+      >
         <v-btn
           variant="tonal"
           color="secondary"
@@ -1515,11 +1660,17 @@ export default {
           FlopoMarket
         </v-btn>
       </v-card-actions>
-      <v-card-actions v-else class="pa-4">
+      <v-card-actions v-else class="pa-4 d-flex ga-2">
         <v-spacer />
-        <v-btn variant="tonal" color="secondary" rounded="lg" @click="csSkinDetailsDialog = false"
-          >Fermer</v-btn
+        <v-btn
+          class="w-33"
+          variant="tonal"
+          color="secondary"
+          rounded="lg"
+          @click="csSkinDetailsDialog = false"
         >
+          Fermer
+        </v-btn>
         <v-spacer />
       </v-card-actions>
     </v-card>
@@ -1904,5 +2055,20 @@ export default {
   pointer-events: none;
   z-index: 0;
   border-radius: 50%;
+}
+
+.price-chart-wrapper {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 6px;
+}
+.price-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.price-chart circle {
+  cursor: crosshair;
+  transition: r 0.1s;
 }
 </style>

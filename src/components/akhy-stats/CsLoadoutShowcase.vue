@@ -14,6 +14,7 @@ export default {
     featuredSkins: { type: Array, default: () => [] },
     isOwnProfile: { type: Boolean, default: false },
   },
+  emits: ['skin-clicked'],
   computed: {
     SIDES: () => SIDES,
     SIDE_LABELS: () => SIDE_LABELS,
@@ -102,6 +103,7 @@ export default {
                     ? { borderColor: getRarityColor(equippedBySlot[slot.id].rarity) }
                     : {}
                 "
+                @click="equippedBySlot[slot.id] && $emit('skin-clicked', equippedBySlot[slot.id])"
               >
                 <template v-if="equippedBySlot[slot.id]">
                   <v-icon
@@ -209,6 +211,14 @@ export default {
 
 .weapon-slot.equipped {
   border-width: 1px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+
+.weapon-slot.equipped:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .weapon-slot.empty {

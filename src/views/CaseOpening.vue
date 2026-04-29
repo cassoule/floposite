@@ -38,6 +38,8 @@ export default {
       skipAnimation: false, // For testing purposes
 
       CS_CASE_PRICE: 250,
+      cases: null,
+      caseColor: null,
     }
   },
   computed: {
@@ -67,6 +69,7 @@ export default {
       console.log(e)
       this.$router.push('/')
     }
+    await this.fetchCases()
     window.addEventListener('resize', this.updatePosition)
   },
   beforeUnmount() {
@@ -74,10 +77,18 @@ export default {
   },
   methods: {
     getRarityColor,
-    async openCase() {
+    async fetchCases() {
+      try {
+        const response = await flapi.get('/cs-cases')
+        this.cases = response.data
+      } catch (e) {
+        console.error('Failed to fetch cases:', e)
+      }
+    },
+    async openCase(cs_case) {
       this.loading = true
       try {
-        const response = await flapi.post('/open-cs-case')
+        const response = await flapi.post('/open-cs-case', { caseId: cs_case.id })
         // Refresh user coins
         try {
           const userResp = await flapi.get('/user/' + this.discordId)
@@ -90,6 +101,7 @@ export default {
         this.resultSkin = response.data.skin
         this.rouletteSkins = response.data.rouletteSkins
         this.resultIndex = response.data.resultIndex
+        this.caseColor = cs_case.color
 
         if (this.skipAnimation) {
           this.skinResultDialog = true
@@ -223,7 +235,13 @@ export default {
           z-index: 10;
         "
       ></v-switch>
-      <v-card color="#1A1A1A" rounded="xl" class="px-0" style="min-width: 280px; max-width: 400px">
+      <v-card
+        v-if="!cases"
+        color="#1A1A1A"
+        rounded="xl"
+        class="px-0"
+        style="min-width: 280px; max-width: 400px"
+      >
         <v-card-item class="px-4 py-4">
           <div
             rounded="lg"
@@ -248,7 +266,7 @@ export default {
                 user-select: none;
               "
             >
-              CS2
+              <v-progress-circular indeterminate></v-progress-circular>
             </div>
             <div
               style="
@@ -261,8 +279,8 @@ export default {
             ></div>
           </div>
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4">CS2 Case</h2>
-            <p class="text-secondary">{{ CS_CASE_PRICE }}&nbsp;Coins</p>
+            <h2 class="mr-4">Chargement...</h2>
+            <p class="text-secondary">-&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
@@ -272,7 +290,7 @@ export default {
             color="primary"
             rounded="lg"
             :disabled="user?.coins < CS_CASE_PRICE || loading"
-            @click="openCase"
+            @click=""
           >
             Ouvrir
           </v-btn>
@@ -280,9 +298,10 @@ export default {
       </v-card>
 
       <v-card
+        v-for="cs_case in cases"
+        :key="cs_case.id"
         color="#1A1A1A"
         rounded="xl"
-        variant="tonal"
         class="px-0"
         style="min-width: 280px; max-width: 400px"
       >
@@ -293,13 +312,13 @@ export default {
               width: 100%;
               height: 180px;
               border-radius: 12px;
-              background: radial-gradient(circle at 50% 120%, #dddddd22 0%, #1a1a1a22 70%);
               display: flex;
               align-items: center;
               justify-content: center;
               position: relative;
               overflow: hidden;
             "
+            :style="`background: radial-gradient(circle at 50% 120%, ${cs_case.color} 0%, #1a1a1a 70%)`"
           >
             <div
               style="
@@ -310,15 +329,29 @@ export default {
                 user-select: none;
               "
             >
-              ...
+              {{ cs_case.name.split(' ')[0] }}
             </div>
+            <div
+              style="position: absolute; bottom: 10px; width: 60%; height: 2px"
+              :style="`background: linear-gradient(to right, transparent, ${cs_case.color}, transparent)`"
+            ></div>
           </div>
           <div class="d-flex justify-space-between align-baseline w-100 flex-wrap mt-3">
-            <h2 class="mr-4">Bientôt disponible</h2>
+            <h2 class="mr-4">{{ cs_case.name }}</h2>
+            <p class="text-secondary">{{ cs_case.price }}&nbsp;Coins</p>
           </div>
         </v-card-item>
         <v-card-item class="pb-3">
-          <v-btn disabled block :loading="loading" color="primary" rounded="lg"> ... </v-btn>
+          <v-btn
+            :disabled="user?.coins < cs_case.price || loading"
+            block
+            :loading="loading"
+            color="primary"
+            rounded="lg"
+            @click="openCase(cs_case)"
+          >
+            Ouvrir
+          </v-btn>
         </v-card-item>
       </v-card>
     </v-main>
@@ -338,7 +371,7 @@ export default {
       color="#1A1A1A"
       rounded="xl"
       class="w-100 px-0"
-      style="box-shadow: inset 0 0 10px 2px #4b69ff"
+      :style="`box-shadow: inset 0 0 10px 2px ${this.caseColor}`"
     >
       <v-card-item class="px-0">
         <div ref="rouletteContainer" class="roulette-container">
@@ -368,6 +401,11 @@ export default {
                 loading="eager"
                 decoding="async"
                 draggable="false"
+                :style="
+                  skin.rarity === 'Extraordinary' || skin.rarity === 'Covert'
+                    ? `filter: contrast(0%) brightness(0%) drop-shadow(0 0 5px ${getRarityColor(skin.rarity)}77)`
+                    : ''
+                "
               />
               <div
                 class="skin-card-bg"
