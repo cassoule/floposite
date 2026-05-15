@@ -23,6 +23,7 @@ import TradeUp from '../views/TradeUp.vue'
 import Inventory from '../views/Inventory.vue'
 import Sicbo from '../views/SicboRoom.vue'
 import Loadout from '../views/Loadout.vue'
+import Crash from '../views/CrashRoom.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -50,6 +51,7 @@ const routes = [
   { path: '/cgv', component: CGV },
   { path: '/privacy', component: Privacy },
   { path: '/sicbo', component: Sicbo },
+  {path: '/crash', component: Crash}
 ]
 
 const router = createRouter({

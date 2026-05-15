@@ -270,6 +270,13 @@ export default {
           class: 'ttt-action-card',
           chips: ['1v1', 'Elo'],
         },
+        {
+          name: 'Crash',
+          description: 'Multiplie tes FlopoCoins en te retirant avant le crash !',
+          route: 'crash',
+          class: 'crash-action-card',
+          chips: ['Multi', 'Coins'],
+        },
       ],
     }
   },
@@ -1027,6 +1034,11 @@ button:disabled {
 .sicbo-action-card::after {
   background: url('/game_illu_sicbo.png') no-repeat center center;
   background-size: 50% auto;
+}
+
+.crash-action-card::after {
+  background: url('/game_illu_crash.png') no-repeat center center;
+  background-size: 40% auto;
 }
 
 .disabled-card::after {
