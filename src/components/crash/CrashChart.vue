@@ -58,6 +58,7 @@
 <script>
 import { formatAmount } from '@/utils/format.js'
 
+// Curve follows e^(LAMBDA * t) — controls how fast the multiplier grows
 const LAMBDA = 0.08
 const CURVE_MAX_T = 10
 const CURVE_INIT_MAX_Y = 2.0
@@ -77,20 +78,18 @@ export default {
     planeStyle: { left: '0px', top: '0px' },
     planeFallback: false,
     avatarCache: {},
-
     drawnAvatars: [],
     hoveredPlayer: null,
     tooltipStyle: { top: '0px', left: '0px' },
   }),
   computed: {
-    // Calcule la couleur du texte et l'ombre en temps réel
     multiplierStyle() {
       const s = this.room?.status
       if (s === 'crashed' || s === 'payout') {
-        return { color: '#e24b4a' } // Rouge crash
+        return { color: '#e24b4a' }
       }
       if (s === 'betting') {
-        return { color: 'rgba(255, 255, 255, 0.4)' } // Gris en attente
+        return { color: 'rgba(255, 255, 255, 0.4)' }
       }
       if (s === 'flying') {
         const { r, g, b } = this.getInterpolatedColor(this.displayMultiplier)
@@ -162,6 +161,7 @@ export default {
     },
     'room.currentMultiplier'(val) {
       this.serverMultiplier = val
+      // If local time drifts more than 30ms from server, nudge flyStartTime to re-sync
       if (this.room?.status === 'flying' && val > 1.0) {
         const expectedElapsed = (Math.log(val) / LAMBDA) * 1000
         const actualElapsed = performance.now() - this.flyStartTime
@@ -172,10 +172,9 @@ export default {
   },
   mounted() {
     this.$nextTick(() => {
-      // 1. On initialise le canvas d'abord
       this.initCanvas()
 
-      // 2. Ensuite seulement on vérifie le statut et on dessine
+      // If we mount mid-round, back-calculate flyStartTime so the curve starts at the right spot
       if (this.room?.status === 'flying') {
         const m = this.room.currentMultiplier ?? 1.0
         this.serverMultiplier = m
@@ -186,7 +185,6 @@ export default {
       }
     })
 
-    // L'event listener peut rester à l'extérieur (ou dedans, ça ne change pas grand chose ici)
     window.addEventListener(
       'resize',
       (this._onResize = () => {
@@ -202,25 +200,22 @@ export default {
   methods: {
     formatAmount,
 
+    // Color gradient: pink at 1x → blue at 5x → gold at 10x+
     getInterpolatedColor(h) {
-      // Pour 10x et plus, on retourne directement le Gold de ta maquette
-      if (h >= 10) return { r: 255, g: 215, b: 0 } // #FFD700 (Gold)
+      if (h >= 10) return { r: 255, g: 215, b: 0 }
 
-      // On commence à 1.0x pour avoir du rouge au tout début
       const minLog = Math.log(1.0)
       const maxLog = Math.log(10)
       const currentLog = Math.log(Math.max(1.0, h))
       const percent = Math.max(0, Math.min(1, (currentLog - minLog) / (maxLog - minLog)))
 
-      // NOUVEAU DÉGRADÉ : Rouge -> Bleu -> Or (basé sur ton image)
       const stops = [
-        { p: 0, r: 237, g: 97, b: 227 }, // 0%   : Rouge (#FF0000)
-        { p: 0.5, r: 88, g: 101, b: 242 }, // 50%  : Bleu (#5865F2)
-        { p: 1, r: 255, g: 215, b: 0 }, // 100% : Or (#FFD700)
+        { p: 0,   r: 237, g: 97,  b: 227 }, // pink
+        { p: 0.5, r: 88,  g: 101, b: 242 }, // blue
+        { p: 1,   r: 255, g: 215, b: 0   }, // gold
       ]
 
-      let c1 = stops[0],
-        c2 = stops[stops.length - 1]
+      let c1 = stops[0], c2 = stops[stops.length - 1]
       for (let i = 0; i < stops.length - 1; i++) {
         if (percent >= stops[i].p && percent <= stops[i + 1].p) {
           c1 = stops[i]
@@ -240,11 +235,9 @@ export default {
     },
 
     getHistoryGradient(h) {
-      // Pour l'historique : si le crash est < 1.5, on force le rouge sombre
       if (h < 1.5) return 'linear-gradient(135deg, #fa2524 0%, #b31b1b 100%)'
 
       const { r, g, b } = this.getInterpolatedColor(h)
-      // Variante plus sombre pour le gradient (effet bouton)
       const r2 = Math.max(0, r - 40)
       const g2 = Math.max(0, g - 40)
       const b2 = Math.max(0, b - 40)
@@ -258,6 +251,8 @@ export default {
       this.ctx = canvas.getContext('2d')
       this.resizeCanvas()
     },
+
+    // Scale canvas to device pixel ratio to avoid blurry rendering on retina screens
     resizeCanvas() {
       const canvas = this.$refs.crashCanvas
       const area = this.$refs.chartArea
@@ -342,7 +337,6 @@ export default {
       const currentY = isBetting ? 1.0 : (this.displayMultiplier ?? 1.0)
       const currentT = this.currentT || 0
 
-      // Génération dynamique des couleurs de la courbe
       let lineColor, fillColorTop, fillColorBot
       if (isCrashed) {
         lineColor = '#e24b4a'
@@ -367,9 +361,12 @@ export default {
       const PAD_BOTTOM = 28
       const plotW = W - PAD_LEFT - PAD_RIGHT
       const plotH = H - PAD_TOP - PAD_BOTTOM
+
+      // Axes expand as the multiplier grows
       const maxT = Math.max(CURVE_MAX_T, currentT)
       const minY = CURVE_MIN_Y
       const maxY = Math.max(CURVE_INIT_MAX_Y, currentY * 1.25)
+
       const toPixel = (t, y) => ({
         x: PAD_LEFT + (t / maxT) * plotW,
         y: PAD_TOP + plotH - ((y - minY) / (maxY - minY)) * plotH,
@@ -398,10 +395,12 @@ export default {
         ctx.beginPath()
         ctx.rect(PAD_LEFT, PAD_TOP, plotW + PAD_RIGHT, plotH)
         ctx.clip()
+
         const grad = ctx.createLinearGradient(0, PAD_TOP, 0, PAD_TOP + plotH)
         grad.addColorStop(0, fillColorTop)
         grad.addColorStop(1, fillColorBot)
 
+        // 80 segments gives a smooth curve without being too expensive
         const segments = 80
         const first = toPixel(0, 1.0)
         const lastPx = toPixel(currentT, currentY)
@@ -444,6 +443,7 @@ export default {
               const pos = toPixel(tCashout, cashoutMulti)
               const radius = 12
 
+              // Store position for hover hit-detection in onMouseMove
               this.drawnAvatars.push({
                 x: pos.x,
                 y: pos.y,
@@ -474,8 +474,6 @@ export default {
                 ctx.save()
                 ctx.beginPath()
                 ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
-
-                // Petit bonus : la bordure des avatars est de la couleur de leur retrait exact
                 const { r: cr, g: cg, b: cb } = this.getInterpolatedColor(cashoutMulti)
                 ctx.strokeStyle = `rgb(${cr}, ${cg}, ${cb})`
                 ctx.lineWidth = 2
@@ -497,6 +495,8 @@ export default {
         }
       }
     },
+
+    // Angle the plane to match the slope of the curve at the current point
     updatePlanePositionCanvas(lastPx, currentT, toPixel) {
       const isCrashed = this.room?.status === 'crashed' || this.room?.status === 'payout'
       const deltaT = 0.02
@@ -520,6 +520,7 @@ export default {
         }
       }
     },
+
     tiltPlaneCrash() {
       this.planeStyle = {
         ...this.planeStyle,
@@ -527,6 +528,8 @@ export default {
         transition: 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
       }
     },
+
+    // Rounds tick values to clean numbers so the Y axis doesn't look ugly
     niceYTicks(min, max, targetCount) {
       const range = max - min
       const rawStep = range / targetCount
@@ -542,6 +545,7 @@ export default {
       }
       return ticks
     },
+
     onPlaneImgError() {
       this.planeFallback = true
     },
@@ -639,7 +643,7 @@ export default {
   font-weight: 500;
   transition:
     color 0.1s linear,
-    text-shadow 0.1s linear; /* Transition plus rapide car les valeurs changent par JS à chaque frame */
+    text-shadow 0.1s linear;
   line-height: 1;
   position: relative;
 }
