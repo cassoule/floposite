@@ -218,14 +218,14 @@ export default {
           description: 'Tente de gagner quelques FlopoCoins au solitaire.',
           route: 'solitaire',
           class: 'sol-action-card',
-          chips: ['Solo', 'Coins'],
+          chips: ['Daily', 'Solo', 'Coins'],
         },
         {
           name: 'Sudoku',
           description: 'Gagne des FlopoCoins en complétant des grilles de sudoku.',
           route: 'sudoku',
           class: 'sudoku-action-card',
-          chips: ['Solo', 'Coins'],
+          chips: ['Daily', 'Solo', 'Coins'],
         },
         {
           name: 'Blackjack',
@@ -241,6 +241,13 @@ export default {
           route: 'sicbo',
           class: 'sicbo-action-card',
           chips: ['Multi', 'Coins'],
+        },
+        {
+          name: 'Crash',
+          description: 'Multiplie tes FlopoCoins en te retirant avant le crash !',
+          route: 'crash',
+          class: 'crash-action-card',
+          chips: ['New', 'Multi', 'Coins'],
         },
         {
           name: 'Flopoker',
@@ -1027,6 +1034,11 @@ button:disabled {
 .sicbo-action-card::after {
   background: url('/game_illu_sicbo.png') no-repeat center center;
   background-size: 50% auto;
+}
+
+.crash-action-card::after {
+  background: url('/game_illu_crash.png') no-repeat center center;
+  background-size: 40% auto;
 }
 
 .disabled-card::after {

@@ -40,7 +40,15 @@ export default {
     <v-card-title>
       {{ game.name }}
       <v-chip-group style="float: right; pointer-events: none">
-        <v-chip v-for="chip in game.chips" :key="chip" size="small">{{ chip }}</v-chip>
+        <v-chip
+          v-for="chip in game.chips"
+          :key="chip"
+          size="small"
+          :class="chip === 'Daily' ? 'daily-chip' : ''"
+          :variant="chip === 'New' ? 'flat' : 'tonal'"
+          :base-color="chip === 'New' ? 'red' : ''"
+          >{{ chip }}</v-chip
+        >
       </v-chip-group>
     </v-card-title>
     <v-card-subtitle class="mb-4" style="text-wrap: wrap; white-space: normal; flex-grow: 1">

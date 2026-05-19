@@ -13,6 +13,7 @@
           class="mb-0 pb-0 text-secondary"
           selected-class="text-white"
         >
+          <v-chip size="small" :value="'Daily'" filter class="daily-chip">Daily</v-chip>
           <v-chip size="small" :value="'1v1'" filter>1v1</v-chip>
           <v-chip size="small" :value="'Multi'" filter>Multi</v-chip>
           <v-chip size="small" :value="'Solo'" filter>Solo</v-chip>
