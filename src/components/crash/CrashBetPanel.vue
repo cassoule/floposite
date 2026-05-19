@@ -54,7 +54,7 @@
       v-else-if="room.status === 'betting' && isInRoom && me?.inRound"
       class="d-flex justify-center align-center pt-4"
     >
-      <v-chip color="primary" variant="tonal" size="large">
+      <v-chip color="white" variant="tonal" size="large">
         Mise de {{ formatAmount(me.betAmount) }} Flopos placée
         <span v-if="me.autoCashout">
           &nbsp;·&nbsp;Auto {{ me.autoCashout.toFixed(2) }}x
