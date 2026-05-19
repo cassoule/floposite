@@ -16,7 +16,7 @@
  */
 export function formatAmount(amount) {
   if (amount === null || amount === undefined) return '0'
-  const num = Number(amount)
+  const num = Number(amount).toFixed()
   if (Number.isNaN(num)) return '0'
 
   let value = num

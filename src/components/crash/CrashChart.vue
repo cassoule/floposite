@@ -210,12 +210,13 @@ export default {
       const percent = Math.max(0, Math.min(1, (currentLog - minLog) / (maxLog - minLog)))
 
       const stops = [
-        { p: 0,   r: 237, g: 97,  b: 227 }, // pink
-        { p: 0.5, r: 88,  g: 101, b: 242 }, // blue
-        { p: 1,   r: 255, g: 215, b: 0   }, // gold
+        { p: 0, r: 237, g: 97, b: 227 }, // pink
+        { p: 0.5, r: 88, g: 101, b: 242 }, // blue
+        { p: 1, r: 255, g: 215, b: 0 }, // gold
       ]
 
-      let c1 = stops[0], c2 = stops[stops.length - 1]
+      let c1 = stops[0],
+        c2 = stops[stops.length - 1]
       for (let i = 0; i < stops.length - 1; i++) {
         if (percent >= stops[i].p && percent <= stops[i + 1].p) {
           c1 = stops[i]

@@ -51,7 +51,7 @@ const routes = [
   { path: '/cgv', component: CGV },
   { path: '/privacy', component: Privacy },
   { path: '/sicbo', component: Sicbo },
-  {path: '/crash', component: Crash}
+  { path: '/crash', component: Crash },
 ]
 
 const router = createRouter({

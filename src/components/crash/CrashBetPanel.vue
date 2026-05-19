@@ -56,9 +56,7 @@
     >
       <v-chip color="white" variant="tonal" size="large">
         Mise de {{ formatAmount(me.betAmount) }} Flopos placée
-        <span v-if="me.autoCashout">
-          &nbsp;·&nbsp;Auto {{ me.autoCashout.toFixed(2) }}x
-        </span>
+        <span v-if="me.autoCashout"> &nbsp;·&nbsp;Auto {{ me.autoCashout.toFixed(2) }}x </span>
       </v-chip>
     </div>
 
@@ -69,12 +67,13 @@
       <v-btn
         color="primary"
         variant="flat"
-        size="large"
         rounded="lg"
-        class="px-10"
+        class="px-10 text-none"
         @click="$emit('cashout')"
       >
-         Encaisser — {{ formatAmount((me.betAmount * displayMultiplier).toFixed(2)) }} Flopos
+        Encaisser&nbsp;·
+        {{ formatAmount((me.betAmount * displayMultiplier).toFixed(2)) }}
+        Flopos
       </v-btn>
     </div>
 

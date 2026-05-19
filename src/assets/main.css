@@ -70,3 +70,7 @@ a,
 .v-expansion-panel {
   padding: 0 !important;
 }
+
+.daily-chip {
+  background: radial-gradient(#5218f2 90%, transparent 20%) !important;
+}
