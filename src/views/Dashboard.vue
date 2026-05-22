@@ -228,6 +228,14 @@ export default {
           chips: ['Daily', 'Solo', 'Coins'],
         },
         {
+          name: 'Mots Fléchés',
+          description:
+            'Teste ta culture générale et gagne des FlopoCoins en complétant la grille du jour.',
+          route: 'mots-fleches',
+          class: 'mots-fleches-action-card',
+          chips: ['Daily', 'Solo', 'Coins'],
+        },
+        {
           name: 'Blackjack',
           description: 'Mise tes FlopoCoins au Blackjack.',
           route: 'blackjack',
@@ -1029,6 +1037,10 @@ button:disabled {
 .sudoku-action-card::after {
   background: url('/game_illu_sudoku.png') no-repeat center center;
   background-size: 50% auto;
+}
+.mots-fleches-action-card::after {
+  background: url('/game_illu_mots_fleches.png') no-repeat center center;
+  background-size: 45% auto;
 }
 
 .sicbo-action-card::after {

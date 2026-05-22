@@ -67,7 +67,9 @@
             ? user?.solitaireOTDRank
             : game.name === 'Sudoku'
               ? user?.sudokuOTDRank
-              : null
+              : game.name === 'Mots Fléchés'
+                ? user?.motsFlechesOTDRank
+                : null
         "
       ></game-card>
     </div>

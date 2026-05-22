@@ -146,19 +146,22 @@
                   </v-btn>
                 </v-card-actions>
               </v-card>
-
+              <v-divider vertical class="d-none d-sm-flex" />
+              <v-divider class="d-flex d-sm-none" />
               <v-card
                 class="d-flex flex-column"
                 variant="text"
                 color="white"
-                style="flex-basis: 75%; gap: 1em"
+                style="flex-basis: 50%; gap: 0.5em"
               >
-                <v-card-title>
+                <v-card-title class="pb-0 mb-0">
                   <v-icon class="mdi mdi-archive-outline" />
                   Archives
                 </v-card-title>
-                <v-card-text>
-                  <p>Rejouez une grille précédente (sans scoring).</p>
+                <v-card-text
+                  class="pt-0 mt-0"
+                  style="max-height: 190px; overflow-y: auto; scrollbar-width: auto"
+                >
                   <v-list
                     v-if="archive.length"
                     density="compact"
@@ -166,10 +169,13 @@
                     bg-color="transparent"
                   >
                     <v-list-item
-                      v-for="entry in archive"
+                      v-for="entry in archive.filter(
+                        (e) => e.date !== new Date().toISOString().slice(0, 10),
+                      )"
                       :key="entry.date"
                       :title="entry.date"
                       :subtitle="`${entry.wordCount} mots · ${entry.rows}×${entry.cols}${entry.hasPlayed ? ' · joué' : ''}`"
+                      rounded="lg"
                       @click="handleStartArchive(entry.date)"
                     >
                       <template #append>
@@ -180,27 +186,97 @@
                   <p v-else class="text-disabled">Aucune grille archivée pour l'instant.</p>
                 </v-card-text>
               </v-card>
-
-              <v-card
-                v-if="rankings && rankings.length"
-                class="d-flex flex-column"
-                variant="text"
-                color="white"
-                style="flex-basis: 75%; gap: 1em"
-              >
-                <v-card-title>Classement du jour</v-card-title>
-                <v-card-text>
-                  <v-list density="compact" bg-color="transparent">
-                    <v-list-item
-                      v-for="(s, i) in rankings"
-                      :key="s.id"
-                      :title="`${i + 1}. ${s.user?.globalName || s.user?.username || '???'}`"
-                      :subtitle="`score ${s.score} · ${s.cluesSolved} mots · ${formatFinishTime(s.time)}`"
-                    />
-                  </v-list>
-                </v-card-text>
-              </v-card>
             </div>
+          </v-alert>
+        </div>
+
+        <div v-if="!gameState" class="my-16">
+          <v-alert variant="tonal" color="secondary" rounded="xl">
+            <v-card
+              v-if="rankings && rankings.length"
+              class="d-flex flex-column"
+              variant="text"
+              color="secondary"
+              rounded="xl"
+            >
+              <v-card-title>Classement du jour</v-card-title>
+              <v-card-text>
+                <v-row v-if="rankings && rankings.length > 0" class="text-secondary">
+                  <v-col cols="6" class="text-right"> Score </v-col>
+                  <v-col cols="3" class="text-right"> Mots </v-col>
+                  <v-col cols="3" class="text-right"> Temps </v-col>
+                </v-row>
+                <v-row
+                  v-for="(stats, index) in rankings"
+                  :key="stats.id"
+                  class="text-white font-weight-bolder"
+                  style="border-radius: 10px"
+                  :style="
+                    stats.userId === userId
+                      ? 'background: radial-gradient(circle at -100% -300%,#5865f2,transparent 100%)'
+                      : ''
+                  "
+                >
+                  <v-col
+                    cols="12"
+                    sm="3"
+                    class=""
+                    style="
+                      display: flex;
+                      overflow: hidden;
+                      text-wrap: nowrap;
+                      text-overflow: ellipsis;
+                      gap: 0.7em;
+                      align-items: center;
+                    "
+                    :title="'@' + stats.user.username"
+                  >
+                    <v-img
+                      :src="stats.user.avatarUrl"
+                      color="transparent"
+                      style="border-radius: 50%; min-width: 30px; max-width: 30px; height: 30px"
+                    />
+                    <p>@{{ stats.user.username }}</p>
+                  </v-col>
+                  <v-col cols="12" sm="0" order-sm="12" class="py-0 d-sm-none">
+                    <v-divider
+                      color="#ddd"
+                      opacity=".3"
+                      class="mx-1"
+                      thickness="2"
+                      style="border-radius: 50px"
+                    ></v-divider>
+                  </v-col>
+                  <v-col cols="3" offset="3" offset-sm="0" class="d-flex align-center justify-end">
+                    {{ stats.score }}
+                  </v-col>
+                  <v-col cols="3" class="d-flex align-center justify-end">
+                    {{ stats.cluesSolved }}
+                  </v-col>
+                  <v-col cols="3" class="d-flex align-center justify-end">
+                    {{ formatFinishTime(stats.time) }}
+                  </v-col>
+                </v-row>
+                <v-row
+                  v-if="!rankings || rankings.length === 0"
+                  class="mt-4 mb-1 text-white font-weight-bolder"
+                >
+                  <v-col
+                    cols="12"
+                    class="d-flex flex-column justify-center align-center ga-6"
+                    style="
+                      width: 25%;
+                      overflow: hidden;
+                      text-wrap: nowrap;
+                      text-overflow: ellipsis;
+                      text-align: center;
+                    "
+                  >
+                    Personne n'a complété la grille aujourd'hui
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
           </v-alert>
         </div>
       </div>
@@ -220,7 +296,7 @@
       </v-dialog>
 
       <v-dialog v-model="errorDialog" max-width="450">
-        <v-card rounded="xl">
+        <v-card rounded="lg">
           <v-card-title>Erreurs</v-card-title>
           <v-card-text>
             {{ errors.length }} case(s) incorrecte(s). Les erreurs sont surlignées en rouge.
@@ -650,13 +726,13 @@ export default {
   display: grid;
   gap: 1px;
   background: #444;
-  border: 3px solid #888;
+  border: 2px solid #888;
   border-radius: 6px;
   overflow: hidden;
   width: 100%;
 }
 .mf-cell {
-  background: #1e1e1e;
+  background: #5218f6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -674,7 +750,7 @@ export default {
   background: #111;
 }
 .mf-def {
-  background: #2b2b2b;
+  background: #5218f644;
   font-size: clamp(0.4rem, 0.9vw, 0.6rem);
   padding: 2px;
   line-height: normal;
@@ -705,9 +781,9 @@ export default {
   text-align: left;
 }
 .mf-def-line + .mf-def-line {
-  border-top: 1px solid #444;
-  padding-top: 3px;
-  margin-top: 3px;
+  border-top: 1px solid #aaa;
+  padding-top: 2px;
+  margin-top: 1px;
 }
 .mf-input-wrap {
   background: #fefefe;
@@ -746,24 +822,24 @@ export default {
 }
 /* → : def on the left, word goes right → triangle on LEFT edge, pointing right */
 .mf-arrow.arrow-right {
-  left: 1px;
+  left: 0px;
   top: 50%;
   width: 0;
   height: 0;
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
-  border-left: 7px solid #5218f6;
+  border-left: 7px solid #483874;
   transform: translateY(-50%);
 }
 /* ↓ : def above, word goes down → triangle on TOP edge, pointing down */
 .mf-arrow.arrow-down {
-  top: 1px;
+  top: 0px;
   left: 50%;
   width: 0;
   height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 7px solid #5218f6;
+  border-top: 7px solid #483874;
   transform: translateX(-50%);
 }
 /* Bent arrow base: 14×14 corner indicator with a segment + a triangle head */
@@ -778,7 +854,7 @@ export default {
 .mf-arrow.arrow-bent-v::before {
   content: '';
   position: absolute;
-  background: #5218f6;
+  background: #483874;
 }
 .mf-arrow.arrow-bent-h::after,
 .mf-arrow.arrow-bent-v::after {
@@ -793,19 +869,19 @@ export default {
   width: 1px;
   height: 9px;
   left: 4px;
-  top: 0;
+  top: -1px;
 }
 .mf-arrow.arrow-bent-h::after {
   left: 4px;
   top: 5px;
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
-  border-left: 7px solid #5218f6;
+  border-left: 7px solid #483874;
 }
 /* ↱ : def is BELOW this input cell → flip vertically and anchor to bottom */
 .mf-arrow.arrow-bent-h.arrow-bent-up {
   top: auto;
-  bottom: 1px;
+  bottom: 0px;
   transform: scaleY(-1);
 }
 /* ⤵ : def is to the LEFT of this input cell, word goes down.
@@ -813,7 +889,7 @@ export default {
 .mf-arrow.arrow-bent-v::before {
   width: 9px;
   height: 2px;
-  left: 0;
+  left: -1px;
   top: 3px;
 }
 .mf-arrow.arrow-bent-v::after {
@@ -821,16 +897,16 @@ export default {
   top: 3px;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 7px solid #5218f6;
+  border-top: 7px solid #483874;
 }
 /* ⤓ : def is to the RIGHT of this input cell → flip horizontally, anchor right */
 .mf-arrow.arrow-bent-v.arrow-bent-mirror {
   left: auto;
-  right: 1px;
+  right: 0px;
   transform: scaleX(-1);
 }
 .mf-input {
-  background: #fefefe;
+  background: #fff;
   color: #111;
   caret-color: #1976d2;
   font-weight: 600;
@@ -862,13 +938,18 @@ export default {
   padding: 1em;
 }
 .back-btn {
-  position: fixed;
-  bottom: 16px;
-  left: 16px;
-  z-index: 10;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  border-radius: 12px;
 }
 .menu {
   display: flex;
-  flex-direction: column;
+}
+
+@media (max-width: 730px) {
+  .menu {
+    flex-direction: column;
+  }
 }
 </style>
