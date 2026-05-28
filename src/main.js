@@ -10,6 +10,15 @@ import axios from 'axios'
 
 import App from './App.vue'
 import router from './router'
+import { registerMethod } from '@/services/loginMethods'
+import { FLAPI_BASE } from '@/services/flapi'
+
+// Register default login methods
+registerMethod({
+  id: 'discord',
+  src: '/discord.svg',
+  authUrl: FLAPI_BASE + '/auth/discord',
+})
 
 // Global axios interceptor: attach JWT token to every request
 axios.interceptors.request.use((config) => {

@@ -1,6 +1,6 @@
 <!-- Sudoku.vue -->
 <template>
-  <CoinsCounter />
+  <CoinsCounter v-if="userId" />
   <v-layout class="w-100 mt-16">
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="height: 130vh">
       <div class="w-100">
@@ -107,7 +107,7 @@
                 {{ n }}
               </v-btn>
             </div>
-            <div class="d-flex justify-center mt-4">
+            <div class="d-flex justify-center mt-4" style="gap: 0.5em">
               <v-btn
                 variant="flat"
                 color="primary"
@@ -297,6 +297,13 @@
         </div>
       </div>
 
+      <SaveScoreDialog
+        :visible="guestDialog"
+        :submissionToken="pendingSubmissionToken"
+        :finishTime="finishTime"
+        @close="guestDialog = false"
+      />
+
       <!-- Win dialog -->
       <v-dialog v-model="winDialog" class="modals" max-width="400" persistent>
         <v-card variant="flat" color="secondary" class="rounded-xl modal-card">
@@ -371,18 +378,22 @@
 import api from '../services/api'
 import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
+import SaveScoreDialog from '../components/SaveScoreDialog.vue'
 
 export default {
   name: 'Sudoku',
   components: {
     CoinsCounter,
+    SaveScoreDialog,
   },
   data() {
     return {
       gameState: null,
       userId: null,
+      gameId: null,
       isLoading: false,
       now: Date.now(),
+      pendingSubmissionToken: null,
 
       grid: Array(81).fill(null),
       givenCells: new Set(),
@@ -401,9 +412,11 @@ export default {
       ],
 
       winDialog: false,
+      guestDialog: false,
       finishTime: null,
       rankings: null,
 
+      clientStartTime: null,
       timerInterval: null,
       elapsedTime: 0,
     }
@@ -414,18 +427,20 @@ export default {
     },
   },
   async mounted() {
-    try {
-      this.userId = localStorage.getItem('discordId')
-      if (!this.userId) this.$router.push('/')
+    this.userId = localStorage.getItem('discordId')
 
-      this.initSocket()
+    try {
       this.isLoading = true
       await this.getRankings()
-      await this.fetchGameState(this.userId)
+      if (this.userId) {
+        this.initSocket()
+        await this.fetchGameState(this.userId)
+          await this.claimPendingSubmission();
+      }
       this.isLoading = false
     } catch (error) {
       console.error('Failed to load game state:', error)
-      if (!this.userId) this.$router.push('/')
+      this.isLoading = false
     }
   },
   beforeUnmount() {
@@ -455,6 +470,35 @@ export default {
       return String.fromCharCode('a'.charCodeAt(0) + num - 1)
     },
 
+    async claimPendingSubmission() {
+      const stored = localStorage.getItem('sudokuPendingSubmission')
+      if (!stored || !this.userId) return
+
+      let data
+      try {
+        data = JSON.parse(stored)
+      } catch (e) {
+        return
+      }
+
+      try {
+        // Adapte l'appel API selon ton service :
+        const response = await api.claimSudokuSubmission(data.token)
+        // ou si tu n'as pas cette fonction, utilise directement flapi :
+        // const response = await flapi.post('/sudoku/claim-submission', { submissionToken: data.token });
+
+        if (response.data.success) {
+          this.finishTime = response.data.time
+          this.winDialog = true // affiche la popup de victoire
+          localStorage.removeItem('sudokuPendingSubmission')
+        }
+      } catch (e) {
+        console.error('Failed to claim submission:', e)
+        // Token invalide ou expiré → on nettoie
+        localStorage.removeItem('sudokuPendingSubmission')
+      }
+    },
+
     initGrid(puzzle) {
       this.grid = Array(81).fill(null)
       this.givenCells = new Set()
@@ -473,11 +517,10 @@ export default {
 
     startTimer() {
       if (this.timerInterval) clearInterval(this.timerInterval)
+      this.clientStartTime = Date.now()
       this.elapsedTime = 0
       this.timerInterval = setInterval(() => {
-        if (this.gameState) {
-          this.elapsedTime = Date.now() - this.gameState.startTime
-        }
+        this.elapsedTime = Date.now() - this.clientStartTime
       }, 100)
     },
 
@@ -532,6 +575,7 @@ export default {
       try {
         const response = await api.startSudoku(this.difficulty)
         this.gameState = response.data.gameState
+        this.gameId = response.data.gameId
         this.initGrid(this.gameState.puzzle)
         this.startTimer()
         this.$nextTick(() => this.$refs.board?.focus())
@@ -545,6 +589,7 @@ export default {
       try {
         const response = await api.startSudokuSOTD()
         this.gameState = response.data.gameState
+        this.gameId = response.data.gameId
         this.initGrid(this.gameState.puzzle)
         this.startTimer()
         this.$nextTick(() => this.$refs.board?.focus())
@@ -555,15 +600,17 @@ export default {
 
     async handleReset() {
       if (this.timerInterval) clearInterval(this.timerInterval)
+      this.gameState = null
+      this.grid = Array(81).fill(null)
+      this.givenCells = new Set()
+      this.notes = Array.from({ length: 81 }, () => new Set())
+      this.errors = []
+      this.selectedCell = null
+      this.gameId = null
+      if (!this.userId) return
       await this.getRankings()
       try {
         await api.resetSudoku()
-        this.gameState = null
-        this.grid = Array(81).fill(null)
-        this.givenCells = new Set()
-        this.notes = Array.from({ length: 81 }, () => new Set())
-        this.errors = []
-        this.selectedCell = null
       } catch (error) {
         console.error('Failed to reset game:', error)
       }
@@ -573,6 +620,7 @@ export default {
       try {
         const response = await api.getSudokuState(this.userId)
         this.gameState = response?.data?.gameState
+        this.gameId = response?.data?.gameId
         if (this.gameState) {
           this.initGrid(this.gameState.puzzle)
           this.restoreProgress()
@@ -645,9 +693,10 @@ export default {
     },
 
     saveProgress() {
+      if (!this.gameId) return
       const grid = this.grid.map((cell) => (cell != null ? String(cell) : '-')).join('')
       const notes = this.notes.map((s) => [...s])
-      api.saveSudokuProgress(grid, notes).catch(() => {})
+      api.saveSudokuProgress(this.gameId, grid, notes).catch(() => {})
     },
 
     clearNotesForRelated(index, num) {
@@ -744,25 +793,28 @@ export default {
     async handleSubmit() {
       const gridString = this.grid.join('')
       this.isLoading = true
-
       try {
-        console.log(gridString)
-        const response = await api.submitSudoku(gridString)
-
+        const response = await api.submitSudoku(this.gameId, gridString, this.elapsedTime)
         if (response.data.valid) {
           this.finishTime = response.data.time
-          this.winDialog = true
           if (this.timerInterval) clearInterval(this.timerInterval)
+          if (!this.userId) {
+            this.pendingSubmissionToken = response.data.submissionToken
+            this.guestDialog = true
+          } else {
+            this.winDialog = true
+          }
         } else {
           this.errors = response.data.errors
           this.errorDialog = true
         }
       } catch (error) {
-        console.error('Failed to submit:', error)
+        /* ... */
       } finally {
         this.isLoading = false
       }
     },
+
   },
 }
 </script>

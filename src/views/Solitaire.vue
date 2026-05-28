@@ -1,6 +1,6 @@
 <!-- Solitaire.vue -->
 <template>
-  <CoinsCounter />
+  <CoinsCounter v-if="userId" />
   <v-layout class="w-100 mt-16">
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="height: 130vh">
       <div class="w-100">
@@ -66,7 +66,6 @@
                 type="wastePile"
                 :pile="gameState.wastePile"
                 @drag-start-from-pile="handleDragStart"
-                @auto-move-triggered="handleAutoMove"
               />
             </div>
             <div class="foundations">
@@ -90,7 +89,6 @@
               :pile="pile"
               @drag-start-from-pile="handleDragStart"
               @drop-on-pile="handleDrop"
-              @auto-move-triggered="handleAutoMove"
             />
           </div>
         </div>
@@ -379,6 +377,17 @@
           </v-card-text>
         </v-card>
       </v-dialog>
+
+      <!-- Dialog de sauvegarde pour invités -->
+      <SaveScoreDialog
+        v-if="guestDialog"
+        :visible="guestDialog"
+        game="solitaire"
+        :submissionToken="pendingSubmissionToken"
+        :finishTime="finishTime"
+        @close="guestDialog = false"
+      />
+
       <v-snackbar
         v-model="resetSnackbar"
         :timeout="2000"
@@ -408,32 +417,19 @@
 </template>
 
 <script>
-/* global localStorage, setInterval, clearInterval, Image */
+/* global localStorage, setInterval, clearInterval */
 import Pile from '../components/solitaire/Pile.vue'
 import api from '../services/api'
-import flapi from '@/services/flapi.js'
-import { getAllCardImagePaths } from '../utils/cardImages.js'
 import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
-
-function getRankValue(rank) {
-  if (rank === 'A') return 1
-  if (rank === 'T') return 10
-  if (rank === 'J') return 11
-  if (rank === 'Q') return 12
-  if (rank === 'K') return 13
-  return parseInt(rank, 10)
-}
-
-function getCardColor(suit) {
-  return suit === 'h' || suit === 'd' ? 'red' : 'black'
-}
+import SaveScoreDialog from '../components/SaveScoreDialog.vue'
 
 export default {
   name: 'Solitaire',
   components: {
     Pile,
     CoinsCounter,
+    SaveScoreDialog,
   },
   data() {
     return {
@@ -442,6 +438,9 @@ export default {
       userId: null,
       isLoading: false,
       now: Date.now(),
+
+      // Guest support
+      gameId: null,
 
       hardMode: false,
 
@@ -455,34 +454,36 @@ export default {
       resetVoteLoading: false,
       resetSnackbar: false,
 
-      avatars: {},
+      // Guest save support
+      guestDialog: false,
+      pendingSubmissionToken: null,
+      finishTime: 0,
     }
   },
   async mounted() {
-    // Fetch the initial game state when the component is created
     try {
       this.userId = localStorage.getItem('discordId')
-      if (!this.userId) this.$router.push('/')
+      // Pas de redirect pour les invités — ils peuvent jouer
+
+      await this.claimPendingSubmission()
 
       this.initSocket()
       this.isLoading = true
-      await this.preloadImages()
       await this.getRankings()
       await this.fetchResetVotes()
-      await this.fetchGameState(this.userId)
+      if (this.userId) {
+        await this.fetchGameState(this.userId)
+      }
       this.isLoading = false
-      //this.fetchAvatars()
       if (this.gameState?.isDone) {
         this.winDialog = true
       }
     } catch (error) {
       console.error('Failed to load game state:', error)
-      if (!this.userId) this.$router.push('/')
     }
   },
   beforeUnmount() {
     if (this.socket) {
-      if (this._onConnect) this.socket.off('connect', this._onConnect)
       if (this._onSolitaireUpdate) this.socket.off('solitaire:update', this._onSolitaireUpdate)
       if (this._onSotdResetVoteUpdate)
         this.socket.off('sotd-reset-vote-update', this._onSotdResetVoteUpdate)
@@ -490,26 +491,27 @@ export default {
     }
   },
   methods: {
+    async claimPendingSubmission() {
+      const stored = localStorage.getItem('solitairePendingSubmission')
+      if (!stored || !this.userId) return
+      try {
+        const data = JSON.parse(stored)
+        const response = await api.claimSolitaireSubmission(data.token)
+        console.log('Pending submission claimed:', response.data)
+        // On pourrait afficher un toast ou la popup de victoire
+        localStorage.removeItem('solitairePendingSubmission')
+      } catch (error) {
+        console.error('Failed to claim pending submission:', error)
+        localStorage.removeItem('solitairePendingSubmission')
+      }
+    },
+
     initSocket() {
       this.socket = getSocket()
 
-      this._onConnect = () => {
-        console.log('Connected to WebSocket server')
-      }
-      this.socket.on('connect', this._onConnect)
-
       this._onSolitaireUpdate = (payload) => {
         if (payload?.userId === this.userId) {
-          if (!payload.moves || payload.moves.length === 0) window.location.reload()
-          let i = 0
-          const interval = setInterval(() => {
-            const move = payload.moves[i]
-            this.processMove(move)
-            i++
-            if (i >= payload.moves.length) {
-              clearInterval(interval) // stop when done
-            }
-          }, 100)
+          window.location.reload()
         }
       }
       this.socket.on('solitaire:update', this._onSolitaireUpdate)
@@ -618,26 +620,13 @@ export default {
       }
     },
 
-    fetchAvatars() {
-      this.rankings.forEach(async (stats) => {
-        this.avatars[stats.id] = await this.getAvatar(stats.id)
-      })
-    },
-
-    async getAvatar(id) {
-      try {
-        const response = await flapi.get('/user/' + id + '/avatar')
-        return response.data.avatarUrl
-      } catch (e) {
-        console.error('flAPI error:', e)
-      }
-    },
-
     async handleRestart() {
       await this.getRankings()
       try {
         const response = await api.startNewGame(this.userSeed, this.hardMode)
         this.gameState = response.data.gameState
+        this.gameId = response.data.gameId || null
+        this.pendingSubmissionToken = null
       } catch (error) {
         console.error('Failed to start new game:', error)
       }
@@ -648,6 +637,8 @@ export default {
       try {
         const response = await api.startSOTD()
         this.gameState = response.data.gameState
+        this.gameId = response.data.gameId || null
+        this.pendingSubmissionToken = null
       } catch (error) {
         console.error('Failed to start new game:', error)
       }
@@ -656,8 +647,10 @@ export default {
     async handleReset() {
       await this.getRankings()
       try {
-        await api.resetGame()
+        await api.resetGame(this.gameId)
         this.gameState = null
+        this.gameId = null
+        this.pendingSubmissionToken = null
       } catch (error) {
         console.error('Failed to reset game:', error)
       }
@@ -672,14 +665,11 @@ export default {
       }
     },
 
-    // Called when a drag operation starts from any valid pile.
-    // The 'sourceInfo' object is now fully detailed.
     handleDragStart(sourceInfo) {
       if (this.isLoading) return
       this.draggedCardSourceInfo = sourceInfo
     },
 
-    // Called when a card is dropped onto a valid destination pile.
     async handleDrop(destinationInfo) {
       if (!this.draggedCardSourceInfo || this.isLoading) return
 
@@ -687,9 +677,9 @@ export default {
 
       const oldState = JSON.parse(JSON.stringify(this.gameState))
 
-      // Combine the stored source info and the new destination info.
       const movePayload = {
         userId: this.userId,
+        gameId: this.gameId,
         ...this.draggedCardSourceInfo,
         ...destinationInfo,
       }
@@ -702,50 +692,17 @@ export default {
         this.gameState.score = response.data.gameState.score
         this.gameState.moves = response.data.gameState.moves
 
-        if (response.data.win && !this.oldState?.isDone) {
-          this.gameState.endTime = response.data.endTime
+        if (response.data.win) {
           this.winDialog = true
+          if (response.data.submissionToken) {
+            this.pendingSubmissionToken = response.data.submissionToken
+            this.finishTime = Date.now() - this.gameState.startTime
+            this.guestDialog = true
+          }
         }
       } catch (error) {
-        // The backend correctly identifies invalid moves now.
-        console.warn('Invalid move:', error.response.data.error)
+        console.warn('Invalid move:', error.response?.data?.error || error.message)
         this.gameState = oldState
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    async handleAutoMove(sourceInfo) {
-      if (this.isLoading) return
-
-      // Find a valid foundation pile destination for the clicked card
-      const destinationInfo = this.findBestAutoMove(sourceInfo)
-
-      // If a valid destination was found, process it
-      if (destinationInfo) {
-        const movePayload = { ...sourceInfo, ...destinationInfo }
-        await this.processMove(movePayload)
-      }
-    },
-
-    async processMove(movePayload) {
-      this.isLoading = true
-      const oldState = JSON.parse(JSON.stringify(this.gameState))
-
-      this.performLocalMove(movePayload)
-
-      try {
-        const response = await api.moveCard(movePayload)
-        this.gameState.score = response.data.gameState.score
-        this.gameState.moves = response.data.gameState.moves
-        // On success, our optimistic state is correct. We do nothing.
-        if (response.data.win && !this.oldState?.isDone) {
-          this.gameState.endTime = response.data.endTime
-          this.winDialog = true
-        }
-      } catch {
-        console.warn('Invalid move detected by server. Reverting UI.')
-        this.gameState = oldState // Roll back on error
       } finally {
         this.isLoading = false
       }
@@ -756,7 +713,7 @@ export default {
       const oldState = JSON.parse(JSON.stringify(this.gameState))
 
       try {
-        const response = await api.undoMove()
+        const response = await api.undoMove(this.gameId)
         this.gameState = { ...response.data.gameState }
         this.isLoading = false
       } catch (error) {
@@ -797,122 +754,20 @@ export default {
     async handleDrawCard() {
       const oldState = JSON.parse(JSON.stringify(this.gameState))
 
-      /*if (this.gameState.stockPile.length > 0) {
-        const card = this.gameState.stockPile.pop();
-        card.faceUp = true;
-        this.gameState.wastePile.push(card);
-      } else {
-        this.gameState.stockPile = this.gameState.wastePile.reverse();
-        this.gameState.stockPile.forEach(c => c.faceUp = false);
-        this.gameState.wastePile = [];
-      }*/
-
       try {
         this.isLoading = true
-        const response = await api.drawCard()
+        const response = await api.drawCard(this.gameId)
         this.gameState = { ...response.data.gameState }
         this.isLoading = false
-        await this.fetchGameState()
+        if (this.userId) {
+          await this.fetchGameState()
+        }
       } catch (error) {
         console.error('Failed to draw card:', error)
         this.gameState = oldState
       }
     },
 
-    findBestAutoMove(sourceInfo) {
-      const { sourcePileType, sourcePileIndex, sourceCardIndex } = sourceInfo
-
-      let sourcePile =
-        sourcePileType === 'tableauPiles'
-          ? this.gameState.tableauPiles[sourcePileIndex]
-          : this.gameState.wastePile
-
-      // Can only auto-move the top card of a stack
-      /*if (sourceCardIndex !== sourcePile.length - 1) {
-        return null
-      }*/
-
-      const sourceCard = sourcePile[sourceCardIndex]
-
-      if (sourcePileType === 'wastePile') {
-        if (sourceCardIndex !== sourcePile.length - 1) {
-          return
-        }
-      }
-
-      if (sourceCardIndex === sourcePile.length - 1) {
-        for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
-          const foundationPile = this.gameState.foundationPiles[i]
-          const topCard =
-            foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
-
-          // Rule for moving to an empty foundation (must be an Ace)
-          if (!topCard) {
-            if (sourceCard.rank === 'A') {
-              return { destPileType: 'foundationPiles', destPileIndex: i }
-            }
-          }
-          // Rule for moving to a non-empty foundation
-          else {
-            if (
-              sourceCard.suit === topCard.suit &&
-              getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1
-            ) {
-              return { destPileType: 'foundationPiles', destPileIndex: i }
-            }
-          }
-        }
-      }
-
-      for (let i = 0; i < this.gameState.tableauPiles.length; i++) {
-        // If the source is a tableau pile, you can't move it to itself.
-        if (sourcePileType === 'tableauPiles' && sourcePileIndex === i) {
-          continue
-        }
-
-        const destPile = this.gameState.tableauPiles[i]
-        const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : null
-
-        if (!topCard) {
-          // Moving a King to an empty tableau pile
-          if (sourceCard.rank === 'K') {
-            return { destPileType: 'tableauPiles', destPileIndex: i }
-          }
-        } else {
-          // Moving to a non-empty tableau pile
-          const sourceColor = getCardColor(sourceCard.suit)
-          const destColor = getCardColor(topCard.suit)
-          const sourceValue = getRankValue(sourceCard.rank)
-          const destValue = getRankValue(topCard.rank)
-
-          if (sourceColor !== destColor && destValue - sourceValue === 1) {
-            return { destPileType: 'tableauPiles', destPileIndex: i }
-          }
-        }
-      }
-
-      // Loop through all foundation piles to find a valid spot
-
-      // If no valid move was found after checking all piles
-      return null
-    },
-
-    async preloadImages() {
-      const imagePaths = getAllCardImagePaths()
-      const promises = imagePaths.map((imagePath) => {
-        return new Promise((resolve) => {
-          const img = new Image()
-          img.src = imagePath
-          img.onload = () => resolve()
-          img.onerror = () => {
-            console.warn('Failed to load image:', imagePath)
-            resolve()
-          }
-        })
-      })
-      await Promise.all(promises)
-      console.log('All cards preloaded')
-    },
   },
 }
 </script>

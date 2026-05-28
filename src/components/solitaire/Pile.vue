@@ -46,7 +46,7 @@ export default {
       default: null,
     },
   },
-  emits: ['drag-start-from-pile', 'drop-on-pile', 'stock-pile-clicked', 'auto-move-triggered'],
+  emits: ['drag-start-from-pile', 'drop-on-pile', 'stock-pile-clicked'],
   data() {
     return {
       dragStartIndex: null,
@@ -152,13 +152,7 @@ export default {
     },
 
     handleCardClick(cardIndex) {
-      const sourceInfo = {
-        sourcePileType: this.type,
-        sourcePileIndex: this.pileIndex,
-        sourceCardIndex: cardIndex,
-      }
-
-      this.$emit('auto-move-triggered', sourceInfo)
+      // No action on single click
     },
   },
 }
