@@ -66,6 +66,7 @@
                 type="wastePile"
                 :pile="gameState.wastePile"
                 @drag-start-from-pile="handleDragStart"
+                @auto-move-triggered="handleAutoMove"
               />
             </div>
             <div class="foundations">
@@ -81,15 +82,16 @@
             </div>
           </div>
           <div class="tableau-section">
-            <Pile
-              v-for="(pile, index) in gameState.tableauPiles"
-              :key="'tableau-' + index"
-              type="tableauPiles"
-              :pile-index="index"
-              :pile="pile"
-              @drag-start-from-pile="handleDragStart"
-              @drop-on-pile="handleDrop"
-            />
+              <Pile
+                v-for="(pile, index) in gameState.tableauPiles"
+                :key="'tableau-' + index"
+                type="tableauPiles"
+                :pile-index="index"
+                :pile="pile"
+                @drag-start-from-pile="handleDragStart"
+                @drop-on-pile="handleDrop"
+                @auto-move-triggered="handleAutoMove"
+              />
           </div>
         </div>
         <div v-else>
@@ -424,6 +426,19 @@ import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
 import SaveScoreDialog from '../components/SaveScoreDialog.vue'
 
+function getRankValue(rank) {
+  if (rank === 'A') return 1
+  if (rank === 'T') return 10
+  if (rank === 'J') return 11
+  if (rank === 'Q') return 12
+  if (rank === 'K') return 13
+  return parseInt(rank, 10)
+}
+
+function getCardColor(suit) {
+  return suit === 'h' || suit === 'd' ? 'red' : 'black'
+}
+
 export default {
   name: 'Solitaire',
   components: {
@@ -749,6 +764,120 @@ export default {
       if (sourcePileType === 'tableauPiles' && sourcePile.length > 0) {
         sourcePile[sourcePile.length - 1].faceUp = true
       }
+    },
+
+    async handleAutoMove(sourceInfo) {
+      if (this.isLoading) return
+
+      // Find a valid foundation pile destination for the clicked card
+      const destinationInfo = this.findBestAutoMove(sourceInfo)
+
+      // If a valid destination was found, process it
+      if (destinationInfo) {
+        const movePayload = { ...sourceInfo, ...destinationInfo }
+        await this.processMove(movePayload)
+      }
+    },
+
+    async processMove(movePayload) {
+      this.isLoading = true
+      const oldState = JSON.parse(JSON.stringify(this.gameState))
+
+      this.performLocalMove(movePayload)
+
+      try {
+        const response = await api.moveCard({
+          ...movePayload,
+          userId: this.userId,
+          gameId: this.gameId,
+        })
+        this.gameState.score = response.data.gameState.score
+        this.gameState.moves = response.data.gameState.moves
+        if (response.data.win) {
+          this.winDialog = true
+          if (response.data.submissionToken) {
+            this.pendingSubmissionToken = response.data.submissionToken
+            this.finishTime = Date.now() - this.gameState.startTime
+            this.guestDialog = true
+          }
+        }
+      } catch {
+        console.warn('Invalid move detected by server. Reverting UI.')
+        this.gameState = oldState // Roll back on error
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    findBestAutoMove(sourceInfo) {
+      const { sourcePileType, sourcePileIndex, sourceCardIndex } = sourceInfo
+
+      let sourcePile =
+        sourcePileType === 'tableauPiles'
+          ? this.gameState.tableauPiles[sourcePileIndex]
+          : this.gameState.wastePile
+
+      const sourceCard = sourcePile[sourceCardIndex]
+
+      if (sourcePileType === 'wastePile') {
+        if (sourceCardIndex !== sourcePile.length - 1) {
+          return
+        }
+      }
+
+      if (sourceCardIndex === sourcePile.length - 1) {
+        for (let i = 0; i < this.gameState.foundationPiles.length; i++) {
+          const foundationPile = this.gameState.foundationPiles[i]
+          const topCard =
+            foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
+
+          // Rule for moving to an empty foundation (must be an Ace)
+          if (!topCard) {
+            if (sourceCard.rank === 'A') {
+              return { destPileType: 'foundationPiles', destPileIndex: i }
+            }
+          }
+          // Rule for moving to a non-empty foundation
+          else {
+            if (
+              sourceCard.suit === topCard.suit &&
+              getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1
+            ) {
+              return { destPileType: 'foundationPiles', destPileIndex: i }
+            }
+          }
+        }
+      }
+
+      for (let i = 0; i < this.gameState.tableauPiles.length; i++) {
+        // If the source is a tableau pile, you can't move it to itself.
+        if (sourcePileType === 'tableauPiles' && sourcePileIndex === i) {
+          continue
+        }
+
+        const destPile = this.gameState.tableauPiles[i]
+        const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : null
+
+        if (!topCard) {
+          // Moving a King to an empty tableau pile
+          if (sourceCard.rank === 'K') {
+            return { destPileType: 'tableauPiles', destPileIndex: i }
+          }
+        } else {
+          // Moving to a non-empty tableau pile
+          const sourceColor = getCardColor(sourceCard.suit)
+          const destColor = getCardColor(topCard.suit)
+          const sourceValue = getRankValue(sourceCard.rank)
+          const destValue = getRankValue(topCard.rank)
+
+          if (sourceColor !== destColor && destValue - sourceValue === 1) {
+            return { destPileType: 'tableauPiles', destPileIndex: i }
+          }
+        }
+      }
+
+      // If no valid move was found after checking all piles
+      return null
     },
 
     async handleDrawCard() {
