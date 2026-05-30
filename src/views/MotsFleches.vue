@@ -62,7 +62,7 @@
                   <div v-if="getDefClues(r, c)" class="mf-cell mf-def" :title="defTitle(r, c)">
                     <div class="mf-def-text">
                       <span v-for="(clue, idx) in getDefClues(r, c)" :key="idx" class="mf-def-line">
-                        {{ definitionFor(clue) || clue.word }}
+                        {{ clue.def }}
                       </span>
                     </div>
                   </div>
@@ -75,6 +75,7 @@
                       :key="`a${ai}`"
                       class="mf-arrow"
                       :class="arrowClass(a.arrow)"
+                      :style="arrowStyle(a)"
                       aria-hidden="true"
                     />
                     <input
@@ -163,7 +164,9 @@
                   style="max-height: 190px; overflow-y: auto; scrollbar-width: auto"
                 >
                   <v-list
-                    v-if="archive.length"
+                    v-if="
+                      archive.filter((e) => e.date !== new Date().toISOString().slice(0, 10)).length
+                    "
                     density="compact"
                     class="mf-archive-list"
                     bg-color="transparent"
@@ -183,7 +186,7 @@
                       </template>
                     </v-list-item>
                   </v-list>
-                  <p v-else class="text-disabled">Aucune grille archivée pour l'instant.</p>
+                  <p v-else class="text-white">Aucune grille archivée pour l'instant.</p>
                 </v-card-text>
               </v-card>
             </div>
@@ -193,7 +196,7 @@
         <div v-if="!gameState" class="my-16">
           <v-alert variant="tonal" color="secondary" rounded="xl">
             <v-card
-              v-if="rankings && rankings.length"
+              v-if="rankings"
               class="d-flex flex-column"
               variant="text"
               color="secondary"
@@ -207,7 +210,7 @@
                   <v-col cols="3" class="text-right"> Temps </v-col>
                 </v-row>
                 <v-row
-                  v-for="(stats, index) in rankings"
+                  v-for="stats in rankings"
                   :key="stats.id"
                   class="text-white font-weight-bolder"
                   style="border-radius: 10px"
@@ -322,7 +325,7 @@
 </template>
 
 <script>
-/* global localStorage, setInterval, clearInterval */
+/* global localStorage, setInterval, setTimeout, clearInterval, clearTimeout */
 import api from '../services/api'
 import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
@@ -361,14 +364,13 @@ export default {
       }
       return true
     },
-    // Map: "r,c" of the FIRST letter cell of a word → list of arrow descriptors
-    // pointing from the adjacent def cell into this cell.
     arrowsAtStart() {
       const map = {}
       if (!this.gameState?.defCells) return map
       for (const [cellKey, clues] of Object.entries(this.gameState.defCells)) {
         const [dr, dc] = cellKey.split(',').map(Number)
-        for (const clue of clues) {
+        const total = clues.length
+        clues.forEach((clue, idx) => {
           let sr, sc
           switch (clue.arrow) {
             case '→':
@@ -396,12 +398,12 @@ export default {
               sc = dc - 1
               break
             default:
-              continue
+              return
           }
           const k = `${sr},${sc}`
           if (!map[k]) map[k] = []
-          map[k].push({ arrow: clue.arrow, dir: clue.dir, word: clue.word })
-        }
+          map[k].push({ arrow: clue.arrow, dir: clue.dir, idx, total })
+        })
       }
       return map
     },
@@ -446,22 +448,9 @@ export default {
       return arr && arr.length ? arr : null
     },
 
-    definitionFor(clue) {
-      if (!clue) return ''
-      const defs = this.gameState?.definitions
-      if (!defs) return ''
-      const key = clue.word ? clue.word.toUpperCase() : ''
-      return defs[key] || ''
-    },
-
     defTitle(r, c) {
       const clues = this.getDefClues(r, c) || []
-      return clues.map((cl) => `${cl.arrow} ${this.definitionFor(cl) || cl.word}`).join('\n')
-    },
-
-    truncate(s, n) {
-      if (!s) return ''
-      return s.length > n ? s.slice(0, n - 1) + '…' : s
+      return clues.map((cl) => `${cl.arrow} ${cl.def || ''}`).join('\n')
     },
 
     arrowClass(arrow) {
@@ -484,6 +473,19 @@ export default {
           return 'arrow-bent-v arrow-bent-mirror'
         default:
           return 'arrow-right'
+      }
+    },
+    arrowStyle(a) {
+      if (!a || a.total <= 1) return null
+      const centerPct = ((a.idx + 0.5) / a.total) * 100
+      switch (a.arrow) {
+        case '→':
+          return { top: `${centerPct}%` }
+        case '⤵':
+        case '⤓':
+          return { top: `calc(${centerPct}% - 8px)` }
+        default:
+          return null
       }
     },
 
