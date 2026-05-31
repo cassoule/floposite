@@ -144,8 +144,8 @@ export default {
     },
 
     handleLogin(method) {
-      // Save current route before redirecting
-      localStorage.setItem('returnUrl', this.$route.fullPath)
+      // Redirect to dashboard after login
+      localStorage.setItem('returnUrl', '/dashboard')
       if (method.handler) {
         method.handler(method, this)
       } else if (method.authUrl) {

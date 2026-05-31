@@ -297,6 +297,13 @@
         </div>
       </div>
 
+      <RegisterWelcomeModal
+        v-model="welcomeDialog"
+        :anonUsername="userName"
+        @quit="closeWelcomeAndShowStats"
+        @register="closeWelcomeAndShowStats"
+      />
+
       <SaveScoreDialog
         :visible="guestDialog"
         :submissionToken="pendingSubmissionToken"
@@ -379,12 +386,14 @@ import api from '../services/api'
 import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
 import SaveScoreDialog from '../components/SaveScoreDialog.vue'
+import RegisterWelcomeModal from '../components/dashboard/RegisterWelcomeModal.vue'
 
 export default {
   name: 'Sudoku',
   components: {
     CoinsCounter,
     SaveScoreDialog,
+    RegisterWelcomeModal,
   },
   data() {
     return {
@@ -411,7 +420,9 @@ export default {
         { title: 'Expert', value: 'expert', props: { subtitle: '+1000 FlopoCoins' } },
       ],
 
+      isNewUser: false,
       winDialog: false,
+      welcomeDialog: false,
       guestDialog: false,
       finishTime: null,
       rankings: null,
@@ -425,6 +436,9 @@ export default {
     isGridComplete() {
       return this.grid.every((cell) => cell !== null)
     },
+    userName() {
+      return localStorage.getItem('discordUsername') || 'joueur'
+    },
   },
   async mounted() {
     this.userId = localStorage.getItem('discordId')
@@ -435,7 +449,7 @@ export default {
       if (this.userId) {
         this.initSocket()
         await this.fetchGameState(this.userId)
-          await this.claimPendingSubmission();
+        await this.claimPendingSubmission()
       }
       this.isLoading = false
     } catch (error) {
@@ -489,7 +503,12 @@ export default {
 
         if (response.data.success) {
           this.finishTime = response.data.time
-          this.winDialog = true // affiche la popup de victoire
+          this.isNewUser = response.data.isNewUser || false
+          if (this.isNewUser) {
+            this.welcomeDialog = true
+          } else {
+            this.winDialog = true
+          }
           localStorage.removeItem('sudokuPendingSubmission')
         }
       } catch (e) {
@@ -578,6 +597,7 @@ export default {
         this.gameId = response.data.gameId
         this.initGrid(this.gameState.puzzle)
         this.startTimer()
+        this.isNewUser = false
         this.$nextTick(() => this.$refs.board?.focus())
       } catch (error) {
         console.error('Failed to start new game:', error)
@@ -592,6 +612,7 @@ export default {
         this.gameId = response.data.gameId
         this.initGrid(this.gameState.puzzle)
         this.startTimer()
+        this.isNewUser = false
         this.$nextTick(() => this.$refs.board?.focus())
       } catch (error) {
         console.error('Failed to start SOTD:', error)
@@ -607,6 +628,7 @@ export default {
       this.errors = []
       this.selectedCell = null
       this.gameId = null
+      this.isNewUser = false
       if (!this.userId) return
       await this.getRankings()
       try {
@@ -802,7 +824,12 @@ export default {
             this.pendingSubmissionToken = response.data.submissionToken
             this.guestDialog = true
           } else {
-            this.winDialog = true
+            this.isNewUser = response.data.isNewUser || false
+            if (this.isNewUser) {
+              this.welcomeDialog = true
+            } else {
+              this.winDialog = true
+            }
           }
         } else {
           this.errors = response.data.errors
@@ -813,6 +840,11 @@ export default {
       } finally {
         this.isLoading = false
       }
+    },
+
+    closeWelcomeAndShowStats() {
+      this.welcomeDialog = false
+      this.winDialog = true
     },
 
   },

@@ -37,6 +37,7 @@ export default {
   },
 
   // --- Sudoku ---
+
   getSudokuRankings() {
     return flapi.get('/sudoku/sotd/rankings')
   },

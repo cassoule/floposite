@@ -65,15 +65,6 @@
             <img src="/discord.svg" alt="Discord" style="height: 22px; filter: brightness(0) invert(1)" />
           </template>
         </v-btn>
-        <v-btn
-          block
-          variant="tonal"
-          color="grey-darken-1"
-          class="rounded-lg text-none py-4"
-          @click="$emit('close')"
-        >
-          Plus tard
-        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -93,6 +84,14 @@ export default {
     finishTime: Number,
     moves: Number,
     score: Number,
+    isSOTD: {
+      type: Boolean,
+      default: false,
+    },
+    seed: {
+      type: String,
+      default: null,
+    },
     game: {
       type: String,
       default: 'sudoku',
@@ -126,9 +125,17 @@ export default {
       return `${hours > 0 ? paddedHours + ':' : ''}${paddedMinutes}:${paddedSeconds}.${paddedMilliseconds[0]}`
     },
     handleLogin() {
+      const extra = {}
+      if (this.game === 'solitaire') {
+        extra.moves = this.moves
+        extra.score = this.score
+        extra.isSOTD = this.isSOTD
+        extra.seed = this.seed
+      }
       localStorage.setItem(`${this.game}PendingSubmission`, JSON.stringify({
         token: this.submissionToken,
         time: this.finishTime,
+        ...extra,
       }))
       localStorage.setItem('returnUrl', `/${this.game}`)
       window.location = FLAPI_BASE + '/auth/discord'

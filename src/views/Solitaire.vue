@@ -1,4 +1,3 @@
-<!-- Solitaire.vue -->
 <template>
   <CoinsCounter v-if="userId" />
   <v-layout class="w-100 mt-16">
@@ -68,6 +67,7 @@
                 @drag-start-from-pile="handleDragStart"
                 @auto-move-triggered="handleAutoMove"
               />
+
             </div>
             <div class="foundations">
               <Pile
@@ -92,9 +92,11 @@
                 @drop-on-pile="handleDrop"
                 @auto-move-triggered="handleAutoMove"
               />
+
           </div>
         </div>
         <div v-else>
+
           <v-alert variant="tonal" color="secondary" rounded="xl">
             <div class="menu" style="gap: 1em">
               <v-card
@@ -341,6 +343,13 @@
         </v-card>
       </v-dialog>
 
+      <RegisterWelcomeModal
+        v-model="welcomeDialog"
+        :anonUsername="userName"
+        @quit="closeWelcomeAndShowStats"
+        @register="closeWelcomeAndShowStats"
+      />
+
       <v-dialog v-model="winDialog" class="modals" max-width="400" persistent>
         <v-card variant="flat" color="secondary" class="rounded-xl modal-card">
           <v-card-item class="text-white">
@@ -380,13 +389,16 @@
         </v-card>
       </v-dialog>
 
-      <!-- Dialog de sauvegarde pour invités -->
       <SaveScoreDialog
         v-if="guestDialog"
         :visible="guestDialog"
         game="solitaire"
         :submissionToken="pendingSubmissionToken"
         :finishTime="finishTime"
+        :moves="gameState?.moves"
+        :score="gameState?.score"
+        :isSOTD="gameState?.isSOTD"
+        :seed="gameState?.seed"
         @close="guestDialog = false"
       />
 
@@ -425,6 +437,7 @@ import api from '../services/api'
 import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
 import SaveScoreDialog from '../components/SaveScoreDialog.vue'
+import RegisterWelcomeModal from '../components/dashboard/RegisterWelcomeModal.vue'
 
 function getRankValue(rank) {
   if (rank === 'A') return 1
@@ -445,6 +458,7 @@ export default {
     Pile,
     CoinsCounter,
     SaveScoreDialog,
+    RegisterWelcomeModal,
   },
   data() {
     return {
@@ -461,6 +475,7 @@ export default {
 
       seedChoiceDialog: false,
       winDialog: false,
+      welcomeDialog: false,
 
       userSeed: null,
       rankings: null,
@@ -469,18 +484,23 @@ export default {
       resetVoteLoading: false,
       resetSnackbar: false,
 
+      isNewUser: false,
+
       // Guest save support
       guestDialog: false,
       pendingSubmissionToken: null,
       finishTime: 0,
     }
   },
+  computed: {
+    userName() {
+      return localStorage.getItem('discordUsername') || 'joueur'
+    },
+  },
   async mounted() {
     try {
       this.userId = localStorage.getItem('discordId')
       // Pas de redirect pour les invités — ils peuvent jouer
-
-      await this.claimPendingSubmission()
 
       this.initSocket()
       this.isLoading = true
@@ -488,6 +508,7 @@ export default {
       await this.fetchResetVotes()
       if (this.userId) {
         await this.fetchGameState(this.userId)
+        await this.claimPendingSubmission()
       }
       this.isLoading = false
       if (this.gameState?.isDone) {
@@ -513,7 +534,27 @@ export default {
         const data = JSON.parse(stored)
         const response = await api.claimSolitaireSubmission(data.token)
         console.log('Pending submission claimed:', response.data)
-        // On pourrait afficher un toast ou la popup de victoire
+        this.finishTime = response.data.time
+        this.isNewUser = response.data.isNewUser || false
+        
+        // Création du faux gameState avec les piles vides pour éviter le crash
+        this.gameState = {
+          moves: response.data.moves,
+          score: response.data.score,
+          isSOTD: data.isSOTD ?? false,
+          seed: data.seed ?? null,
+          stockPile: [],
+          wastePile: [],
+          foundationPiles: [],
+          tableauPiles: [],
+          isDone: true
+        }
+        
+        if (this.isNewUser) {
+          this.welcomeDialog = true
+        } else {
+          this.winDialog = true
+        }
         localStorage.removeItem('solitairePendingSubmission')
       } catch (error) {
         console.error('Failed to claim pending submission:', error)
@@ -642,6 +683,7 @@ export default {
         this.gameState = response.data.gameState
         this.gameId = response.data.gameId || null
         this.pendingSubmissionToken = null
+        this.isNewUser = false
       } catch (error) {
         console.error('Failed to start new game:', error)
       }
@@ -654,6 +696,7 @@ export default {
         this.gameState = response.data.gameState
         this.gameId = response.data.gameId || null
         this.pendingSubmissionToken = null
+        this.isNewUser = false
       } catch (error) {
         console.error('Failed to start new game:', error)
       }
@@ -666,6 +709,7 @@ export default {
         this.gameState = null
         this.gameId = null
         this.pendingSubmissionToken = null
+        this.isNewUser = false
       } catch (error) {
         console.error('Failed to reset game:', error)
       }
@@ -708,11 +752,15 @@ export default {
         this.gameState.moves = response.data.gameState.moves
 
         if (response.data.win) {
-          this.winDialog = true
+          this.isNewUser = response.data.isNewUser || false
           if (response.data.submissionToken) {
             this.pendingSubmissionToken = response.data.submissionToken
             this.finishTime = Date.now() - this.gameState.startTime
             this.guestDialog = true
+          } else if (this.isNewUser) {
+            this.welcomeDialog = true
+          } else {
+            this.winDialog = true
           }
         }
       } catch (error) {
@@ -776,36 +824,6 @@ export default {
       if (destinationInfo) {
         const movePayload = { ...sourceInfo, ...destinationInfo }
         await this.processMove(movePayload)
-      }
-    },
-
-    async processMove(movePayload) {
-      this.isLoading = true
-      const oldState = JSON.parse(JSON.stringify(this.gameState))
-
-      this.performLocalMove(movePayload)
-
-      try {
-        const response = await api.moveCard({
-          ...movePayload,
-          userId: this.userId,
-          gameId: this.gameId,
-        })
-        this.gameState.score = response.data.gameState.score
-        this.gameState.moves = response.data.gameState.moves
-        if (response.data.win) {
-          this.winDialog = true
-          if (response.data.submissionToken) {
-            this.pendingSubmissionToken = response.data.submissionToken
-            this.finishTime = Date.now() - this.gameState.startTime
-            this.guestDialog = true
-          }
-        }
-      } catch {
-        console.warn('Invalid move detected by server. Reverting UI.')
-        this.gameState = oldState // Roll back on error
-      } finally {
-        this.isLoading = false
       }
     },
 
@@ -878,6 +896,48 @@ export default {
 
       // If no valid move was found after checking all piles
       return null
+    },
+
+    async processMove(movePayload) {
+
+
+      this.isLoading = true
+      const oldState = JSON.parse(JSON.stringify(this.gameState))
+
+      this.performLocalMove(movePayload)
+
+      try {
+        const response = await api.moveCard({
+          ...movePayload,
+          userId: this.userId,
+          gameId: this.gameId,
+        })
+        this.gameState.score = response.data.gameState.score
+        this.gameState.moves = response.data.gameState.moves
+        if (response.data.win) {
+          this.isNewUser = response.data.isNewUser || false
+          if (response.data.submissionToken) {
+            this.pendingSubmissionToken = response.data.submissionToken
+            this.finishTime = Date.now() - this.gameState.startTime
+            this.guestDialog = true
+          } else if (this.isNewUser) {
+            this.welcomeDialog = true
+          } else {
+            this.winDialog = true
+          }
+        }
+      } catch {
+        console.warn('Invalid move detected by server. Reverting UI.')
+        this.gameState = oldState // Roll back on error
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    closeWelcomeAndShowStats() {
+
+      this.welcomeDialog = false
+      this.winDialog = true
     },
 
     async handleDrawCard() {
