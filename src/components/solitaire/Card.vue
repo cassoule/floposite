@@ -3,6 +3,7 @@
   <div
     class="rounded"
     :class="['card-container', { 'is-hidden': isHidden }]"
+    :data-card="card.rank + card.suit"
     :draggable="card.faceUp"
     @dragstart.stop="onDragStart"
     @dragend.stop="onDragEnd"
@@ -67,7 +68,6 @@ export default {
   height: 145px;
   cursor: grab;
   opacity: 1;
-  transition: opacity 0.2s; /* No transition needed */
   background-image: url('/cards/webp/card_back.webp');
   background-size: cover;
   background-position: center center;

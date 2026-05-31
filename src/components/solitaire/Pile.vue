@@ -11,7 +11,9 @@
       :card-index="index"
       :style="cardStyle(index)"
       class="card-in-pile"
-      :is-hidden="dragStartIndex !== null && index >= dragStartIndex && card.faceUp"
+      :is-hidden="
+        (dragStartIndex !== null && index >= dragStartIndex && card.faceUp) || isCardAnimating(card)
+      "
       @card-drag-started="handleCardDrag"
       @card-drag-ended="handleCardDragEnd"
       @card-clicked="handleCardClick"
@@ -45,6 +47,11 @@ export default {
       type: Number, // Index for tableau and foundation piles
       default: null,
     },
+    // Map of "rankSuit" -> true for cards currently hidden behind a flying clone.
+    animatingKeys: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   emits: ['drag-start-from-pile', 'drop-on-pile', 'stock-pile-clicked', 'auto-move-triggered'],
 
@@ -54,6 +61,9 @@ export default {
     }
   },
   methods: {
+    isCardAnimating(card) {
+      return !!this.animatingKeys[card.rank + card.suit]
+    },
     cardStyle(index) {
       switch (this.type) {
         case 'tableauPiles':

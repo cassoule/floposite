@@ -32,6 +32,9 @@ export default {
   undoMove(gameId = null) {
     return flapi.post('/solitaire/undo', { gameId })
   },
+  autoCompleteSolitaire(gameId = null) {
+    return flapi.post('/solitaire/auto-complete', { gameId })
+  },
   claimSolitaireSubmission(submissionToken) {
     return flapi.post('/solitaire/claim-submission', { submissionToken })
   },

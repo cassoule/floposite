@@ -11,10 +11,7 @@
         <a
           :href="'#' + link.section"
           class="nav-item"
-          @click.prevent="
-            menuOpen = false
-            scrollTo(link.section)
-          "
+          @click.prevent="((menuOpen = false), scrollTo(link.section))"
         >
           {{ link.name }}
         </a>
