@@ -1,6 +1,5 @@
 <template>
   <nav class="navbar">
-    
     <button class="hamburger" @click="menuOpen = !menuOpen" aria-label="Menu">
       <span class="hamburger-line" :class="{ open: menuOpen }"></span>
       <span class="hamburger-line" :class="{ open: menuOpen }"></span>
@@ -9,32 +8,26 @@
 
     <ul class="nav-links" :class="{ open: menuOpen }">
       <li v-for="link in links" :key="link.section">
-        <a :href="'#' + link.section" class="nav-item" @click.prevent="menuOpen = false; scrollTo(link.section)">
+        <a
+          :href="'#' + link.section"
+          class="nav-item"
+          @click.prevent="
+            menuOpen = false
+            scrollTo(link.section)
+          "
+        >
           {{ link.name }}
         </a>
       </li>
     </ul>
 
     <div class="nav-actions">
-      <button
-        v-if="isLoggedIn"
-        class="login-btn jouer-btn"
-        @click="goToDashboard"
-      >
-        Jouer
-      </button>
-      <button
-        v-else
-        class="login-btn"
-        @click="emit('open-login')"
-      >
-        Login
-      </button>
+      <button v-if="isLoggedIn" class="login-btn jouer-btn" @click="goToDashboard">Jouer</button>
+      <button v-else class="login-btn" @click="emit('open-login')">Login</button>
     </div>
 
     <!-- Overlay mobile -->
     <div v-if="menuOpen" class="nav-overlay" @click="menuOpen = false"></div>
-
   </nav>
 </template>
 
@@ -47,12 +40,12 @@ const menuOpen = ref(false)
 defineProps({
   links: {
     type: Array,
-    required: true
+    required: true,
   },
   isLoggedIn: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emit = defineEmits(['open-login'])
@@ -76,7 +69,7 @@ const goToDashboard = () => {
   align-items: center;
   width: 100%;
   box-sizing: border-box;
-  padding: 20px 48px;  
+  padding: 20px 48px;
   background-color: transparent;
 }
 
@@ -99,11 +92,12 @@ const goToDashboard = () => {
   list-style: none;
   margin: 0;
   padding: 0;
-  margin-right: auto; 
+  margin-right: auto;
 }
 
 .nav-item {
   font-family: 'Poppins', sans-serif;
+  position: relative;
   font-size: 20px;
   font-weight: 600;
   font-style: normal;
@@ -114,8 +108,32 @@ const goToDashboard = () => {
   opacity: 0.9;
 }
 
-.nav-item:hover, 
+.nav-item::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  width: 50%;
+  height: 50%;
+  opacity: 0;
+  border-radius: 10px;
+  background: #dddddd11;
+  transition:
+    width 0.3s ease,
+    height 0.2s ease-in,
+    opacity 0.1s linear;
+  transform: translateX(-50%) translateY(-50%);
+}
+
+.nav-item:hover,
 .router-link-active {
+  opacity: 1;
+}
+
+.nav-item:hover::after {
+  width: 120%;
+  height: 120%;
   opacity: 1;
 }
 
@@ -129,22 +147,22 @@ const goToDashboard = () => {
   justify-content: center;
   align-items: center;
   gap: 10px;
-  
+
   width: 184px;
   height: 40px;
-  
-  background: #FFFFFF;
+
+  background: #ffffff;
   border-radius: 20px;
   border: none;
-  
+
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-  
+
   font-family: 'Poppins', sans-serif;
   font-size: 16px;
   font-weight: 600;
   color: #000000 !important;
   text-decoration: none;
-  
+
   cursor: pointer;
   transition: transform 0.1s ease;
 }
@@ -172,7 +190,9 @@ const goToDashboard = () => {
   height: 2px;
   background: #fff;
   border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .hamburger-line.open:nth-child(1) {

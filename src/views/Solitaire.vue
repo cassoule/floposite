@@ -67,7 +67,6 @@
                 @drag-start-from-pile="handleDragStart"
                 @auto-move-triggered="handleAutoMove"
               />
-
             </div>
             <div class="foundations">
               <Pile
@@ -82,21 +81,19 @@
             </div>
           </div>
           <div class="tableau-section">
-              <Pile
-                v-for="(pile, index) in gameState.tableauPiles"
-                :key="'tableau-' + index"
-                type="tableauPiles"
-                :pile-index="index"
-                :pile="pile"
-                @drag-start-from-pile="handleDragStart"
-                @drop-on-pile="handleDrop"
-                @auto-move-triggered="handleAutoMove"
-              />
-
+            <Pile
+              v-for="(pile, index) in gameState.tableauPiles"
+              :key="'tableau-' + index"
+              type="tableauPiles"
+              :pile-index="index"
+              :pile="pile"
+              @drag-start-from-pile="handleDragStart"
+              @drop-on-pile="handleDrop"
+              @auto-move-triggered="handleAutoMove"
+            />
           </div>
         </div>
         <div v-else>
-
           <v-alert variant="tonal" color="secondary" rounded="xl">
             <div class="menu" style="gap: 1em">
               <v-card
@@ -536,7 +533,7 @@ export default {
         console.log('Pending submission claimed:', response.data)
         this.finishTime = response.data.time
         this.isNewUser = response.data.isNewUser || false
-        
+
         // Création du faux gameState avec les piles vides pour éviter le crash
         this.gameState = {
           moves: response.data.moves,
@@ -547,9 +544,9 @@ export default {
           wastePile: [],
           foundationPiles: [],
           tableauPiles: [],
-          isDone: true
+          isDone: true,
         }
-        
+
         if (this.isNewUser) {
           this.welcomeDialog = true
         } else {
@@ -899,8 +896,6 @@ export default {
     },
 
     async processMove(movePayload) {
-
-
       this.isLoading = true
       const oldState = JSON.parse(JSON.stringify(this.gameState))
 
@@ -935,7 +930,6 @@ export default {
     },
 
     closeWelcomeAndShowStats() {
-
       this.welcomeDialog = false
       this.winDialog = true
     },
@@ -956,7 +950,6 @@ export default {
         this.gameState = oldState
       }
     },
-
   },
 }
 </script>

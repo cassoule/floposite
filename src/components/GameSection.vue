@@ -8,24 +8,24 @@
     <div class="section-grid">
       <!-- if 3 games or less : simple grid -->
       <div v-if="games.length <= 3" class="cards-grid">
-          <GameCard 
-            v-for="(game, index) in games" 
-            :key="index"
-            :title="game.title" 
-            :image="game.image" 
-            :buttonText="game.buttonText" 
-            :buttonType="game.buttonType" 
-            :to="game.to"
-            :requiresAuth="game.requiresAuth"
-            :isLoggedIn="isLoggedIn"
-            @open-login="emit('open-login')"
-          />
+        <GameCard
+          v-for="(game, index) in games"
+          :key="index"
+          :title="game.title"
+          :image="game.image"
+          :buttonText="game.buttonText"
+          :buttonType="game.buttonType"
+          :to="game.to"
+          :requiresAuth="game.requiresAuth"
+          :isLoggedIn="isLoggedIn"
+          @open-login="emit('open-login')"
+        />
       </div>
 
       <!-- else : infinite carousel -->
       <div v-else class="infinite-carousel-container">
-        <div 
-          class="infinite-carousel-track" 
+        <div
+          class="infinite-carousel-track"
           ref="trackRef"
           @mouseenter="slowDown"
           @mouseleave="speedUp"
@@ -33,13 +33,13 @@
           @touchend="speedUp"
         >
           <div class="carousel-set">
-            <GameCard 
-              v-for="(game, index) in games" 
+            <GameCard
+              v-for="(game, index) in games"
               :key="'orig-' + index"
-              :title="game.title" 
-              :image="game.image" 
-              :buttonText="game.buttonText" 
-              :buttonType="game.buttonType" 
+              :title="game.title"
+              :image="game.image"
+              :buttonText="game.buttonText"
+              :buttonType="game.buttonType"
               :to="game.to"
               :requiresAuth="game.requiresAuth"
               :isLoggedIn="isLoggedIn"
@@ -48,13 +48,13 @@
             />
           </div>
           <div class="carousel-set" aria-hidden="true">
-            <GameCard 
-              v-for="(game, index) in games" 
+            <GameCard
+              v-for="(game, index) in games"
               :key="'clone-' + index"
-              :title="game.title" 
-              :image="game.image" 
-              :buttonText="game.buttonText" 
-              :buttonType="game.buttonType" 
+              :title="game.title"
+              :image="game.image"
+              :buttonText="game.buttonText"
+              :buttonType="game.buttonType"
               :to="game.to"
               :requiresAuth="game.requiresAuth"
               :isLoggedIn="isLoggedIn"
@@ -75,19 +75,19 @@ import GameCard from '@/components/GameCardIndex.vue'
 const props = defineProps({
   id: {
     type: String,
-    default: ''
+    default: '',
   },
   title: String,
   description: String,
   games: {
     type: Array,
     required: true,
-    default: () => []
+    default: () => [],
   },
   isLoggedIn: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emit = defineEmits(['open-login'])
@@ -97,15 +97,12 @@ const trackRef = ref(null)
 let animInstance = null
 
 const animConfig = {
-  duration: 35000, 
+  duration: 35000,
   iterations: Infinity,
-  easing: 'linear'
+  easing: 'linear',
 }
 
-const keyframes = [
-  { transform: 'translateX(0)' },
-  { transform: 'translateX(-50%)' } 
-]
+const keyframes = [{ transform: 'translateX(0)' }, { transform: 'translateX(-50%)' }]
 
 onMounted(() => {
   // Only start animation if we have more than 3 games and the track element is available
@@ -115,11 +112,11 @@ onMounted(() => {
 })
 
 const slowDown = () => {
-  if (animInstance) animInstance.playbackRate = 0.15 
+  if (animInstance) animInstance.playbackRate = 0.15
 }
 
 const speedUp = () => {
-  if (animInstance) animInstance.playbackRate = 1 
+  if (animInstance) animInstance.playbackRate = 1
 }
 
 onUnmounted(() => {
@@ -147,7 +144,7 @@ onUnmounted(() => {
 }
 
 .section-title {
-  color: #FFF;
+  color: #fff;
   font-family: 'Poppins', sans-serif;
   font-size: 40px;
   font-weight: 700;
@@ -156,7 +153,7 @@ onUnmounted(() => {
 }
 
 .section-description {
-  color: #ABB0B6;
+  color: #abb0b6;
   font-family: 'Poppins', sans-serif;
   font-size: 20px;
   font-weight: 500;
@@ -168,63 +165,85 @@ onUnmounted(() => {
   width: 100%;
 }
 
-.cards-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-  gap: 32px; 
-  width: 100%; 
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  width: 100%;
 }
 
 .infinite-carousel-container {
   width: 100%;
   overflow: hidden;
   position: relative;
-  
-  padding: 32px 0; 
+
+  padding: 32px 0;
   margin-top: -32px;
   margin-bottom: -32px;
 
   mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 5%,
+    black 95%,
+    transparent 100%
+  );
 }
 
 .infinite-carousel-track {
   display: flex;
   width: max-content;
   cursor: pointer;
-  align-items: center; 
+  align-items: center;
 }
 
 .carousel-set {
   display: flex;
   gap: 32px;
   padding-right: 32px;
-  align-items: flex-end; 
+  align-items: flex-end;
 }
 
 .carousel-item {
   width: 280px;
   flex-shrink: 0;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.3s ease; 
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    z-index 0.3s ease;
   position: relative;
-  z-index: 1; 
+  z-index: 1;
 }
 
 .carousel-item:hover {
   transform: scale(1.05) translateY(-16px);
-  box-shadow: 0 10px 25px #7834e62a; 
-  z-index: 10; 
+  box-shadow: 0 10px 25px #7834e62a;
+  z-index: 10;
 }
 
 /* --- Mobile --- */
 @media (max-width: 968px) {
-  .game-section { padding: 0 24px; }
-  .carousel-set { gap: 16px; padding-right: 16px; }
-  .carousel-item { width: 240px; }
-  
+  .game-section {
+    padding: 0 24px;
+  }
+  .carousel-set {
+    gap: 16px;
+    padding-right: 16px;
+  }
+  .carousel-item {
+    width: 240px;
+  }
+
   .infinite-carousel-container {
     mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 10%,
+      black 90%,
+      transparent 100%
+    );
     padding: 24px 0;
     margin-top: -24px;
     margin-bottom: -24px;

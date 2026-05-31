@@ -17,7 +17,6 @@
       @card-clicked="handleCardClick"
     />
   </div>
-
 </template>
 
 <script>
@@ -48,7 +47,6 @@ export default {
     },
   },
   emits: ['drag-start-from-pile', 'drop-on-pile', 'stock-pile-clicked', 'auto-move-triggered'],
-
 
   data() {
     return {
@@ -136,7 +134,6 @@ export default {
     },
 
     createDragPreview(cards) {
-
       const container = document.createElement('div')
       // Style the container to be invisible and hold the stack
       container.style.position = 'absolute'
@@ -164,8 +161,6 @@ export default {
 
       return container
     },
-
-
   },
 }
 </script>

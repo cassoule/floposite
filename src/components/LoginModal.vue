@@ -9,7 +9,9 @@
         </div>
 
         <h2 class="modal-title">Bienvenue sur <span class="title-flopo">Flopo</span>Site</h2>
-        <p class="modal-subtitle">Connecte-toi pour accéder à tous les jeux, classements et récompenses</p>
+        <p class="modal-subtitle">
+          Connecte-toi pour accéder à tous les jeux, classements et récompenses
+        </p>
 
         <div class="login-methods">
           <button
@@ -38,12 +40,23 @@
         </div>
 
         <div class="modal-status" v-if="!flapi_ready">
-          <div class="status-dot" :class="{ active: maintenanceInfo?.active, scheduled: maintenanceInfo?.scheduled }"></div>
+          <div
+            class="status-dot"
+            :class="{ active: maintenanceInfo?.active, scheduled: maintenanceInfo?.scheduled }"
+          ></div>
           <template v-if="maintenanceInfo?.scheduled">
-            <span>Maintenance prévue<span v-if="maintenanceInfo.remaining"> dans {{ maintenanceInfo.remaining }}</span></span>
+            <span
+              >Maintenance prévue<span v-if="maintenanceInfo.remaining">
+                dans {{ maintenanceInfo.remaining }}</span
+              ></span
+            >
           </template>
           <template v-else-if="maintenanceInfo?.active">
-            <span>FlopoBot en maintenance<span v-if="maintenanceInfo.remaining">, retour dans {{ maintenanceInfo.remaining }}</span></span>
+            <span
+              >FlopoBot en maintenance<span v-if="maintenanceInfo.remaining"
+                >, retour dans {{ maintenanceInfo.remaining }}</span
+              ></span
+            >
           </template>
           <template v-else>
             <span>FlopoBot n'est pas disponible pour le moment :(</span>
@@ -190,7 +203,6 @@ export default {
           this.maintenanceInfo = null
         }
       }
-
     },
   },
 }
@@ -266,7 +278,7 @@ export default {
 }
 
 .modal-subtitle {
-  color: #ABB0B6;
+  color: #abb0b6;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
   line-height: 1.5;
@@ -342,7 +354,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #ABB0B6;
+  color: #abb0b6;
   font-family: 'Poppins', sans-serif;
   font-size: 12px;
   margin-top: 4px;
@@ -366,8 +378,13 @@ export default {
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* ─── Transition ─── */

@@ -45,7 +45,7 @@
         <!-- Message -->
         <div class="text-center mb-2">
           <p class="text-white font-weight-bold text-body-1 mb-1">Gardez votre score</p>
-          <p class="text-body-2 text-white" >
+          <p class="text-body-2 text-white">
             Connectez-vous pour sauvegarder votre score et apparaître dans le classement !
           </p>
         </div>
@@ -62,7 +62,11 @@
           @click="handleLogin"
         >
           <template #prepend>
-            <img src="/discord.svg" alt="Discord" style="height: 22px; filter: brightness(0) invert(1)" />
+            <img
+              src="/discord.svg"
+              alt="Discord"
+              style="height: 22px; filter: brightness(0) invert(1)"
+            />
           </template>
         </v-btn>
       </v-card-actions>
@@ -132,11 +136,14 @@ export default {
         extra.isSOTD = this.isSOTD
         extra.seed = this.seed
       }
-      localStorage.setItem(`${this.game}PendingSubmission`, JSON.stringify({
-        token: this.submissionToken,
-        time: this.finishTime,
-        ...extra,
-      }))
+      localStorage.setItem(
+        `${this.game}PendingSubmission`,
+        JSON.stringify({
+          token: this.submissionToken,
+          time: this.finishTime,
+          ...extra,
+        }),
+      )
       localStorage.setItem('returnUrl', `/${this.game}`)
       window.location = FLAPI_BASE + '/auth/discord'
     },

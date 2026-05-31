@@ -846,7 +846,6 @@ export default {
       this.welcomeDialog = false
       this.winDialog = true
     },
-
   },
 }
 </script>

@@ -8,7 +8,6 @@
     @dragend.stop="onDragEnd"
     @click="onClick"
   >
-
     <img
       v-if="card.faceUp"
       :src="`/cards/webp/${card.rank}${card.suit}.webp`"
@@ -38,7 +37,6 @@ export default {
   },
   emits: ['card-drag-started', 'card-drag-ended', 'card-clicked'],
 
-
   methods: {
     // When a drag starts, emit the card and its index up to the pile
     onDragStart(event) {
@@ -60,7 +58,6 @@ export default {
       }
     },
   },
-
 }
 </script>
 

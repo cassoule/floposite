@@ -14,7 +14,13 @@
       <button :class="['action-btn', buttonType]">
         <span class="play-icon">
           <svg width="10" height="12" viewBox="0 0 10 12" fill="none">
-            <path d="M1 1L9 6L1 11V1Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path
+              d="M1 1L9 6L1 11V1Z"
+              fill="currentColor"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linejoin="round"
+            />
           </svg>
         </span>
         {{ buttonText }}
@@ -33,7 +39,7 @@ const props = defineProps({
   buttonType: { type: String, default: 'purple' },
   to: { type: String, default: null },
   requiresAuth: { type: Boolean, default: false },
-  isLoggedIn: { type: Boolean, default: false }
+  isLoggedIn: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['open-login'])
@@ -71,7 +77,10 @@ function handleClick() {
     0 8px 32px rgba(0, 0, 0, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
   cursor: pointer;
 }
 
@@ -128,11 +137,7 @@ function handleClick() {
   left: 0;
   right: 0;
   height: 60%;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(15, 18, 40, 0.75) 100%
-  );
+  background: linear-gradient(to bottom, transparent 0%, rgba(15, 18, 40, 0.75) 100%);
   pointer-events: none;
 }
 
