@@ -1,26 +1,51 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import { onMounted, onUnmounted } from 'vue'
 import { useToastStore } from '@/stores/toastStore.js'
+import { useMaintenanceStore } from '@/stores/maintenanceStore.js'
 import { getSocket, disconnectSocket } from '@/services/socket.js'
+import flapi from '@/services/flapi.js'
 import Toast from '@/components/Toast.vue'
 
 const toastStore = useToastStore()
+const maintenanceStore = useMaintenanceStore()
+const router = useRouter()
 let socket = null
+
+async function checkMaintenanceStatus() {
+  try {
+    const { data } = await flapi.get('/check')
+    if (data.scheduledMaintenance) {
+      maintenanceStore.setScheduled(data.scheduledMaintenance.startsAt, data.scheduledMaintenance.estimatedEnd)
+    }
+  } catch (err) {
+    if (err.response?.data?.error === 'maintenance') {
+      maintenanceStore.setMaintenance(true, err.response.data.estimatedEnd)
+      router.replace({ name: 'Maintenance' })
+    }
+  }
+}
 
 const onMaintenanceUpdate = (data) => {
   if (data.active) {
+    maintenanceStore.setMaintenance(true, data.estimatedEnd)
     toastStore.showMaintenanceToast(data.estimatedEnd)
+    router.replace({ name: 'Maintenance' })
+    } else {
+      maintenanceStore.setMaintenance(false)
+        router.replace({ path: '/' }) 
   }
 }
 
 const onMaintenanceScheduled = (data) => {
   if (data?.startsAt) {
+    maintenanceStore.setScheduled(data.startsAt, data.estimatedEnd)
     toastStore.showMaintenanceScheduledToast(data.startsAt)
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await checkMaintenanceStatus()
   socket = getSocket()
   socket.on('maintenance-update', onMaintenanceUpdate)
   socket.on('maintenance-scheduled', onMaintenanceScheduled)
