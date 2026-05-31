@@ -3,6 +3,7 @@
   <div
     class="rounded"
     :class="['card-container', { 'is-hidden': isHidden }]"
+    :data-card="card.rank + card.suit"
     :draggable="card.faceUp"
     @dragstart.stop="onDragStart"
     @dragend.stop="onDragEnd"
@@ -36,6 +37,7 @@ export default {
     },
   },
   emits: ['card-drag-started', 'card-drag-ended', 'card-clicked'],
+
   methods: {
     // When a drag starts, emit the card and its index up to the pile
     onDragStart(event) {
@@ -66,7 +68,6 @@ export default {
   height: 145px;
   cursor: grab;
   opacity: 1;
-  transition: opacity 0.2s; /* No transition needed */
   background-image: url('/cards/webp/card_back.webp');
   background-size: cover;
   background-position: center center;

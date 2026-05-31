@@ -18,7 +18,7 @@
     "@stripe/stripe-js": "^8.7.0",
     "@vueuse/motion": "^3.0.3",
     "animate.css": "^4.1.1",
-    "axios": "^1.13.5",
+    "axios": "^1.16.1",
     "cannon-es": "^0.20.0",
     "cors": "^2.8.6",
     "discord.js": "^14.25.1",

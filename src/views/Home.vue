@@ -1,322 +1,406 @@
 <template>
-  <div class="login">
-    <div>
-      <h1 style="font-size: 3em"><span style="color: #5865f2">Flopo</span>Site</h1>
-      <p>Connectes-toi via <span style="color: #5865f2">Discord</span> 👇</p>
+  <div class="landing-page">
+    <Navbar :links="navLinks" :is-logged-in="isLoggedIn" @open-login="showLogin = true" />
 
-      <v-btn
-        class="btn-login text-capitalize px-8"
-        style="border-radius: 10px"
-        height="40"
-        color="white"
-        variant="text"
-        :disabled="!flapi_ready"
-        @click="handleLogin"
-      >
-        <span>Connexion</span>
-        <div class="shine"></div>
-      </v-btn>
+    <LoginModal :visible="showLogin" @close="showLogin = false" />
 
-      <p v-if="maintenanceInfo?.scheduled" class="mt-5" style="color: #ddd">
-        ⏳ Maintenance prévue<span v-if="maintenanceInfo.remaining">
-          dans {{ maintenanceInfo.remaining }}</span
-        >
-      </p>
+    <section class="chat-section">
+      <div class="chat-content">
+        <h1 class="chat-title">Floposite</h1>
+        <p class="chat-description">
+          La plateforme ultime de jeux en ligne. Jouez à des grands classiques, défiez vos rivaux
+          dans des duels, et ouvrez des caisses de récompenses exclusives pour bâtir votre empire de
+          FlopoCoins.
+        </p>
+      </div>
 
-      <p v-else-if="!flapi_ready" class="mt-5" style="color: #ddd">
-        <template v-if="maintenanceInfo?.active">
-          🔧 FlopoBot est en maintenance<span v-if="maintenanceInfo.remaining"
-            >, retour dans {{ maintenanceInfo.remaining }}</span
-          >
-        </template>
-        <template v-else> FlopoBot n'est pas disponible pour le moment :( </template>
-      </p>
-    </div>
+      <div class="chat-image-container">
+        <img src="/flopobot.webp" alt="Flopo Cat" class="chat-img" />
+      </div>
+
+      <div class="scroll-indicator">
+        <span class="scroll-label">Scroll</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <GameSection
+      id="games"
+      title="Jeux du jour"
+      description="Découvrez notre collection de jeux solo gratuits. Que vous vouliez passer le temps ou vous creuser la tête, lancez-vous directement dans une partie de Solitaire ou de Sudoku, sans inscription, juste du pur plaisir !"
+      :games="dailyGames"
+      :is-logged-in="isLoggedIn"
+      @open-login="showLogin = true"
+    />
+
+    <GameSection
+      id="multiplayer"
+      title="Arène 1v1 & Classements"
+      description="Défiez d'autres joueurs dans des duels classiques en temps réel. Gagnez des matchs, grimpez dans le classement et améliorez votre FlopoRank pour prouver que vous êtes le meilleur."
+      :games="arenaGames"
+      :is-logged-in="isLoggedIn"
+      @open-login="showLogin = true"
+    />
+    <GameSection
+      id="gambling"
+      title="Flopo Casino"
+      description="L'arène des gros joueurs. Prenez des risques, domptez la courbe du Crash, etlessivez vos adversaires au Flopoker. Que vous soyez plutôt stratégie au Blackjack ou pure intuition au Sic-Bo, venez bâtir votre empire de FlopoCoins."
+      :games="casinoGames"
+      :is-logged-in="isLoggedIn"
+      @open-login="showLogin = true"
+    />
+
+    <GameSection
+      id="loot-trade"
+      title="Butinez, échangez et personnalisez"
+      description="Déballez des skins rares, gérez votre inventaire personnel et échangez des objets avec d'autres joueurs sur le FlopoMarket officiel."
+      :games="lootTradeGames"
+      :is-logged-in="isLoggedIn"
+      @open-login="showLogin = true"
+    />
+
+    <footer class="home-footer">
+      <p class="footer-copy">&copy; 2026 Floposite. Tous droits réservés.</p>
+      <div class="footer-links">
+        <a href="/cgv">Conditions Générales de Vente</a>
+        <a href="/privacy">Politique de Confidentialité</a>
+      </div>
+    </footer>
   </div>
-
-  <div class="flopo-img">
-    <v-img class="flopobot" src="flopobot.webp"></v-img>
-  </div>
-
-  <div class="flopo-img-sm">
-    <v-img src="flopobot.webp" width="200px"></v-img>
-  </div>
-
-  <footer
-    class="w-100 d-flex justify-end flex-wrap px-4"
-    style="position: fixed; bottom: 5px; left: 0; z-index: 10; column-gap: 4em"
-  >
-    <a href="/cgv">Conditions Générales de Vente</a>
-    <a href="/privacy">Politique de Confidentialité</a>
-  </footer>
 </template>
 
-<script>
-/* global localStorage */
-import flapi, { FLAPI_BASE } from '@/services/flapi.js'
-import { getSocket } from '@/services/socket.js'
-import { useFlopoToasts } from '@/composables/useFlopoToasts.js'
+<script setup>
+import { ref, computed } from 'vue'
+import Navbar from '@/components/Navbar.vue'
+import LoginModal from '@/components/LoginModal.vue'
+import GameSection from '@/components/GameSection.vue'
 
-export default {
-  setup() {
-    return { ...useFlopoToasts() }
+const showLogin = ref(false)
+const isLoggedIn = computed(() => {
+  return !!(localStorage.getItem('discordId') && localStorage.getItem('token'))
+})
+
+const navLinks = ref([
+  { name: 'Jeux', section: 'games' },
+  { name: 'Multijoueur', section: 'multiplayer' },
+  { name: 'Gambling', section: 'gambling' },
+  { name: 'Loot & Trade', section: 'loot-trade' },
+])
+
+const dailyGames = ref([
+  {
+    title: 'Solitaire',
+    image: '/game_illu_sol.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/solitaire',
   },
-
-  data() {
-    return {
-      flapi_ready: false,
-      discordId: null,
-      maintenanceInfo: null,
-      socket: null,
-    }
+  {
+    title: 'Sudoku',
+    image: '/game_illu_sudoku.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/sudoku',
   },
+])
 
-  computed: {
-    discordAuthUrl() {
-      return FLAPI_BASE + '/auth/discord'
-    },
+const arenaGames = ref([
+  {
+    title: 'Puissance 4',
+    image: '/game_illu_c4.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/connect-4',
+    requiresAuth: true,
   },
-
-  async mounted() {
-    this.initSocket()
-    await this.checkFlapi()
+  {
+    title: 'Morpion',
+    image: '/game_illu_ttt.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/tic-tac-toe',
+    requiresAuth: true,
   },
-
-  beforeUnmount() {
-    if (this.socket) {
-      this.socket.off('connect', this._onConnect)
-      this.socket.off('disconnect', this._onDisconnect)
-      this.socket.off('maintenance-update', this._onMaintenanceUpdate)
-      this.socket.off('maintenance-scheduled', this._onMaintenanceScheduled)
-    }
+  {
+    title: 'Monke',
+    image: '/game_illu_mg.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/monke-game',
+    requiresAuth: true,
   },
-
-  methods: {
-    initSocket() {
-      this.socket = getSocket()
-
-      this._onConnect = async () => {
-        console.log('Connected to WebSocket server')
-        await this.checkFlapi()
-      }
-      this._onDisconnect = () => {
-        console.log('Disconnected from WebSocket server')
-      }
-      this._onMaintenanceUpdate = (data) => {
-        if (data.active) {
-          this.maintenanceInfo = {
-            active: true,
-            remaining: this.formatRemaining(data.estimatedEnd),
-          }
-          this.flapi_ready = false
-        }
-      }
-      this._onMaintenanceScheduled = (data) => {
-        if (data?.startsAt) {
-          this.maintenanceInfo = { scheduled: true, remaining: this.formatRemaining(data.startsAt) }
-        } else {
-          this.maintenanceInfo = null
-        }
-      }
-
-      this.socket.on('connect', this._onConnect)
-      this.socket.on('disconnect', this._onDisconnect)
-      this.socket.on('maintenance-update', this._onMaintenanceUpdate)
-      this.socket.on('maintenance-scheduled', this._onMaintenanceScheduled)
-    },
-
-    handleLogin() {
-      window.location = this.discordAuthUrl
-    },
-
-    formatRemaining(timestamp) {
-      if (!timestamp) return null
-      const ms = timestamp - Date.now()
-      if (ms <= 0) return null
-      const totalSeconds = Math.ceil(ms / 1000)
-      if (totalSeconds < 60) return `${totalSeconds}s`
-      const minutes = Math.ceil(ms / 60000)
-      if (minutes >= 60) {
-        const hours = Math.floor(minutes / 60)
-        const mins = minutes % 60
-        return `${hours}h${mins > 0 ? mins.toString().padStart(2, '0') : ''}`
-      }
-      return `${minutes}min`
-    },
-
-    async checkFlapi() {
-      console.log('Checking flAPI...')
-      try {
-        const response = await flapi.get('/check')
-        console.log('flAPI ready')
-        this.flapi_ready = true
-        // Check if a maintenance is scheduled
-        if (response.data.scheduledMaintenance) {
-          const { startsAt } = response.data.scheduledMaintenance
-          this.maintenanceInfo = { scheduled: true, remaining: this.formatRemaining(startsAt) }
-        }
-      } catch (err) {
-        console.log('flAPI not ready')
-        this.flapi_ready = false
-        if (err.response?.status === 503 && err.response?.data?.error === 'maintenance') {
-          this.maintenanceInfo = {
-            active: true,
-            remaining: this.formatRemaining(err.response.data.estimatedEnd),
-          }
-        } else {
-          this.maintenanceInfo = null
-        }
-      }
-      this.discordId = localStorage.getItem('discordId')
-      const token = localStorage.getItem('token')
-      if (this.discordId && token && this.flapi_ready) this.$router.push('/dashboard')
-    },
+  {
+    title: 'Snake',
+    image: '/game_illu_snake.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/snake',
+    requiresAuth: true,
   },
-}
+])
+const casinoGames = ref([
+  {
+    title: 'Blackjack',
+    image: '/game_illu_bj.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/blackjack',
+    requiresAuth: true,
+  },
+  {
+    title: 'Sic-Bo',
+    image: '/game_illu_sicbo.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/sicbo',
+    requiresAuth: true,
+  },
+  {
+    title: 'Crash',
+    image: '/game_illu_crash.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/crash',
+    requiresAuth: true,
+  },
+  {
+    title: 'Flopoker',
+    image: '/game_illu_poker.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/poker',
+    requiresAuth: true,
+  },
+])
+
+const lootTradeGames = ref([
+  {
+    title: 'Caisses',
+    image: '/caisse_illu.png',
+    buttonText: 'Ouvrir',
+    buttonType: 'purple',
+    to: '/cases',
+    requiresAuth: true,
+  },
+  {
+    title: 'Skin Up',
+    image: '/tradeup_illu.png',
+    buttonText: 'Upgrader',
+    buttonType: 'purple',
+    to: '/trade-up',
+    requiresAuth: true,
+  },
+  {
+    title: 'Market',
+    image: '/market_illu.png',
+    buttonText: 'Explorer',
+    buttonType: 'purple',
+    to: '/market',
+    requiresAuth: true,
+  },
+  {
+    title: 'Inventaire',
+    image: '/inventaire_illu.png',
+    buttonText: 'Voir',
+    buttonType: 'purple',
+    to: '/inventory',
+    requiresAuth: true,
+  },
+])
 </script>
 
-<style>
-.discord-login {
-  background: #5865f2;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 10px;
-  text-decoration: none;
-  display: inline-block;
-  margin-top: 20px;
-}
-
-.btn-login {
-  box-sizing: border-box;
-  position: relative;
-  margin-top: 40px;
-  padding: 12px 40px;
-  font-size: 1em;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #ddd;
-  background: #1c2526;
-  border-radius: 12px;
-  cursor: pointer;
-  overflow: hidden !important;
-  z-index: 1;
-  pointer-events: all;
-  transition: all 0.3s ease;
-}
-
-.btn-login::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  background: linear-gradient(45deg, #5865f2, #7984f5);
-  border-radius: 14px;
-  z-index: -1;
-  transition: all 0.3s ease;
-}
-
-.btn-login::after {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  background: #1c2526;
-  border-radius: 10px;
-  z-index: -1;
-}
-
-.btn-login:hover::before {
-  filter: blur(1px);
-}
-
-.shine {
-  box-sizing: border-box;
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.5s ease;
-  z-index: 0;
-}
-
-.btn-login:hover .shine {
-  transform: translateX(100%);
-}
-
-.login {
+<style scoped>
+.landing-page {
+  width: 100%;
+  min-height: 100vh;
   display: flex;
-  place-content: center;
-  place-items: center;
-  pointer-events: none;
+  flex-direction: column;
+}
+.chat-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  box-sizing: border-box;
+  gap: 60px;
+  height: calc(100vh - 80px);
+}
+.chat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.chat-title {
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 100px;
+  font-weight: 600;
+  line-height: 1;
+  margin: 0;
+}
+.chat-description {
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.6;
+  max-width: 560px;
+  opacity: 0.75;
+  margin: 0;
+}
+.chat-image-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 350px;
+}
+.chat-img {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  object-fit: contain;
+  animation: float 4s ease-in-out infinite;
 }
 
-.flopo-img {
-  position: fixed;
-  top: -50vh;
-  right: -25vw;
-  width: 150vw;
-  height: 200vh;
-  background: linear-gradient(-90deg, #5865f255, transparent);
-  background-position: center;
-  background-size: cover;
-  border-radius: 20px;
-  transform-style: preserve-3d;
-  transition: transform 0.1s ease;
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-18px);
+  }
 }
 
-.flopobot {
+.scroll-indicator {
   position: absolute;
-  top: 50%;
-  left: 65%;
-  width: 300px;
-  transform: translate(-50%, -50%) translateZ(175px);
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: fadeInUp 1s ease 0.6s both;
+}
+.scroll-label {
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+.scroll-line {
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
 }
 
-.flopo-img-sm {
-  position: absolute;
-  bottom: 50px;
-  right: 10px;
-  display: none;
+@keyframes scrollPulse {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
 }
-
-@media (max-width: 850px) {
-  /*html {
-    height: 100vh !important;
-    width: 100vw !important;
-    overflow: hidden !important;
-  }*/
-  .flopo-img {
-    display: none;
-    position: absolute;
-    background: transparent;
-    top: -10vh;
-    height: 120vh;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
   }
-
-  .flopobot {
-    position: absolute;
-    top: 70%;
-    left: 70%;
-  }
-
-  .flopo-img-sm {
-    display: flex;
-  }
-
-  .login {
-    margin-top: 10rem;
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }
 
-a {
-  color: #dddddd77 !important;
-  font-size: 0.9em;
+.home-footer {
+  width: 100%;
+  margin-top: 80px;
+  padding: 48px 48px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.footer-copy {
+  color: #ddd;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  margin: 0;
+  padding-right: 24px;
+}
+
+.home-footer .footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.home-footer .footer-links a {
+  color: #dddddd77;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  text-decoration: none;
   line-height: 0.95em;
+  transition: color 0.2s ease;
 }
 
-a:hover {
-  color: #ddd !important;
+.home-footer .footer-links a:hover {
+  color: #ddd;
+}
+
+/* ─── Mobile ─── */
+@media (max-width: 968px) {
+  .chat-section {
+    flex-direction: column-reverse;
+    text-align: center;
+    padding: 20px 24px 80px;
+    gap: 32px;
+    height: calc(100svh - 70px);
+    justify-content: center;
+  }
+  .chat-title {
+    font-size: 64px;
+  }
+  .chat-description {
+    margin: 0 auto;
+  }
+  .chat-image-container {
+    max-width: 220px;
+  }
+  .scroll-indicator {
+    bottom: 20px;
+  }
+  .home-footer {
+    flex-direction: column;
+    gap: 16px;
+    padding: 32px 24px 16px;
+  }
+  .home-footer .footer-links {
+    flex-direction: column;
+    gap: 16px;
+  }
 }
 </style>

@@ -11,7 +11,9 @@
       :card-index="index"
       :style="cardStyle(index)"
       class="card-in-pile"
-      :is-hidden="dragStartIndex !== null && index >= dragStartIndex && card.faceUp"
+      :is-hidden="
+        (dragStartIndex !== null && index >= dragStartIndex && card.faceUp) || isCardAnimating(card)
+      "
       @card-drag-started="handleCardDrag"
       @card-drag-ended="handleCardDragEnd"
       @card-clicked="handleCardClick"
@@ -45,14 +47,23 @@ export default {
       type: Number, // Index for tableau and foundation piles
       default: null,
     },
+    // Map of "rankSuit" -> true for cards currently hidden behind a flying clone.
+    animatingKeys: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   emits: ['drag-start-from-pile', 'drop-on-pile', 'stock-pile-clicked', 'auto-move-triggered'],
+
   data() {
     return {
       dragStartIndex: null,
     }
   },
   methods: {
+    isCardAnimating(card) {
+      return !!this.animatingKeys[card.rank + card.suit]
+    },
     cardStyle(index) {
       switch (this.type) {
         case 'tableauPiles':
@@ -122,6 +133,16 @@ export default {
       }
     },
 
+    handleCardClick(cardIndex) {
+      const sourceInfo = {
+        sourcePileType: this.type,
+        sourcePileIndex: this.pileIndex,
+        sourceCardIndex: cardIndex,
+      }
+
+      this.$emit('auto-move-triggered', sourceInfo)
+    },
+
     createDragPreview(cards) {
       const container = document.createElement('div')
       // Style the container to be invisible and hold the stack
@@ -149,16 +170,6 @@ export default {
       })
 
       return container
-    },
-
-    handleCardClick(cardIndex) {
-      const sourceInfo = {
-        sourcePileType: this.type,
-        sourcePileIndex: this.pileIndex,
-        sourceCardIndex: cardIndex,
-      }
-
-      this.$emit('auto-move-triggered', sourceInfo)
     },
   },
 }

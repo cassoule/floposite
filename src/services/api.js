@@ -1,6 +1,7 @@
 import flapi from './flapi.js'
 
 export default {
+  // --- Solitaire ---
   getRankings() {
     return flapi.get('/solitaire/sotd/rankings')
   },
@@ -16,8 +17,8 @@ export default {
   startSOTD() {
     return flapi.post('/solitaire/start/sotd')
   },
-  resetGame() {
-    return flapi.post('/solitaire/reset')
+  resetGame(gameId = null) {
+    return flapi.post('/solitaire/reset', { gameId })
   },
   getGameState(userId) {
     return flapi.get(`/solitaire/state/${userId}`)
@@ -25,14 +26,21 @@ export default {
   moveCard(moveData) {
     return flapi.post('/solitaire/move', moveData)
   },
-  drawCard() {
-    return flapi.post('/solitaire/draw')
+  drawCard(gameId = null) {
+    return flapi.post('/solitaire/draw', { gameId })
   },
-  undoMove() {
-    return flapi.post('/solitaire/undo')
+  undoMove(gameId = null) {
+    return flapi.post('/solitaire/undo', { gameId })
+  },
+  autoCompleteSolitaire(gameId = null) {
+    return flapi.post('/solitaire/auto-complete', { gameId })
+  },
+  claimSolitaireSubmission(submissionToken) {
+    return flapi.post('/solitaire/claim-submission', { submissionToken })
   },
 
-  // Sudoku
+  // --- Sudoku ---
+
   getSudokuRankings() {
     return flapi.get('/sudoku/sotd/rankings')
   },
@@ -42,16 +50,19 @@ export default {
   startSudokuSOTD() {
     return flapi.post('/sudoku/start/sotd')
   },
-  resetSudoku() {
-    return flapi.post('/sudoku/reset')
+  resetSudoku(gameId) {
+    return flapi.post('/sudoku/reset', { gameId })
   },
   getSudokuState(userId) {
     return flapi.get(`/sudoku/state/${userId}`)
   },
-  submitSudoku(grid) {
-    return flapi.post('/sudoku/submit', { grid })
+  submitSudoku(gameId, grid, timeTaken) {
+    return flapi.post('/sudoku/submit', { gameId, grid, timeTaken })
   },
-  saveSudokuProgress(grid, notes) {
-    return flapi.post('/sudoku/progress', { grid, notes })
+  saveSudokuProgress(gameId, grid, notes) {
+    return flapi.post('/sudoku/progress', { gameId, grid, notes })
+  },
+  claimSudokuSubmission(submissionToken) {
+    return flapi.post('/sudoku/claim-submission', { submissionToken })
   },
 }

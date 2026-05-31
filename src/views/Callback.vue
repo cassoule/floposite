@@ -29,7 +29,10 @@ onMounted(async () => {
 
     localStorage.setItem('discordId', response.data.discordId)
     showSuccessOrWarningToast('Coucou ^^', false)
-    await router.push('/dashboard')
+    // Redirect to the page the user was on before login, or   to /dashboard
+    const returnUrl = localStorage.getItem('returnUrl') || '/dashboard'
+    localStorage.removeItem('returnUrl')
+    await router.push(returnUrl)
   } catch (error) {
     console.error('Authentication failed:', error.response?.data || error.message)
     localStorage.removeItem('token')
