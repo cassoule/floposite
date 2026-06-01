@@ -65,4 +65,30 @@ export default {
   claimSudokuSubmission(submissionToken) {
     return flapi.post('/sudoku/claim-submission', { submissionToken })
   },
+
+  // Mots Fléchés
+  getMotsFlechesRankings() {
+    return flapi.get('/mots-fleches/sotd/rankings')
+  },
+  getMotsFlechesArchive(limit = 60) {
+    return flapi.get(`/mots-fleches/archive?limit=${limit}`)
+  },
+  startMotsFlechesSOTD() {
+    return flapi.post('/mots-fleches/start/sotd')
+  },
+  startMotsFlechesArchive(date) {
+    return flapi.post('/mots-fleches/start/archive', { date })
+  },
+  getMotsFlechesState(userId) {
+    return flapi.get(`/mots-fleches/state/${userId}`)
+  },
+  saveMotsFlechesProgress(filledGrid) {
+    return flapi.post('/mots-fleches/progress', { filledGrid })
+  },
+  submitMotsFleches(filledGrid) {
+    return flapi.post('/mots-fleches/submit', { filledGrid })
+  },
+  resetMotsFleches() {
+    return flapi.post('/mots-fleches/reset')
+  },
 }

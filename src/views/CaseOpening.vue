@@ -290,7 +290,6 @@ export default {
             color="primary"
             rounded="lg"
             :disabled="user?.coins < CS_CASE_PRICE || loading"
-            @click=""
           >
             Ouvrir
           </v-btn>
@@ -371,7 +370,7 @@ export default {
       color="#1A1A1A"
       rounded="xl"
       class="w-100 px-0"
-      :style="`box-shadow: inset 0 0 10px 2px ${this.caseColor}`"
+      :style="`box-shadow: inset 0 0 10px 2px ${caseColor}`"
     >
       <v-card-item class="px-0">
         <div ref="rouletteContainer" class="roulette-container">
