@@ -206,14 +206,6 @@ export default {
 
       games: [
         {
-          name: 'Puissance 4',
-          description:
-            'Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.',
-          route: 'connect-4',
-          class: 'c4-action-card',
-          chips: ['1v1', 'Elo'],
-        },
-        {
           name: 'Solitaire',
           description: 'Tente de gagner quelques FlopoCoins au solitaire.',
           route: 'solitaire',
@@ -233,7 +225,15 @@ export default {
             'Teste ta culture générale et gagne des FlopoCoins en complétant la grille du jour.',
           route: 'mots-fleches',
           class: 'mots-fleches-action-card',
-          chips: ['Daily', 'Solo', 'Coins'],
+          chips: ['New', 'Daily', 'Solo', 'Coins'],
+        },
+        {
+          name: 'Puissance 4',
+          description:
+            'Joue une partie de puissance 4 contre un autre joueur, mais attention à ton FlopoRank.',
+          route: 'connect-4',
+          class: 'c4-action-card',
+          chips: ['1v1', 'Elo'],
         },
         {
           name: 'Blackjack',
@@ -255,7 +255,7 @@ export default {
           description: 'Multiplie tes FlopoCoins en te retirant avant le crash !',
           route: 'crash',
           class: 'crash-action-card',
-          chips: ['New', 'Multi', 'Coins'],
+          chips: ['Multi', 'Coins'],
         },
         {
           name: 'Flopoker',
