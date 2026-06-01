@@ -82,13 +82,16 @@ export default {
   getMotsFlechesState(userId) {
     return flapi.get(`/mots-fleches/state/${userId}`)
   },
-  saveMotsFlechesProgress(filledGrid) {
-    return flapi.post('/mots-fleches/progress', { filledGrid })
+  saveMotsFlechesProgress(filledGrid, gameId = null) {
+    return flapi.post('/mots-fleches/progress', { filledGrid, gameId })
   },
-  submitMotsFleches(filledGrid) {
-    return flapi.post('/mots-fleches/submit', { filledGrid })
+  submitMotsFleches(filledGrid, gameId = null) {
+    return flapi.post('/mots-fleches/submit', { filledGrid, gameId })
   },
-  resetMotsFleches() {
-    return flapi.post('/mots-fleches/reset')
+  resetMotsFleches(gameId = null) {
+    return flapi.post('/mots-fleches/reset', { gameId })
+  },
+  claimMotsFlechesSubmission(submissionToken) {
+    return flapi.post('/mots-fleches/claim-submission', { submissionToken })
   },
 }

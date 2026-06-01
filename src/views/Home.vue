@@ -52,7 +52,7 @@
 
     <GameSection
       id="loot-trade"
-      title="Butinez, échangez et personnalisez"
+      title="Lootez, échangez et personnalisez"
       description="Déballez des skins rares, gérez votre inventaire personnel et échangez des objets avec d'autres joueurs sur le FlopoMarket officiel."
       :games="lootTradeGames"
       :is-logged-in="isLoggedIn"
@@ -101,6 +101,13 @@ const dailyGames = ref([
     buttonText: 'Jouer',
     buttonType: 'purple',
     to: '/sudoku',
+  },
+  {
+    title: 'Mots fléchés',
+    image: '/game_illu_mots_fleches.png',
+    buttonText: 'Jouer',
+    buttonType: 'purple',
+    to: '/mots-fleches',
   },
 ])
 

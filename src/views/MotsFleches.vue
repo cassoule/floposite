@@ -1,6 +1,6 @@
 <!-- MotsFleches.vue -->
 <template>
-  <CoinsCounter />
+  <CoinsCounter v-if="userId" />
   <v-layout class="w-100 mt-16">
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="min-height: 100vh">
       <div class="w-100">
@@ -284,6 +284,21 @@
         </div>
       </div>
 
+      <RegisterWelcomeModal
+        v-model="welcomeDialog"
+        :anonUsername="userName"
+        @quit="closeWelcomeAndShowStats"
+        @register="closeWelcomeAndShowStats"
+      />
+
+      <SaveScoreDialog
+        :visible="guestDialog"
+        :submissionToken="pendingSubmissionToken"
+        :finishTime="finishTime"
+        game="mots-fleches"
+        @close="guestDialog = false"
+      />
+
       <v-dialog v-model="winDialog" max-width="450">
         <v-card rounded="xl">
           <v-card-title>Bravo !</v-card-title>
@@ -329,13 +344,16 @@
 import api from '../services/api'
 import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
+import SaveScoreDialog from '../components/SaveScoreDialog.vue'
+import RegisterWelcomeModal from '../components/dashboard/RegisterWelcomeModal.vue'
 
 export default {
   name: 'MotsFleches',
-  components: { CoinsCounter },
+  components: { CoinsCounter, SaveScoreDialog, RegisterWelcomeModal },
   data() {
     return {
       userId: null,
+      gameId: null,
       isLoading: false,
       now: Date.now(),
       gameState: null,
@@ -343,6 +361,10 @@ export default {
       errors: [],
       errorDialog: false,
       winDialog: false,
+      welcomeDialog: false,
+      guestDialog: false,
+      isNewUser: false,
+      pendingSubmissionToken: null,
       finishTime: 0,
       finishClues: 0,
       finishScore: 0,
@@ -354,6 +376,9 @@ export default {
     }
   },
   computed: {
+    userName() {
+      return localStorage.getItem('discordUsername') || 'joueur'
+    },
     isComplete() {
       if (!this.gameState) return false
       for (let r = 0; r < this.gameState.rows; r++) {
@@ -410,12 +435,15 @@ export default {
   },
   async mounted() {
     this.userId = localStorage.getItem('discordId')
-    if (!this.userId) return this.$router.push('/')
 
-    this.initSocket()
     this.isLoading = true
     try {
-      await Promise.all([this.fetchRankings(), this.fetchArchive(), this.fetchGameState()])
+      await Promise.all([this.fetchRankings(), this.fetchArchive()])
+      if (this.userId) {
+        this.initSocket()
+        await this.fetchGameState()
+        await this.claimPendingSubmission()
+      }
     } catch (e) {
       console.error('mots-fleches load failed', e)
     }
@@ -435,6 +463,37 @@ export default {
         if (payload?.userId === this.userId) window.location.reload()
       }
       this.socket.on('motsFleches:update', this._onUpdate)
+    },
+
+    async claimPendingSubmission() {
+      const stored = localStorage.getItem('mots-flechesPendingSubmission')
+      if (!stored || !this.userId) return
+
+      let data
+      try {
+        data = JSON.parse(stored)
+      } catch {
+        return
+      }
+
+      try {
+        const response = await api.claimMotsFlechesSubmission(data.token)
+        if (response.data.success) {
+          this.finishTime = response.data.time
+          this.finishClues = response.data.cluesSolved
+          this.finishScore = response.data.score
+          this.isNewUser = response.data.isNewUser || false
+          if (this.isNewUser) {
+            this.welcomeDialog = true
+          } else {
+            this.winDialog = true
+          }
+          localStorage.removeItem('mots-flechesPendingSubmission')
+        }
+      } catch (e) {
+        console.error('Failed to claim mots fléchés submission:', e)
+        localStorage.removeItem('mots-flechesPendingSubmission')
+      }
     },
 
     initFilledGrid() {
@@ -570,7 +629,7 @@ export default {
     async saveProgress() {
       if (!this.gameState) return
       try {
-        await api.saveMotsFlechesProgress(this.filledGrid)
+        await api.saveMotsFlechesProgress(this.filledGrid, this.gameId)
       } catch (e) {
         console.warn('progress save failed', e?.response?.status)
       }
@@ -643,6 +702,7 @@ export default {
         this.isLoading = true
         const res = await api.startMotsFlechesSOTD()
         this.gameState = res.data.gameState
+        this.gameId = res.data.gameId || null
         this.initFilledGrid()
         this.startTimer()
       } catch (e) {
@@ -657,6 +717,7 @@ export default {
         this.isLoading = true
         const res = await api.startMotsFlechesArchive(date)
         this.gameState = res.data.gameState
+        this.gameId = res.data.gameId || null
         this.initFilledGrid()
         this.startTimer()
       } catch (e) {
@@ -668,11 +729,12 @@ export default {
 
     async handleReset() {
       try {
-        await api.resetMotsFleches()
+        await api.resetMotsFleches(this.gameId)
       } catch {
         /* noop */
       }
       this.gameState = null
+      this.gameId = null
       this.filledGrid = []
       if (this.timerInterval) clearInterval(this.timerInterval)
       await this.fetchArchive()
@@ -682,13 +744,19 @@ export default {
     async handleSubmit() {
       this.isLoading = true
       try {
-        const res = await api.submitMotsFleches(this.filledGrid)
+        const res = await api.submitMotsFleches(this.filledGrid, this.gameId)
         if (res.data.valid) {
           this.finishTime = res.data.time
           this.finishClues = res.data.cluesSolved
           this.finishScore = res.data.score
-          this.winDialog = true
           if (this.timerInterval) clearInterval(this.timerInterval)
+          if (!this.userId && res.data.submissionToken) {
+            // Guest win: prompt to log in so the score can be saved/ranked.
+            this.pendingSubmissionToken = res.data.submissionToken
+            this.guestDialog = true
+          } else {
+            this.winDialog = true
+          }
         } else {
           this.errors = res.data.errors || []
           this.errorDialog = true
@@ -703,9 +771,15 @@ export default {
     closeWin() {
       this.winDialog = false
       this.gameState = null
+      this.gameId = null
       this.filledGrid = []
       this.fetchRankings()
       this.fetchArchive()
+    },
+
+    closeWelcomeAndShowStats() {
+      this.welcomeDialog = false
+      this.winDialog = true
     },
   },
 }

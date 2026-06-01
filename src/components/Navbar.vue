@@ -62,7 +62,10 @@ const goToDashboard = () => {
 
 <style scoped>
 .navbar {
+  position: sticky;
+  top: 0;
   display: flex;
+  z-index: 1000;
   align-items: center;
   width: 100%;
   box-sizing: border-box;
@@ -88,8 +91,10 @@ const goToDashboard = () => {
   gap: 40px; /* gap: 10 dans Tailwind (40px) */
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 12px 4px 10px 4px;
   margin-right: auto;
+  border-radius: 12px;
+  backdrop-filter: blur(30px);
 }
 
 .nav-item {
@@ -101,8 +106,7 @@ const goToDashboard = () => {
   line-height: normal;
   color: #e1dcdccd !important;
   text-decoration: none;
-  transition: opacity 0.2s ease;
-  opacity: 0.9;
+  padding: 8px 16px;
 }
 
 .nav-item::after {
@@ -115,7 +119,7 @@ const goToDashboard = () => {
   height: 50%;
   opacity: 0;
   border-radius: 10px;
-  background: #dddddd11;
+  background: #dddddd33;
   transition:
     width 0.3s ease,
     height 0.2s ease-in,
@@ -125,12 +129,12 @@ const goToDashboard = () => {
 
 .nav-item:hover,
 .router-link-active {
-  opacity: 1;
+  color: #fff !important;
 }
 
 .nav-item:hover::after {
-  width: 120%;
-  height: 120%;
+  width: 100%;
+  height: 100%;
   opacity: 1;
 }
 
