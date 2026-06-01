@@ -1,6 +1,5 @@
-<!-- Solitaire.vue -->
 <template>
-  <CoinsCounter />
+  <CoinsCounter v-if="userId" />
   <v-layout class="w-100 mt-16">
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="height: 130vh">
       <div class="w-100">
@@ -26,12 +25,26 @@
           <p v-if="!gameState || gameState?.isSOTD" class="font-weight-medium">{{ timeLeft() }}</p>
           <v-spacer></v-spacer>
           <v-btn
+            v-if="isAutoSolvable || isAutoSolving"
+            class="text-none auto-solve-btn"
+            prepend-icon="mdi-auto-fix"
+            variant="flat"
+            color="success"
+            rounded="lg"
+            :loading="isAutoSolving"
+            :disabled="isAutoSolving"
+            @click="handleAutoSolve"
+          >
+            Terminer la partie
+          </v-btn>
+          <v-btn
             v-if="gameState"
             class="text-none"
             prepend-icon="mdi-undo-variant"
             variant="tonal"
             color="gray"
             rounded="lg"
+            :disabled="isAutoSolving"
             @click="handleUndo"
             >Revenir en arrière</v-btn
           >
@@ -41,6 +54,7 @@
             variant="flat"
             color="error"
             rounded="lg"
+            :disabled="isAutoSolving"
             @click="handleReset"
           >
             Abandonner
@@ -58,13 +72,14 @@
           <div style="font-size: 0.6em">Seed : {{ gameState.seed }}</div>
         </div>
 
-        <div v-if="gameState" :key="Date.now()" class="solitaire-board pb-16">
+        <div v-if="gameState" class="solitaire-board pb-16">
           <div class="top-section">
             <div class="stock-and-waste">
               <Pile type="stock" :pile="gameState.stockPile" @stock-pile-clicked="handleDrawCard" />
               <Pile
                 type="wastePile"
                 :pile="gameState.wastePile"
+                :animating-keys="animatingCards"
                 @drag-start-from-pile="handleDragStart"
                 @auto-move-triggered="handleAutoMove"
               />
@@ -73,9 +88,11 @@
               <Pile
                 v-for="(pile, index) in gameState.foundationPiles"
                 :key="'foundation-' + index"
+                :data-foundation="index"
                 type="foundationPiles"
                 :pile-index="index"
                 :pile="pile"
+                :animating-keys="animatingCards"
                 @drag-start-from-pile="handleDragStart"
                 @drop-on-pile="handleDrop"
               />
@@ -88,6 +105,7 @@
               type="tableauPiles"
               :pile-index="index"
               :pile="pile"
+              :animating-keys="animatingCards"
               @drag-start-from-pile="handleDragStart"
               @drop-on-pile="handleDrop"
               @auto-move-triggered="handleAutoMove"
@@ -295,11 +313,7 @@
           </v-alert>
         </div>
 
-        <div
-          v-if="gameState"
-          :key="Date.now() + '-stats'"
-          style="position: fixed; bottom: 1em; left: 1em"
-        >
+        <div v-if="gameState" style="position: fixed; bottom: 1em; left: 1em">
           <v-card
             variant="tonal"
             rounded="xl"
@@ -310,6 +324,31 @@
               <p>{{ gameState.moves }} coups</p>
             </v-card-text>
           </v-card>
+        </div>
+
+        <!-- Flying cards: animate moves to foundations, auto-moves, and draws -->
+        <div v-if="flyingCards.length" class="flying-layer">
+          <div
+            v-for="f in flyingCards"
+            :key="f.id"
+            class="flying-card"
+            :style="{
+              width: f.w + 'px',
+              height: f.h + 'px',
+              transform: `translate(${f.x}px, ${f.y}px)`,
+            }"
+          >
+            <div v-if="f.flip" class="flying-flip" :class="{ flipped: f.flipped }">
+              <img class="flying-face back" src="/cards/webp/card_back.webp" alt="" />
+              <img class="flying-face front" :src="`/cards/webp/${f.rank}${f.suit}.webp`" alt="" />
+            </div>
+            <img
+              v-else
+              class="flying-face-single"
+              :src="`/cards/webp/${f.rank}${f.suit}.webp`"
+              alt=""
+            />
+          </div>
         </div>
       </div>
 
@@ -340,6 +379,13 @@
           </v-card-text>
         </v-card>
       </v-dialog>
+
+      <RegisterWelcomeModal
+        v-model="welcomeDialog"
+        :anon-username="userName"
+        @quit="closeWelcomeAndShowStats"
+        @register="closeWelcomeAndShowStats"
+      />
 
       <v-dialog v-model="winDialog" class="modals" max-width="400" persistent>
         <v-card variant="flat" color="secondary" class="rounded-xl modal-card">
@@ -379,6 +425,20 @@
           </v-card-text>
         </v-card>
       </v-dialog>
+
+      <SaveScoreDialog
+        v-if="guestDialog"
+        :visible="guestDialog"
+        game="solitaire"
+        :submission-token="pendingSubmissionToken"
+        :finish-time="finishTime"
+        :moves="gameState?.moves"
+        :score="gameState?.score"
+        :is-s-o-t-d="gameState?.isSOTD"
+        :seed="gameState?.seed"
+        @close="guestDialog = false"
+      />
+
       <v-snackbar
         v-model="resetSnackbar"
         :timeout="2000"
@@ -408,13 +468,13 @@
 </template>
 
 <script>
-/* global localStorage, setInterval, clearInterval, Image */
+/* global localStorage, setTimeout, requestAnimationFrame */
 import Pile from '../components/solitaire/Pile.vue'
 import api from '../services/api'
-import flapi from '@/services/flapi.js'
-import { getAllCardImagePaths } from '../utils/cardImages.js'
 import { getSocket } from '@/services/socket.js'
 import CoinsCounter from '../components/CoinsCounter.vue'
+import SaveScoreDialog from '../components/SaveScoreDialog.vue'
+import RegisterWelcomeModal from '../components/dashboard/RegisterWelcomeModal.vue'
 
 function getRankValue(rank) {
   if (rank === 'A') return 1
@@ -434,6 +494,8 @@ export default {
   components: {
     Pile,
     CoinsCounter,
+    SaveScoreDialog,
+    RegisterWelcomeModal,
   },
   data() {
     return {
@@ -443,10 +505,14 @@ export default {
       isLoading: false,
       now: Date.now(),
 
+      // Guest support
+      gameId: null,
+
       hardMode: false,
 
       seedChoiceDialog: false,
       winDialog: false,
+      welcomeDialog: false,
 
       userSeed: null,
       rankings: null,
@@ -455,34 +521,66 @@ export default {
       resetVoteLoading: false,
       resetSnackbar: false,
 
-      avatars: {},
+      isNewUser: false,
+
+      // Guest save support
+      guestDialog: false,
+      pendingSubmissionToken: null,
+      finishTime: 0,
+
+      // Flying-card animations (auto-complete, auto-move, draw)
+      isAutoSolving: false,
+      flyingCards: [],
+      animatingCards: {},
     }
   },
+  computed: {
+    userName() {
+      return localStorage.getItem('discordUsername') || 'joueur'
+    },
+    // The board can be finished automatically once every tableau card is face-up
+    // and the stock + waste are empty — Klondike is guaranteed winnable from here.
+    isAutoSolvable() {
+      const gs = this.gameState
+      if (!gs || gs.isDone) return false
+      if (!gs.stockPile || !gs.wastePile || !gs.tableauPiles || !gs.foundationPiles) return false
+      if (gs.stockPile.length > 0 || gs.wastePile.length > 0) return false
+
+      const allFaceUp = gs.tableauPiles.every((pile) => pile.every((card) => card.faceUp))
+      if (!allFaceUp) return false
+
+      const foundationCount = gs.foundationPiles.reduce((acc, pile) => acc + pile.length, 0)
+      return foundationCount < 52
+    },
+  },
+  created() {
+    this.syncQueue = Promise.resolve()
+    this.undoStack = []
+    this.syncGeneration = 0
+    this.flyingIdSeq = 0
+  },
   async mounted() {
-    // Fetch the initial game state when the component is created
     try {
       this.userId = localStorage.getItem('discordId')
-      if (!this.userId) this.$router.push('/')
 
       this.initSocket()
       this.isLoading = true
-      await this.preloadImages()
       await this.getRankings()
       await this.fetchResetVotes()
-      await this.fetchGameState(this.userId)
+      if (this.userId) {
+        await this.fetchGameState(this.userId)
+        await this.claimPendingSubmission()
+      }
       this.isLoading = false
-      //this.fetchAvatars()
       if (this.gameState?.isDone) {
         this.winDialog = true
       }
     } catch (error) {
       console.error('Failed to load game state:', error)
-      if (!this.userId) this.$router.push('/')
     }
   },
   beforeUnmount() {
     if (this.socket) {
-      if (this._onConnect) this.socket.off('connect', this._onConnect)
       if (this._onSolitaireUpdate) this.socket.off('solitaire:update', this._onSolitaireUpdate)
       if (this._onSotdResetVoteUpdate)
         this.socket.off('sotd-reset-vote-update', this._onSotdResetVoteUpdate)
@@ -490,26 +588,50 @@ export default {
     }
   },
   methods: {
+    async claimPendingSubmission() {
+      const stored = localStorage.getItem('solitairePendingSubmission')
+      if (!stored || !this.userId) return
+      try {
+        const data = JSON.parse(stored)
+        const response = await api.claimSolitaireSubmission(data.token)
+        console.log('Pending submission claimed:', response.data)
+        this.finishTime = response.data.time
+        this.isNewUser = response.data.isNewUser || false
+
+        // Création du faux gameState avec les piles vides pour éviter le crash
+        this.gameState = {
+          moves: response.data.moves,
+          score: response.data.score,
+          isSOTD: data.isSOTD ?? false,
+          seed: data.seed ?? null,
+          stockPile: [],
+          wastePile: [],
+          foundationPiles: [],
+          tableauPiles: [],
+          isDone: true,
+        }
+
+        if (this.isNewUser) {
+          this.welcomeDialog = true
+        } else {
+          this.winDialog = true
+        }
+        localStorage.removeItem('solitairePendingSubmission')
+      } catch (error) {
+        console.error('Failed to claim pending submission:', error)
+        localStorage.removeItem('solitairePendingSubmission')
+      }
+    },
+
     initSocket() {
       this.socket = getSocket()
 
-      this._onConnect = () => {
-        console.log('Connected to WebSocket server')
-      }
-      this.socket.on('connect', this._onConnect)
-
       this._onSolitaireUpdate = (payload) => {
-        if (payload?.userId === this.userId) {
-          if (!payload.moves || payload.moves.length === 0) window.location.reload()
-          let i = 0
-          const interval = setInterval(() => {
-            const move = payload.moves[i]
-            this.processMove(move)
-            i++
-            if (i >= payload.moves.length) {
-              clearInterval(interval) // stop when done
-            }
-          }, 100)
+        if (payload?.userId === this.userId && this.userId) {
+          this.gameState = null
+          this.gameId = null
+          this.undoStack = []
+          this.getRankings()
         }
       }
       this.socket.on('solitaire:update', this._onSolitaireUpdate)
@@ -618,46 +740,46 @@ export default {
       }
     },
 
-    fetchAvatars() {
-      this.rankings.forEach(async (stats) => {
-        this.avatars[stats.id] = await this.getAvatar(stats.id)
-      })
-    },
-
-    async getAvatar(id) {
-      try {
-        const response = await flapi.get('/user/' + id + '/avatar')
-        return response.data.avatarUrl
-      } catch (e) {
-        console.error('flAPI error:', e)
-      }
-    },
-
     async handleRestart() {
+      this.clearAnimations()
+      this.undoStack = []
       await this.getRankings()
       try {
         const response = await api.startNewGame(this.userSeed, this.hardMode)
         this.gameState = response.data.gameState
+        this.gameId = response.data.gameId || null
+        this.pendingSubmissionToken = null
+        this.isNewUser = false
       } catch (error) {
         console.error('Failed to start new game:', error)
       }
     },
 
     async handleRestartSotd() {
+      this.clearAnimations()
+      this.undoStack = []
       await this.getRankings()
       try {
         const response = await api.startSOTD()
         this.gameState = response.data.gameState
+        this.gameId = response.data.gameId || null
+        this.pendingSubmissionToken = null
+        this.isNewUser = false
       } catch (error) {
         console.error('Failed to start new game:', error)
       }
     },
 
     async handleReset() {
+      this.clearAnimations()
+      this.undoStack = []
       await this.getRankings()
       try {
-        await api.resetGame()
+        await api.resetGame(this.gameId)
         this.gameState = null
+        this.gameId = null
+        this.pendingSubmissionToken = null
+        this.isNewUser = false
       } catch (error) {
         console.error('Failed to reset game:', error)
       }
@@ -672,97 +794,198 @@ export default {
       }
     },
 
-    // Called when a drag operation starts from any valid pile.
-    // The 'sourceInfo' object is now fully detailed.
     handleDragStart(sourceInfo) {
-      if (this.isLoading) return
+      if (this.isAutoSolving) return
       this.draggedCardSourceInfo = sourceInfo
     },
 
-    // Called when a card is dropped onto a valid destination pile.
-    async handleDrop(destinationInfo) {
-      if (!this.draggedCardSourceInfo || this.isLoading) return
+    enqueueSync(fn) {
+      const generation = this.syncGeneration
+      this.syncQueue = this.syncQueue.then(async () => {
+        // A reconcile invalidated everything queued before it.
+        if (generation !== this.syncGeneration) return
+        try {
+          await fn()
+        } catch (error) {
+          await this.handleDesync(error)
+        }
+      })
+    },
 
-      this.isLoading = true
+    snapshot() {
+      this.undoStack.push(JSON.parse(JSON.stringify(this.gameState)))
+    },
 
-      const oldState = JSON.parse(JSON.stringify(this.gameState))
+    async handleDesync(error) {
+      this.syncGeneration++
+      this.undoStack = []
+      this.clearAnimations()
+      console.warn(
+        'Solitaire desync, reconciling with server:',
+        error?.response?.data?.error || error?.message,
+      )
+      try {
+        const serverState = error?.response?.data?.gameState
+        if (serverState) {
+          this.gameState = serverState
+        } else if (this.userId) {
+          const response = await api.getGameState(this.userId)
+          if (response?.data?.gameState) this.gameState = response.data.gameState
+        }
+      } catch (e) {
+        console.error('Failed to reconcile solitaire state:', e)
+      }
+    },
 
-      // Combine the stored source info and the new destination info.
+    isMoveLegal(moveData) {
+      if (!this.gameState) return false
+      const { sourcePileType, sourcePileIndex, sourceCardIndex, destPileType, destPileIndex } =
+        moveData
+
+      let sourcePile
+      if (sourcePileType === 'tableauPiles')
+        sourcePile = this.gameState.tableauPiles[sourcePileIndex]
+      else if (sourcePileType === 'wastePile') sourcePile = this.gameState.wastePile
+      else if (sourcePileType === 'foundationPiles')
+        sourcePile = this.gameState.foundationPiles[sourcePileIndex]
+      else return false
+
+      const sourceCard = sourcePile?.[sourceCardIndex]
+      if (!sourceCard || !sourceCard.faceUp) return false
+
+      if (destPileType === 'tableauPiles') {
+        const destinationPile = this.gameState.tableauPiles[destPileIndex]
+        const topCard = destinationPile[destinationPile.length - 1]
+        if (!topCard) return sourceCard.rank === 'K'
+        return (
+          getCardColor(sourceCard.suit) !== getCardColor(topCard.suit) &&
+          getRankValue(topCard.rank) - getRankValue(sourceCard.rank) === 1
+        )
+      }
+
+      if (destPileType === 'foundationPiles') {
+        // Only a single card may go to a foundation.
+        if (sourcePile.slice(sourceCardIndex).length > 1) return false
+        const destinationPile = this.gameState.foundationPiles[destPileIndex]
+        const topCard = destinationPile[destinationPile.length - 1]
+        if (!topCard) return sourceCard.rank === 'A'
+        return (
+          sourceCard.suit === topCard.suit &&
+          getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1
+        )
+      }
+
+      return false
+    },
+
+    applyAndSyncMove(movePayload, { animate = false } = {}) {
+      if (!this.gameState || !this.isMoveLegal(movePayload)) return
+
+      this.snapshot()
+      if (animate) this.animateMove(movePayload)
+      else this.performLocalMove(movePayload)
+
+      this.enqueueSync(async () => {
+        const response = await api.moveCard({
+          ...movePayload,
+          userId: this.userId,
+          gameId: this.gameId,
+        })
+        this.gameState.score = response.data.gameState.score
+        this.gameState.moves = response.data.gameState.moves
+        this.handleWinResponse(response)
+      })
+    },
+
+    animateMove(movePayload) {
+      const { sourcePileType, sourcePileIndex, sourceCardIndex } = movePayload
+
+      let sourcePile
+      if (sourcePileType === 'tableauPiles')
+        sourcePile = this.gameState.tableauPiles[sourcePileIndex]
+      else if (sourcePileType === 'wastePile') sourcePile = this.gameState.wastePile
+      else if (sourcePileType === 'foundationPiles')
+        sourcePile = this.gameState.foundationPiles[sourcePileIndex]
+
+      if (!sourcePile) {
+        this.performLocalMove(movePayload)
+        return
+      }
+
+      // Capture the moving cards and their on-screen positions before the move.
+      const movingCards = sourcePile.slice(sourceCardIndex)
+      const fromRects = movingCards.map((c) =>
+        document.querySelector(`[data-card="${c.rank}${c.suit}"]`)?.getBoundingClientRect(),
+      )
+
+      // Hide them at their destination, then commit the move now.
+      movingCards.forEach((c) => (this.animatingCards[c.rank + c.suit] = true))
+      this.performLocalMove(movePayload)
+
+      // Once the destination has rendered, fly a clone to each card's new spot.
+      this.$nextTick(() => {
+        movingCards.forEach((card, i) => {
+          const key = card.rank + card.suit
+          const fromRect = fromRects[i]
+          const toRect = document
+            .querySelector(`[data-card="${card.rank}${card.suit}"]`)
+            ?.getBoundingClientRect()
+          if (!fromRect || !toRect) {
+            delete this.animatingCards[key]
+            return
+          }
+          this.spawnFlyingCard({
+            rank: card.rank,
+            suit: card.suit,
+            fromRect,
+            toRect,
+            onLand: () => delete this.animatingCards[key],
+          })
+        })
+      })
+    },
+
+    handleWinResponse(response) {
+      if (!response.data.win) return
+      this.isNewUser = response.data.isNewUser || false
+      if (response.data.submissionToken) {
+        this.pendingSubmissionToken = response.data.submissionToken
+        this.finishTime = Date.now() - this.gameState.startTime
+        this.guestDialog = true
+      } else if (this.isNewUser) {
+        this.welcomeDialog = true
+      } else {
+        this.winDialog = true
+      }
+    },
+
+    handleDrop(destinationInfo) {
+      if (this.isAutoSolving || !this.draggedCardSourceInfo) return
+
       const movePayload = {
-        userId: this.userId,
         ...this.draggedCardSourceInfo,
         ...destinationInfo,
       }
-
-      this.performLocalMove(movePayload)
       this.draggedCardSourceInfo = null
 
-      try {
-        const response = await api.moveCard(movePayload)
-        this.gameState.score = response.data.gameState.score
-        this.gameState.moves = response.data.gameState.moves
-
-        if (response.data.win && !this.oldState?.isDone) {
-          this.gameState.endTime = response.data.endTime
-          this.winDialog = true
-        }
-      } catch (error) {
-        // The backend correctly identifies invalid moves now.
-        console.warn('Invalid move:', error.response.data.error)
-        this.gameState = oldState
-      } finally {
-        this.isLoading = false
-      }
+      this.applyAndSyncMove(movePayload)
     },
 
-    async handleAutoMove(sourceInfo) {
-      if (this.isLoading) return
-
-      // Find a valid foundation pile destination for the clicked card
-      const destinationInfo = this.findBestAutoMove(sourceInfo)
-
-      // If a valid destination was found, process it
-      if (destinationInfo) {
-        const movePayload = { ...sourceInfo, ...destinationInfo }
-        await this.processMove(movePayload)
-      }
-    },
-
-    async processMove(movePayload) {
-      this.isLoading = true
-      const oldState = JSON.parse(JSON.stringify(this.gameState))
-
-      this.performLocalMove(movePayload)
-
-      try {
-        const response = await api.moveCard(movePayload)
-        this.gameState.score = response.data.gameState.score
-        this.gameState.moves = response.data.gameState.moves
-        // On success, our optimistic state is correct. We do nothing.
-        if (response.data.win && !this.oldState?.isDone) {
-          this.gameState.endTime = response.data.endTime
-          this.winDialog = true
-        }
-      } catch {
-        console.warn('Invalid move detected by server. Reverting UI.')
-        this.gameState = oldState // Roll back on error
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    async handleUndo() {
-      this.isLoading = true
-      const oldState = JSON.parse(JSON.stringify(this.gameState))
-
-      try {
-        const response = await api.undoMove()
-        this.gameState = { ...response.data.gameState }
-        this.isLoading = false
-      } catch (error) {
-        console.error('Failed to undo move:', error)
-        this.gameState = oldState
-        this.isLoading = false
+    handleUndo() {
+      if (this.isAutoSolving) return
+      this.clearAnimations()
+      if (this.undoStack.length > 0) {
+        this.gameState = this.undoStack.pop()
+        this.enqueueSync(async () => {
+          const response = await api.undoMove(this.gameId)
+          this.gameState.score = response.data.gameState.score
+          this.gameState.moves = response.data.gameState.moves
+        })
+      } else {
+        this.enqueueSync(async () => {
+          const response = await api.undoMove(this.gameId)
+          this.gameState = response.data.gameState
+        })
       }
     },
 
@@ -794,28 +1017,29 @@ export default {
       }
     },
 
-    async handleDrawCard() {
-      const oldState = JSON.parse(JSON.stringify(this.gameState))
+    performLocalDraw() {
+      const gs = this.gameState
+      const drawCount = gs.hardMode ? 3 : 1
 
-      /*if (this.gameState.stockPile.length > 0) {
-        const card = this.gameState.stockPile.pop();
-        card.faceUp = true;
-        this.gameState.wastePile.push(card);
-      } else {
-        this.gameState.stockPile = this.gameState.wastePile.reverse();
-        this.gameState.stockPile.forEach(c => c.faceUp = false);
-        this.gameState.wastePile = [];
-      }*/
+      if (gs.stockPile.length > 0) {
+        for (let i = 0; i < drawCount && gs.stockPile.length > 0; i++) {
+          const card = gs.stockPile.pop()
+          card.faceUp = true
+          gs.wastePile.push(card)
+        }
+      } else if (gs.wastePile.length > 0) {
+        gs.stockPile = gs.wastePile.reverse()
+        gs.stockPile.forEach((card) => (card.faceUp = false))
+        gs.wastePile = []
+      }
+    },
 
-      try {
-        this.isLoading = true
-        const response = await api.drawCard()
-        this.gameState = { ...response.data.gameState }
-        this.isLoading = false
-        await this.fetchGameState()
-      } catch (error) {
-        console.error('Failed to draw card:', error)
-        this.gameState = oldState
+    handleAutoMove(sourceInfo) {
+      if (this.isAutoSolving) return
+      const destinationInfo = this.findBestAutoMove(sourceInfo)
+
+      if (destinationInfo) {
+        this.applyAndSyncMove({ ...sourceInfo, ...destinationInfo }, { animate: true })
       }
     },
 
@@ -826,11 +1050,6 @@ export default {
         sourcePileType === 'tableauPiles'
           ? this.gameState.tableauPiles[sourcePileIndex]
           : this.gameState.wastePile
-
-      // Can only auto-move the top card of a stack
-      /*if (sourceCardIndex !== sourcePile.length - 1) {
-        return null
-      }*/
 
       const sourceCard = sourcePile[sourceCardIndex]
 
@@ -846,14 +1065,11 @@ export default {
           const topCard =
             foundationPile.length > 0 ? foundationPile[foundationPile.length - 1] : null
 
-          // Rule for moving to an empty foundation (must be an Ace)
           if (!topCard) {
             if (sourceCard.rank === 'A') {
               return { destPileType: 'foundationPiles', destPileIndex: i }
             }
-          }
-          // Rule for moving to a non-empty foundation
-          else {
+          } else {
             if (
               sourceCard.suit === topCard.suit &&
               getRankValue(sourceCard.rank) - getRankValue(topCard.rank) === 1
@@ -865,7 +1081,6 @@ export default {
       }
 
       for (let i = 0; i < this.gameState.tableauPiles.length; i++) {
-        // If the source is a tableau pile, you can't move it to itself.
         if (sourcePileType === 'tableauPiles' && sourcePileIndex === i) {
           continue
         }
@@ -874,12 +1089,10 @@ export default {
         const topCard = destPile.length > 0 ? destPile[destPile.length - 1] : null
 
         if (!topCard) {
-          // Moving a King to an empty tableau pile
           if (sourceCard.rank === 'K') {
             return { destPileType: 'tableauPiles', destPileIndex: i }
           }
         } else {
-          // Moving to a non-empty tableau pile
           const sourceColor = getCardColor(sourceCard.suit)
           const destColor = getCardColor(topCard.suit)
           const sourceValue = getRankValue(sourceCard.rank)
@@ -891,34 +1104,241 @@ export default {
         }
       }
 
-      // Loop through all foundation piles to find a valid spot
-
-      // If no valid move was found after checking all piles
       return null
     },
 
-    async preloadImages() {
-      const imagePaths = getAllCardImagePaths()
-      const promises = imagePaths.map((imagePath) => {
-        return new Promise((resolve) => {
-          const img = new Image()
-          img.src = imagePath
-          img.onload = () => resolve()
-          img.onerror = () => {
-            console.warn('Failed to load image:', imagePath)
-            resolve()
-          }
+    closeWelcomeAndShowStats() {
+      this.welcomeDialog = false
+      this.winDialog = true
+    },
+
+    handleDrawCard() {
+      if (this.isAutoSolving || !this.gameState) return
+
+      this.snapshot()
+
+      const gs = this.gameState
+      const drawingFromStock = gs.stockPile.length > 0
+
+      let drawnCards = []
+      let fromRects = []
+      if (drawingFromStock) {
+        const count = Math.min(gs.hardMode ? 3 : 1, gs.stockPile.length)
+        drawnCards = gs.stockPile.slice(gs.stockPile.length - count)
+        fromRects = drawnCards.map((c) =>
+          document.querySelector(`[data-card="${c.rank}${c.suit}"]`)?.getBoundingClientRect(),
+        )
+        drawnCards.forEach((c) => (this.animatingCards[c.rank + c.suit] = true))
+      }
+
+      this.performLocalDraw()
+
+      if (drawingFromStock) {
+        this.$nextTick(() => {
+          drawnCards.forEach((card, i) => {
+            const key = card.rank + card.suit
+            const fromRect = fromRects[i]
+            const toRect = document
+              .querySelector(`[data-card="${card.rank}${card.suit}"]`)
+              ?.getBoundingClientRect()
+            if (!fromRect || !toRect) {
+              delete this.animatingCards[key]
+              return
+            }
+            this.spawnFlyingCard({
+              rank: card.rank,
+              suit: card.suit,
+              flip: true,
+              fromRect,
+              toRect,
+              onLand: () => delete this.animatingCards[key],
+            })
+          })
         })
+      }
+
+      this.enqueueSync(async () => {
+        const response = await api.drawCard(this.gameId)
+        this.gameState.score = response.data.gameState.score
+        this.gameState.moves = response.data.gameState.moves
       })
-      await Promise.all(promises)
-      console.log('All cards preloaded')
+    },
+
+    // --- Auto-complete (flying cascade) ---
+
+    async handleAutoSolve() {
+      if (this.isAutoSolving || !this.isAutoSolvable) return
+      this.isAutoSolving = true
+
+      await this.syncQueue
+
+      const serverPromise = api.autoCompleteSolitaire(this.gameId).catch((error) => {
+        console.error('Auto-complete failed on server:', error)
+        return null
+      })
+
+      // Precompute the full deal order, then play it out as a flying cascade.
+      const sequence = this.computeSolveSequence()
+      await this.playSolveSequence(sequence)
+
+      const response = await serverPromise
+      if (response?.data?.win) {
+        if (response.data.gameState) {
+          this.gameState.score = response.data.gameState.score
+          this.gameState.moves = response.data.gameState.moves
+        }
+        this.gameState.isDone = true
+        this.handleWinResponse(response)
+      } else {
+        // Server didn't confirm the finish — reconcile so we never show a false win.
+        console.error('Auto-complete not confirmed by server; reconciling.')
+        this.syncGeneration++
+        this.undoStack = []
+        if (this.userId) {
+          try {
+            const r = await api.getGameState(this.userId)
+            if (r?.data?.gameState) this.gameState = r.data.gameState
+          } catch (e) {
+            console.error('Failed to reconcile after auto-complete:', e)
+          }
+        }
+      }
+
+      this.isAutoSolving = false
+    },
+
+    findFoundationMoveIn(state) {
+      for (let t = 0; t < state.tableauPiles.length; t++) {
+        const pile = state.tableauPiles[t]
+        if (pile.length === 0) continue
+        const card = pile[pile.length - 1]
+        for (let f = 0; f < state.foundationPiles.length; f++) {
+          const fp = state.foundationPiles[f]
+          const top = fp.length > 0 ? fp[fp.length - 1] : null
+          if (!top) {
+            if (card.rank === 'A') return { sourcePileIndex: t, destFoundationIndex: f }
+          } else if (
+            card.suit === top.suit &&
+            getRankValue(card.rank) - getRankValue(top.rank) === 1
+          ) {
+            return { sourcePileIndex: t, destFoundationIndex: f }
+          }
+        }
+      }
+      return null
+    },
+
+    computeSolveSequence() {
+      const clone = JSON.parse(JSON.stringify(this.gameState))
+      const sequence = []
+      let move
+      while ((move = this.findFoundationMoveIn(clone))) {
+        const card = clone.tableauPiles[move.sourcePileIndex].pop()
+        clone.foundationPiles[move.destFoundationIndex].push(card)
+        sequence.push({
+          sourcePileIndex: move.sourcePileIndex,
+          destFoundationIndex: move.destFoundationIndex,
+          rank: card.rank,
+          suit: card.suit,
+        })
+      }
+      return sequence
+    },
+
+    playSolveSequence(sequence) {
+      const STAGGER_MS = 90
+      const FLIGHT_MS = 320
+      return new Promise((resolve) => {
+        let i = 0
+        const launchNext = () => {
+          if (i >= sequence.length) {
+            setTimeout(resolve, FLIGHT_MS)
+            return
+          }
+          this.launchFlyingCard(sequence[i], FLIGHT_MS)
+          i++
+          setTimeout(launchNext, STAGGER_MS)
+        }
+        launchNext()
+      })
+    },
+
+    launchFlyingCard(move, flightMs) {
+      const { sourcePileIndex, destFoundationIndex, rank, suit } = move
+      const pile = this.gameState.tableauPiles[sourcePileIndex]
+      const card = pile[pile.length - 1]
+
+      const fromRect = document
+        .querySelector(`[data-card="${rank}${suit}"]`)
+        ?.getBoundingClientRect()
+      const toRect = document
+        .querySelector(`[data-foundation="${destFoundationIndex}"]`)
+        ?.getBoundingClientRect()
+
+      // Remove from the tableau immediately so the source slot updates.
+      pile.pop()
+
+      const destPile = this.gameState.foundationPiles[destFoundationIndex]
+      if (!fromRect || !toRect) {
+        // No geometry available — just commit the move without animating.
+        destPile.push(card)
+        return
+      }
+      this.spawnFlyingCard({
+        rank,
+        suit,
+        fromRect,
+        toRect,
+        flightMs,
+        onLand: () => destPile.push(card),
+      })
+    },
+
+    spawnFlyingCard({ rank, suit, flip = false, fromRect, toRect, flightMs = 320, onLand }) {
+      const id = ++this.flyingIdSeq
+      this.flyingCards.push({
+        id,
+        rank,
+        suit,
+        flip,
+        flipped: false,
+        w: fromRect.width,
+        h: fromRect.height,
+        x: fromRect.left,
+        y: fromRect.top,
+        tx: toRect.left,
+        ty: toRect.top,
+      })
+
+      // Next frame: move (and flip) to the target so the CSS transitions animate.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          const f = this.flyingCards.find((c) => c.id === id)
+          if (f) {
+            f.x = f.tx
+            f.y = f.ty
+            if (flip) f.flipped = true
+          }
+        }),
+      )
+
+      setTimeout(() => {
+        if (onLand) onLand()
+        const idx = this.flyingCards.findIndex((c) => c.id === id)
+        if (idx !== -1) this.flyingCards.splice(idx, 1)
+      }, flightMs)
+    },
+
+    /** Drops every in-flight clone and reveals any cards hidden behind them. */
+    clearAnimations() {
+      this.flyingCards = []
+      this.animatingCards = {}
     },
   },
 }
 </script>
 
 <style scoped>
-/* Add your CSS for the board layout here */
 .solitaire-board {
   padding: 20px;
   border-radius: 10px;
@@ -952,6 +1372,65 @@ export default {
   position: fixed;
   bottom: 1em;
   right: 1em;
+}
+
+/* Auto-complete flying cascade */
+.flying-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1500;
+}
+.flying-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform 0.32s cubic-bezier(0.25, 0.7, 0.3, 1);
+  will-change: transform;
+  perspective: 600px;
+}
+.flying-face-single {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+.flying-flip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.32s cubic-bezier(0.25, 0.7, 0.3, 1);
+}
+.flying-flip.flipped {
+  transform: rotateY(180deg);
+}
+.flying-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 5px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+.flying-face.front {
+  transform: rotateY(180deg);
+}
+.flying-face.back {
+  transform: rotateY(0deg);
+}
+.auto-solve-btn {
+  animation: auto-solve-glow 1.4s ease-in-out infinite;
+}
+@keyframes auto-solve-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(76, 175, 80, 0.7);
+  }
 }
 .seed-overlay {
   position: fixed;
