@@ -25,9 +25,12 @@ import Sicbo from '../views/SicboRoom.vue'
 import Loadout from '../views/Loadout.vue'
 import Crash from '../views/CrashRoom.vue'
 import MotsFleches from '../views/MotsFleches.vue'
+import AdminDashboard from '../views/AdminDashboard.vue'
+import PatchNotes from '../views/PatchNotes.vue'
 
 const routes = [
   { path: '/', component: Home },
+  { path: '/patch-notes', component: PatchNotes },
   { path: '/dashboard', component: Dashboard },
   { path: '/auth/callback', component: Callback },
   { path: '/tic-tac-toe', component: TicTacToe },
@@ -54,6 +57,7 @@ const routes = [
   { path: '/privacy', component: Privacy },
   { path: '/sicbo', component: Sicbo },
   { path: '/crash', component: Crash },
+  { path: '/admin', component: AdminDashboard },
 ]
 
 const router = createRouter({

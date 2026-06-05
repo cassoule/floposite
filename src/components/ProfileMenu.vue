@@ -102,33 +102,47 @@
           <p class="pl-4 pt-1 pb-5" style="line-height: 0.5em; color: #ffffff77">
             {{ winRate ?? '-' }}% WR
           </p>
-          <div class="w-100 px-2 ga-2 d-flex">
+          <div class="w-100 px-2 ga-2 d-flex flex-column">
+            <div class="d-flex ga-2" style="width: 100%">
+              <v-btn
+                text="Voir le profil"
+                append-icon=""
+                class="text-none"
+                color="white"
+                variant="tonal"
+                size="small"
+                rounded="lg"
+                style="flex-grow: 1"
+                @click="$router.push(`/akhy/${user.id}`)"
+              >
+              </v-btn>
+              <v-btn
+                text="Soutenir"
+                append-icon=""
+                class="text-none buy-btn"
+                color="white"
+                variant="tonal"
+                size="small"
+                rounded="lg"
+                style="flex-grow: 1"
+                @click="$emit('buy-coins')"
+              >
+                <template #append>
+                  <v-img src="star.svg" width="12px" height="12px" />
+                </template>
+              </v-btn>
+            </div>
             <v-btn
-              text="Voir le profil"
-              append-icon=""
-              class="text-none"
+              text="Patch Notes"
+              prepend-icon="mdi-note-text-outline"
+              class="text-none mt-2"
               color="white"
               variant="tonal"
               size="small"
               rounded="lg"
-              style="flex-grow: 1"
-              @click="$router.push(`/akhy/${user.id}`)"
+              block
+              @click="$router.push('/patch-notes')"
             >
-            </v-btn>
-            <v-btn
-              text="Soutenir"
-              append-icon=""
-              class="text-none buy-btn"
-              color="white"
-              variant="tonal"
-              size="small"
-              rounded="lg"
-              style="flex-grow: 1"
-              @click="$emit('buy-coins')"
-            >
-              <template #append>
-                <v-img src="star.svg" width="12px" height="12px" />
-              </template>
             </v-btn>
           </div>
 
