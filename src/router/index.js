@@ -28,9 +28,12 @@ import Maintenance from '../views/Maintenance.vue'
 import { useMaintenanceStore } from '@/stores/maintenanceStore'
 
 import MotsFleches from '../views/MotsFleches.vue'
+import AdminDashboard from '../views/AdminDashboard.vue'
+import PatchNotes from '../views/PatchNotes.vue'
 
 const routes = [
   { path: '/', component: Home },
+  { path: '/patch-notes', component: PatchNotes },
   { path: '/dashboard', component: Dashboard },
   { path: '/auth/callback', name: 'auth-callback', component: Callback },
   { path: '/tic-tac-toe', component: TicTacToe },
@@ -57,6 +60,7 @@ const routes = [
   { path: '/privacy', component: Privacy },
   { path: '/sicbo', component: Sicbo },
   { path: '/crash', component: Crash },
+  { path: '/admin', component: AdminDashboard },
   { path: '/maintenance', name: 'Maintenance', component: Maintenance },
 
 ]

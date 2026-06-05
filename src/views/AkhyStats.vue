@@ -22,6 +22,7 @@ export default {
 
   data() {
     return {
+      _devIds: [],
       users: null,
       user: null,
       sparkline: null,
@@ -85,8 +86,8 @@ export default {
       const discordId = localStorage.getItem('discordId')
       return discordId && this.user && discordId === this.user.id
     },
-    devId() {
-      return import.meta.env.VITE_DEV_ID
+    devIds() {
+      return this._devIds
     },
     circumference() {
       return 2 * Math.PI * this.radius
@@ -188,6 +189,7 @@ export default {
       //this.sparkline = await this.getSparkline(id)
       this.elo = await this.getElo(id)
       //this.eloGraph = await this.getEloGraph(id)
+      await this.fetchDevId()
       await this.getActiveSlowmodes()
       await this.isTimedOut()
       await this.getGames()
@@ -303,6 +305,15 @@ export default {
       try {
         const response = await flapi.get('/skin/' + skin.uuid)
         this.skinsData[skin.uuid] = response.data
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async fetchDevId() {
+      try {
+        const response = await flapi.get('/devs')
+        this._devIds = response.data.devIds
       } catch (e) {
         console.error('flAPI error:', e)
       }
@@ -634,7 +645,7 @@ export default {
                     class="mdi mdi-check-decagram-outline"
                     title="Akhy certifié"
                   ></i>
-                  <i v-if="user?.id === devId" class="mdi mdi-crown-outline" title="FlopoDev"></i>
+                  <i v-if="devIds.includes(user?.id)" class="mdi mdi-crown-outline" title="FlopoDev"></i>
                 </h1>
                 <h3 class="d-flex mt-2" style="place-items: baseline">
                   {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}

@@ -25,7 +25,7 @@
       <div
         v-if="activePredis"
         class="predis-containers pt-12"
-        :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+        :style="devIds.includes(discordId) ? 'height: 333px;' : 'height: 388px;'"
       >
         <v-card
           v-for="[key, predi] in Object.entries(activePredis)"
@@ -146,7 +146,7 @@
       <div
         v-else
         style="width: 100%; display: flex; place-content: center; place-items: center"
-        :style="discordId === devId ? 'height: 333px;' : 'height: 388px;'"
+        :style="devIds.includes(discordId) ? 'height: 333px;' : 'height: 388px;'"
       >
         <v-progress-circular
           :size="70"
@@ -478,7 +478,7 @@
             </p>
             <p v-else>Prédi annulée, les FlopoCoins ont été remboursés</p>
           </v-card-text>
-          <v-card-item v-if="discordId === devId" class="px-4">
+          <v-card-item v-if="devIds.includes(discordId)" class="px-4">
             <v-btn
               color="primary"
               text="Valider option 1"
@@ -524,7 +524,7 @@ export default {
   props: {
     activePredis: { type: Object, default: null },
     discordId: { type: String, default: null },
-    devId: { type: String, default: null },
+    devIds: { type: Array, default: () => [] },
     avatars: { type: Object, default: () => ({}) },
     users: { type: Array, default: () => [] },
     user: { type: Object, default: null },
@@ -620,7 +620,7 @@ export default {
     },
     async endPredi(confirm, winningOption) {
       this.showCommandToast('Fermeture de la prédiction...')
-      if (this.discordId !== this.devId) {
+      if (!this.devIds.includes(this.discordId)) {
         this.showErrorToast("Tu n'as pas les permissions requises")
         return
       }

@@ -19,7 +19,7 @@
       :elo-graphs="elo_graphs"
       :featured-skins-map="featuredSkinsMap"
       :discord-id="discordId"
-      :dev-id="devId"
+      :dev-ids="devIds"
       :mounting="mounting"
     />
 
@@ -55,15 +55,15 @@
           </v-tabs-window-item>
 
           <v-tabs-window-item v-if="user?.isAkhy" value="predictions">
-            <predictions-tab
-              :active-predis="active_predis"
-              :discord-id="discordId"
-              :dev-id="devId"
-              :avatars="avatars"
-              :users="users"
-              :user="user"
-              @refresh="getActivePredis"
-            />
+    <predictions-tab
+      :active-predis="active_predis"
+      :discord-id="discordId"
+      :dev-ids="devIds"
+      :avatars="avatars"
+      :users="users"
+      :user="user"
+      @refresh="getActivePredis"
+    />
           </v-tabs-window-item>
         </v-tabs-window>
       </div>
@@ -203,6 +203,7 @@ export default {
       stripePromise: null,
 
       user: null,
+      _devIds: [],
 
       games: [
         {
@@ -298,8 +299,8 @@ export default {
       })
       return sum
     },
-    devId() {
-      return import.meta.env.VITE_DEV_ID
+    devIds() {
+      return this._devIds
     },
     unseenActivePoll() {
       return (
@@ -332,6 +333,7 @@ export default {
 
     this.avatar = await this.getAvatar(this.discordId)
     this.anonUsername = await this.fetchUsername(this.discordId)
+    await this.fetchDevId()
 
     await this.getActiveSlowmodes()
 
@@ -626,6 +628,15 @@ export default {
       try {
         const response = await flapi.get('/slowmodes')
         this.active_slowmodes = response.data.slowmodes
+      } catch (e) {
+        console.error('flAPI error:', e)
+      }
+    },
+
+    async fetchDevId() {
+      try {
+        const response = await flapi.get('/devs')
+        this._devIds = response.data.devIds
       } catch (e) {
         console.error('flAPI error:', e)
       }

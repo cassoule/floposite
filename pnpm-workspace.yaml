@@ -1,2 +1,4 @@
 ignoredBuiltDependencies:
   - esbuild
+minimumReleaseAgeExclude:
+  - marked@18.0.5
