@@ -1,4 +1,3 @@
-<!-- MotsFleches.vue -->
 <template>
   <CoinsCounter v-if="userId" />
   <v-layout class="w-100 mt-16">
@@ -59,7 +58,13 @@
               <template v-for="(_, r) in gameState.rows">
                 <template v-for="(__, c) in gameState.cols" :key="`${r}-${c}`">
                   <!-- Definition cell -->
-                  <div v-if="getDefClues(r, c)" class="mf-cell mf-def" :title="defTitle(r, c)">
+                  <div
+                    v-if="getDefClues(r, c)"
+                    class="mf-cell mf-def"
+                    :title="defTitle(r, c)"
+                    :style="{ '--mf-lines': defLineClamp(r, c) }"
+                    @click="openDefSheet(r, c)"
+                  >
                     <div class="mf-def-text">
                       <span v-for="(clue, idx) in getDefClues(r, c)" :key="idx" class="mf-def-line">
                         {{ clue.def }}
@@ -69,7 +74,11 @@
                   <!-- Black cell (no clue) -->
                   <div v-else-if="gameState.blackMask[r][c]" class="mf-cell mf-black"></div>
                   <!-- Input cell -->
-                  <div v-else class="mf-cell mf-input-wrap">
+                  <div
+                    v-else
+                    class="mf-cell mf-input-wrap"
+                    :class="{ 'mf-active': activeWordCells.has(`${r},${c}`) }"
+                  >
                     <span
                       v-for="(a, ai) in arrowsAtStart[`${r},${c}`] || []"
                       :key="`a${ai}`"
@@ -89,6 +98,7 @@
                       @input="onInput($event, r, c)"
                       @keydown="onKey($event, r, c)"
                       @focus="onFocus(r, c)"
+                      @click="onCellClick(r, c)"
                     />
                   </div>
                 </template>
@@ -327,6 +337,19 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <!-- Mobile: full definition text on tap (no hover available on touch) -->
+      <v-bottom-sheet v-model="defSheetOpen">
+        <v-card class="mf-def-sheet pa-4" rounded="t-xl">
+          <div class="text-medium-emphasis text-caption mb-2">
+            Définition{{ defSheetClues.length > 1 ? 's' : '' }}
+          </div>
+          <div v-for="(clue, i) in defSheetClues" :key="i" class="mf-def-sheet-item">
+            <span class="mf-def-sheet-arrow">{{ clue.arrow }}</span>
+            <span>{{ clue.def || '—' }}</span>
+          </div>
+        </v-card>
+      </v-bottom-sheet>
     </v-main>
 
     <v-btn
@@ -373,6 +396,10 @@ export default {
       timerInterval: null,
       elapsedTime: 0,
       saveTimeout: null,
+      activeDir: 'H',
+      focused: null,
+      defSheetOpen: false,
+      defSheetClues: [],
     }
   },
   computed: {
@@ -431,6 +458,70 @@ export default {
         })
       }
       return map
+    },
+    wordAt() {
+      const map = {}
+      if (!this.gameState?.defCells || !this.gameState?.blackMask) return map
+      const { rows, cols, blackMask } = this.gameState
+      const isInput = (r, c) => r >= 0 && r < rows && c >= 0 && c < cols && !blackMask[r][c]
+      for (const [cellKey, clues] of Object.entries(this.gameState.defCells)) {
+        const [dr, dc] = cellKey.split(',').map(Number)
+        for (const clue of clues) {
+          let sr, sc
+          switch (clue.arrow) {
+            case '→':
+              sr = dr
+              sc = dc + 1
+              break
+            case '↓':
+              sr = dr + 1
+              sc = dc
+              break
+            case '↳':
+              sr = dr + 1
+              sc = dc
+              break
+            case '↱':
+              sr = dr - 1
+              sc = dc
+              break
+            case '⤵':
+              sr = dr
+              sc = dc + 1
+              break
+            case '⤓':
+              sr = dr
+              sc = dc - 1
+              break
+            default:
+              continue
+          }
+          if (!isInput(sr, sc)) continue
+          const dir = clue.dir === 'V' ? 'V' : 'H'
+          const stepR = dir === 'V' ? 1 : 0
+          const stepC = dir === 'H' ? 1 : 0
+          const cells = []
+          let r = sr
+          let c = sc
+          while (isInput(r, c)) {
+            cells.push(`${r},${c}`)
+            r += stepR
+            c += stepC
+          }
+          const word = { cells, startKey: `${sr},${sc}` }
+          for (const k of cells) {
+            if (!map[k]) map[k] = {}
+            map[k][dir] = word
+          }
+        }
+      }
+      return map
+    },
+    activeWordCells() {
+      if (!this.focused) return new Set()
+      const key = `${this.focused.r},${this.focused.c}`
+      const cells = this.wordAt[key]?.[this.activeDir]?.cells
+      return new Set(cells || [])
     },
   },
   async mounted() {
@@ -512,6 +603,18 @@ export default {
       return clues.map((cl) => `${cl.arrow} ${cl.def || ''}`).join('\n')
     },
 
+    defLineClamp(r, c) {
+      return (this.getDefClues(r, c) || []).length >= 2 ? 2 : 4
+    },
+
+    openDefSheet(r, c) {
+      if (!this.$vuetify.display.mobile) return
+      const clues = this.getDefClues(r, c)
+      if (!clues) return
+      this.defSheetClues = clues
+      this.defSheetOpen = true
+    },
+
     arrowClass(arrow) {
       switch (arrow) {
         case '→':
@@ -574,29 +677,70 @@ export default {
       }
       if (ev.key === 'ArrowRight') {
         ev.preventDefault()
+        this.activeDir = 'H'
         this.focusOffset(r, c, 0, 1)
       } else if (ev.key === 'ArrowLeft') {
         ev.preventDefault()
+        this.activeDir = 'H'
         this.focusOffset(r, c, 0, -1)
       } else if (ev.key === 'ArrowDown') {
         ev.preventDefault()
+        this.activeDir = 'V'
         this.focusOffset(r, c, 1, 0)
       } else if (ev.key === 'ArrowUp') {
         ev.preventDefault()
+        this.activeDir = 'V'
         this.focusOffset(r, c, -1, 0)
       }
     },
 
     onFocus(r, c) {
+      if (this._programmaticFocus) {
+        this.focused = { r, c }
+        return
+      }
+      const key = `${r},${c}`
+      const w = this.wordAt[key] || {}
+      const dirs = []
+      if (w.H) dirs.push('H')
+      if (w.V) dirs.push('V')
+      if (dirs.length === 1) {
+        this.activeDir = dirs[0]
+      } else if (dirs.length === 2) {
+        const startDirs = new Set((this.arrowsAtStart[key] || []).map((a) => a.dir))
+        if (startDirs.size === 1) {
+          this.activeDir = [...startDirs][0]
+        } else if (!dirs.includes(this.activeDir)) {
+          this.activeDir = dirs[0]
+        }
+      }
       this.focused = { r, c }
+      // The click that produced this focus must not be treated as a toggle.
+      this._suppressToggleClick = true
+    },
+
+    // Re-clicking the already-focused cell flips H↔V (manual override at crossings).
+    onCellClick(r, c) {
+      if (this._suppressToggleClick) {
+        this._suppressToggleClick = false
+        return
+      }
+      const w = this.wordAt[`${r},${c}`] || {}
+      if (w.H && w.V) {
+        this.activeDir = this.activeDir === 'H' ? 'V' : 'H'
+      }
     },
 
     focusNext(r, c) {
-      this.focusOffset(r, c, 0, 1)
+      const dr = this.activeDir === 'V' ? 1 : 0
+      const dc = this.activeDir === 'H' ? 1 : 0
+      this.focusOffset(r, c, dr, dc)
     },
 
     focusPrev(r, c) {
-      this.focusOffset(r, c, 0, -1)
+      const dr = this.activeDir === 'V' ? -1 : 0
+      const dc = this.activeDir === 'H' ? -1 : 0
+      this.focusOffset(r, c, dr, dc)
     },
 
     focusOffset(r, c, dr, dc) {
@@ -610,8 +754,10 @@ export default {
           this.$nextTick(() => {
             const el = document.querySelector(`.mf-board .mf-input[data-r='${tr}'][data-c='${tc}']`)
             if (el) {
+              this._programmaticFocus = true
               el.focus()
               el.select?.()
+              this._programmaticFocus = false
             }
           })
           return
@@ -751,7 +897,6 @@ export default {
           this.finishScore = res.data.score
           if (this.timerInterval) clearInterval(this.timerInterval)
           if (!this.userId && res.data.submissionToken) {
-            // Guest win: prompt to log in so the score can be saved/ranked.
             this.pendingSubmissionToken = res.data.submissionToken
             this.guestDialog = true
           } else {
@@ -839,7 +984,7 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
   gap: 3px;
   overflow: hidden;
@@ -851,8 +996,8 @@ export default {
   hyphens: auto;
   overflow: hidden;
   display: -webkit-box;
-  line-clamp: 3;
-  -webkit-line-clamp: 3;
+  line-clamp: var(--mf-lines, 3);
+  -webkit-line-clamp: var(--mf-lines, 3);
   -webkit-box-orient: vertical;
   text-align: left;
 }
@@ -993,6 +1138,30 @@ export default {
 .mf-error {
   background: #ffb3b3 !important;
   color: #8b0000;
+}
+/* Active word highlight — lighter than the focused cell so the writing
+   direction is visible. The focus rule is declared last (equal specificity)
+   so the current cell stays the most prominent. */
+.mf-input-wrap.mf-active .mf-input {
+  background: #e7eefc;
+}
+.mf-input-wrap .mf-input:focus {
+  background: #c5dafc;
+}
+.mf-def-sheet-item {
+  display: flex;
+  gap: 0.6em;
+  align-items: baseline;
+  padding: 0.5em 0;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+.mf-def-sheet-item + .mf-def-sheet-item {
+  border-top: 1px solid #e0e0e0;
+}
+.mf-def-sheet-arrow {
+  font-size: 1.15rem;
+  flex-shrink: 0;
 }
 .mf-controls {
   display: flex;
