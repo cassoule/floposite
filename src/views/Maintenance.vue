@@ -26,11 +26,13 @@ async function checkMaintenance() {
 }
 
 onMounted(() => {
+  document.body.classList.add('maintenance-no-scroll')
   checkMaintenance()
   pollInterval = setInterval(checkMaintenance, 10000)
 })
 
 onUnmounted(() => {
+  document.body.classList.remove('maintenance-no-scroll')
   if (pollInterval) {
     clearInterval(pollInterval)
     pollInterval = null
@@ -64,8 +66,9 @@ onUnmounted(() => {
 </template>
 
 <style>
-html,
-body {
+/* Applied only while the Maintenance view is mounted; removed on unmount
+   so it never leaks scroll-locking onto other pages. */
+body.maintenance-no-scroll {
   margin: 0;
   padding: 0;
   height: 100%;
