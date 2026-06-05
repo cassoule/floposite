@@ -27,6 +27,7 @@ import Crash from '../views/CrashRoom.vue'
 import Maintenance from '../views/Maintenance.vue'
 import { useMaintenanceStore } from '@/stores/maintenanceStore'
 
+import MotsFleches from '../views/MotsFleches.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -39,6 +40,7 @@ const routes = [
   { path: '/poker/:id', component: PokerRoom },
   { path: '/solitaire', component: Solitaire },
   { path: '/sudoku', component: Sudoku },
+  { path: '/mots-fleches', component: MotsFleches },
   { path: '/blackjack', component: Blackjack },
   { path: '/akhy/:id', component: AkhyStats },
   { path: '/market', component: Market },
