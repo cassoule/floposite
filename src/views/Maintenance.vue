@@ -11,14 +11,15 @@ let pollInterval = null
 async function checkMaintenance() {
   try {
     const { data } = await flapi.get('/check')
-    
+
     if (data.status === 'OK') {
       maintenanceStore.setMaintenance(false)
       router.replace({ path: '/' })
     }
   } catch (err) {
-    const isMaintenanceError = err.response?.status === 503 || err.response?.data?.error === 'maintenance'
-    
+    const isMaintenanceError =
+      err.response?.status === 503 || err.response?.data?.error === 'maintenance'
+
     if (!isMaintenanceError) {
       console.warn('Polling check failed due to unexpected error:', err.message)
     }
@@ -47,9 +48,12 @@ onUnmounted(() => {
         <h1 class="chat-title">Floposite</h1>
 
         <div class="chat-description">
-  <p>Nous effectuons actuellement une maintenance afin d'améliorer votre expérience. Le site sera de retour dans les plus brefs délais.</p>
-  <p>Merci de votre patience.</p>
-</div>
+          <p>
+            Nous effectuons actuellement une maintenance afin d'améliorer votre expérience. Le site
+            sera de retour dans les plus brefs délais.
+          </p>
+          <p>Merci de votre patience.</p>
+        </div>
       </div>
 
       <div class="chat-image-container">
@@ -113,7 +117,7 @@ body.maintenance-no-scroll {
   margin: 0;
 
   color: #ffffff;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: clamp(64px, 8vw, 100px);
   font-weight: 600;
   line-height: 1;
@@ -124,7 +128,7 @@ body.maintenance-no-scroll {
   max-width: 560px;
 
   color: rgba(255, 255, 255, 0.85);
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 24px;
   font-weight: 500;
   line-height: 1.6;

@@ -62,9 +62,7 @@ Exemple:
     </v-alert>
 
     <div class="d-flex justify-end" style="gap: 0.75rem">
-      <v-btn variant="outlined" rounded="lg" @click="$emit('cancel')">
-        Annuler
-      </v-btn>
+      <v-btn variant="outlined" rounded="lg" @click="$emit('cancel')"> Annuler </v-btn>
       <v-btn
         color="success"
         rounded="lg"

@@ -55,15 +55,15 @@
           </v-tabs-window-item>
 
           <v-tabs-window-item v-if="user?.isAkhy" value="predictions">
-    <predictions-tab
-      :active-predis="active_predis"
-      :discord-id="discordId"
-      :dev-ids="devIds"
-      :avatars="avatars"
-      :users="users"
-      :user="user"
-      @refresh="getActivePredis"
-    />
+            <predictions-tab
+              :active-predis="active_predis"
+              :discord-id="discordId"
+              :dev-ids="devIds"
+              :avatars="avatars"
+              :users="users"
+              :user="user"
+              @refresh="getActivePredis"
+            />
           </v-tabs-window-item>
         </v-tabs-window>
       </div>

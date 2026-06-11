@@ -88,6 +88,9 @@ export default {
   submitMotsFleches(filledGrid, gameId = null) {
     return flapi.post('/mots-fleches/submit', { filledGrid, gameId })
   },
+  hintMotsFleches(r, c, gameId = null) {
+    return flapi.post('/mots-fleches/hint', { r, c, gameId })
+  },
   resetMotsFleches(gameId = null) {
     return flapi.post('/mots-fleches/reset', { gameId })
   },

@@ -37,7 +37,6 @@
           </div>
         </div>
 
-       
         <!-- Section: Paramètres modifiables -->
         <div class="section-label mb-4">
           <v-icon size="14" class="mr-2 section-icon">mdi-tune-vertical</v-icon>
@@ -93,7 +92,6 @@
             />
           </div>
         </div>
-
       </v-card-text>
 
       <v-divider class="border-opacity-10" />
@@ -214,7 +212,7 @@ export default {
         this.showSuccessToast('Utilisateur mis à jour avec succès !')
       } catch (e) {
         console.error('Error saving user:', e)
-        this.showErrorToast('Erreur lors de la mise à jour de l\'utilisateur')
+        this.showErrorToast("Erreur lors de la mise à jour de l'utilisateur")
       } finally {
         this.saving = false
       }

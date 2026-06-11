@@ -101,7 +101,11 @@
                   class="mdi mdi-check-decagram-outline"
                   title="Akhy certifié"
                 ></i>
-                <i v-if="devIds.includes(akhy.id)" class="mdi mdi-crown-outline" title="FlopoDev"></i>
+                <i
+                  v-if="devIds.includes(akhy.id)"
+                  class="mdi mdi-crown-outline"
+                  title="FlopoDev"
+                ></i>
               </span>
               <div v-if="leaderboardType === 'coins'" style="display: flex; place-items: center">
                 {{ formatAmount(akhy.coins) }}

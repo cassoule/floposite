@@ -11,7 +11,8 @@
       <v-icon size="48" color="grey" class="mb-3">mdi-hammer-wrench</v-icon>
       <h3 class="text-grey mb-1">En cours de développement</h3>
       <p class="text-grey-darken-1 text-center" style="max-width: 400px">
-        Des graphiques détaillés, des analyses de tendances et un tableau de bord interactif arriveront dans une prochaine mise à jour.
+        Des graphiques détaillés, des analyses de tendances et un tableau de bord interactif
+        arriveront dans une prochaine mise à jour.
       </p>
     </div>
   </div>

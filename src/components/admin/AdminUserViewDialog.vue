@@ -56,10 +56,33 @@
           <div class="info-card">
             <span class="info-label">Rôles</span>
             <div class="d-flex flex-wrap" style="gap: 3px">
-              <v-chip v-if="expandedUser.isAkhy === 1" size="x-small" color="primary" variant="tonal">Akhy</v-chip>
-              <v-chip v-if="expandedUser.isAdmin === 1" size="x-small" color="warning" variant="tonal">Admin</v-chip>
-              <v-chip v-if="expandedUser.isDev === 1" size="x-small" color="success" variant="tonal">Dev</v-chip>
-              <span v-if="expandedUser.isAkhy !== 1 && expandedUser.isAdmin !== 1 && expandedUser.isDev !== 1" class="info-value" style="font-size: 0.85rem">Aucun</span>
+              <v-chip
+                v-if="expandedUser.isAkhy === 1"
+                size="x-small"
+                color="primary"
+                variant="tonal"
+                >Akhy</v-chip
+              >
+              <v-chip
+                v-if="expandedUser.isAdmin === 1"
+                size="x-small"
+                color="warning"
+                variant="tonal"
+                >Admin</v-chip
+              >
+              <v-chip v-if="expandedUser.isDev === 1" size="x-small" color="success" variant="tonal"
+                >Dev</v-chip
+              >
+              <span
+                v-if="
+                  expandedUser.isAkhy !== 1 &&
+                  expandedUser.isAdmin !== 1 &&
+                  expandedUser.isDev !== 1
+                "
+                class="info-value"
+                style="font-size: 0.85rem"
+                >Aucun</span
+              >
             </div>
           </div>
           <div class="info-card">
@@ -72,18 +95,16 @@
         <div class="section-title mb-3">
           <v-icon size="16" color="#e17055" class="mr-2">mdi-crosshairs-gps</v-icon>
           Inventaire CS
-          <v-chip size="x-small" variant="tonal" class="ml-2 count-chip">{{ csInventory.length }}</v-chip>
+          <v-chip size="x-small" variant="tonal" class="ml-2 count-chip">{{
+            csInventory.length
+          }}</v-chip>
         </div>
 
         <div v-if="csInventory.length === 0" class="empty-section pa-4 rounded-lg mb-6">
           <p class="text-grey">Aucun skin CS</p>
         </div>
         <div v-else class="skin-grid mb-6">
-          <div
-            v-for="skin in csInventory"
-            :key="skin.id"
-            class="skin-card"
-          >
+          <div v-for="skin in csInventory" :key="skin.id" class="skin-card">
             <v-img
               :src="skin.imageUrl || '/flopo.png'"
               width="48"
@@ -97,7 +118,6 @@
             </div>
           </div>
         </div>
-
       </v-card-text>
 
       <v-divider class="border-opacity-10" />

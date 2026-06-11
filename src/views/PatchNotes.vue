@@ -4,8 +4,11 @@
     <v-main class="d-flex w-100 mb-16 pb-16 mt-8" style="min-height: 100vh">
       <div class="w-100">
         <HomeBtn />
-        
-        <div class="text-white mb-6 d-flex flex-wrap w-100" style="position: relative; align-items: center; gap: 0.5em">
+
+        <div
+          class="text-white mb-6 d-flex flex-wrap w-100"
+          style="position: relative; align-items: center; gap: 0.5em"
+        >
           <div class="d-flex mr-2 align-center" style="gap: 0.5em">
             <v-icon size="28" color="white" class="fix-aspect">mdi-file-document-outline</v-icon>
             <h1 style="font-size: 1.8rem">Patch Notes</h1>
@@ -14,12 +17,7 @@
         </div>
 
         <div v-if="loading" class="loading-overlay">
-          <v-progress-circular
-            :size="60"
-            :width="8"
-            color="primary"
-            indeterminate
-          />
+          <v-progress-circular :size="60" :width="8" color="primary" indeterminate />
         </div>
 
         <div
@@ -32,14 +30,12 @@
         </div>
 
         <div v-else class="patch-notes-container">
-          <div
-            v-for="note in patchNotes"
-            :key="note.id"
-            class="patch-note-card"
-          >
+          <div v-for="note in patchNotes" :key="note.id" class="patch-note-card">
             <div class="patch-note-header">
               <div class="d-flex align-center flex-wrap" style="gap: 0.5rem">
-                <v-icon size="22" color="primary" class="fix-aspect">mdi-file-document-outline</v-icon>
+                <v-icon size="22" color="primary" class="fix-aspect"
+                  >mdi-file-document-outline</v-icon
+                >
                 <span class="patch-note-title">{{ note.title }}</span>
                 <v-chip
                   v-if="note.version"
@@ -219,10 +215,18 @@ export default {
   font-weight: 600;
 }
 
-.patch-note-body :deep(h1) { font-size: 1.5rem; }
-.patch-note-body :deep(h2) { font-size: 1.3rem; }
-.patch-note-body :deep(h3) { font-size: 1.1rem; }
-.patch-note-body :deep(h4) { font-size: 1rem; }
+.patch-note-body :deep(h1) {
+  font-size: 1.5rem;
+}
+.patch-note-body :deep(h2) {
+  font-size: 1.3rem;
+}
+.patch-note-body :deep(h3) {
+  font-size: 1.1rem;
+}
+.patch-note-body :deep(h4) {
+  font-size: 1rem;
+}
 
 .patch-note-body :deep(p) {
   margin-bottom: 0.5rem;

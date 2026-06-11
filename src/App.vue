@@ -16,7 +16,10 @@ async function checkMaintenanceStatus() {
   try {
     const { data } = await flapi.get('/check')
     if (data.scheduledMaintenance) {
-      maintenanceStore.setScheduled(data.scheduledMaintenance.startsAt, data.scheduledMaintenance.estimatedEnd)
+      maintenanceStore.setScheduled(
+        data.scheduledMaintenance.startsAt,
+        data.scheduledMaintenance.estimatedEnd,
+      )
     }
   } catch (err) {
     if (err.response?.data?.error === 'maintenance') {
@@ -31,9 +34,9 @@ const onMaintenanceUpdate = (data) => {
     maintenanceStore.setMaintenance(true, data.estimatedEnd)
     toastStore.showMaintenanceToast(data.estimatedEnd)
     router.replace({ name: 'Maintenance' })
-    } else {
-      maintenanceStore.setMaintenance(false)
-        router.replace({ path: '/' }) 
+  } else {
+    maintenanceStore.setMaintenance(false)
+    router.replace({ path: '/' })
   }
 }
 
