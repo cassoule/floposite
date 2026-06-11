@@ -645,7 +645,11 @@ export default {
                     class="mdi mdi-check-decagram-outline"
                     title="Akhy certifié"
                   ></i>
-                  <i v-if="devIds.includes(user?.id)" class="mdi mdi-crown-outline" title="FlopoDev"></i>
+                  <i
+                    v-if="devIds.includes(user?.id)"
+                    class="mdi mdi-crown-outline"
+                    title="FlopoDev"
+                  ></i>
                 </h1>
                 <h3 class="d-flex mt-2" style="place-items: baseline">
                   {{ user?.coins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') }}

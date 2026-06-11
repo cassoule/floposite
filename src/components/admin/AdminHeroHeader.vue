@@ -6,12 +6,7 @@
         <p class="hero-subtitle">Gérez les utilisateurs et les contenus de la plateforme</p>
       </div>
       <v-spacer />
-      <v-chip
-        class="admin-chip"
-        variant="flat"
-        size="small"
-        prepend-icon="mdi-shield-check"
-      >
+      <v-chip class="admin-chip" variant="flat" size="small" prepend-icon="mdi-shield-check">
         Admin
       </v-chip>
     </div>

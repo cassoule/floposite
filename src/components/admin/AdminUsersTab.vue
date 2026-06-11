@@ -23,23 +23,18 @@
 
     <div class="pa-4 pa-md-6">
       <v-row>
-        <v-col
-          v-for="user in filteredUsers"
-          :key="user.id"
-          cols="12"
-          sm="6"
-          lg="4"
-          xl="3"
-        >
-          <AdminUserCard :user="user" @select="(u) => $emit('userSelected', u)" @view="(u) => $emit('viewUser', u)" @edit="(u) => $emit('editUser', u)" @delete="(u) => $emit('deleteUser', u)" />
-
+        <v-col v-for="user in filteredUsers" :key="user.id" cols="12" sm="6" lg="4" xl="3">
+          <AdminUserCard
+            :user="user"
+            @select="(u) => $emit('userSelected', u)"
+            @view="(u) => $emit('viewUser', u)"
+            @edit="(u) => $emit('editUser', u)"
+            @delete="(u) => $emit('deleteUser', u)"
+          />
         </v-col>
       </v-row>
 
-      <div
-        v-if="filteredUsers.length === 0"
-        class="empty-state"
-      >
+      <div v-if="filteredUsers.length === 0" class="empty-state">
         <v-icon size="64" color="grey" class="mb-4">mdi-account-off</v-icon>
         <h3 class="text-grey mb-2">Aucun utilisateur trouvé</h3>
         <p class="text-grey-darken-1">Essayez de modifier votre recherche.</p>
@@ -72,9 +67,7 @@ export default {
       if (!this.search) return this.users
       const s = this.search.toLowerCase()
       return this.users.filter(
-        (u) =>
-          u.username?.toLowerCase().includes(s) ||
-          u.globalName?.toLowerCase().includes(s),
+        (u) => u.username?.toLowerCase().includes(s) || u.globalName?.toLowerCase().includes(s),
       )
     },
   },

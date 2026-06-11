@@ -213,9 +213,15 @@ export default {
   margin-bottom: 0.5rem;
 }
 
-.patch-note-content :deep(h1) { font-size: 1.5rem; }
-.patch-note-content :deep(h2) { font-size: 1.3rem; }
-.patch-note-content :deep(h3) { font-size: 1.1rem; }
+.patch-note-content :deep(h1) {
+  font-size: 1.5rem;
+}
+.patch-note-content :deep(h2) {
+  font-size: 1.3rem;
+}
+.patch-note-content :deep(h3) {
+  font-size: 1.1rem;
+}
 
 .patch-note-content :deep(p) {
   margin-bottom: 0.5rem;

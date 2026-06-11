@@ -1,19 +1,24 @@
 <template>
-  <v-dialog :model-value="modelValue" max-width="420" @update:model-value="$emit('update:modelValue', $event)">
+  <v-dialog
+    :model-value="modelValue"
+    max-width="420"
+    @update:model-value="$emit('update:modelValue', $event)"
+  >
     <v-card class="delete-dialog-card">
       <v-card-title class="d-flex align-start delete-dialog-title" style="gap: 0.75rem">
         <v-icon :color="iconColor" class="mt-1">mdi-alert-circle</v-icon>
         <span>{{ title }}</span>
       </v-card-title>
-      
+
       <v-card-text class="delete-dialog-text">
         <span v-if="type === 'user'">
-          Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>"{{ target?.username }}"</strong> ?
+          Êtes-vous sûr de vouloir supprimer l'utilisateur
+          <strong>"{{ target?.username }}"</strong> ?
         </span>
         <span v-else>
           Êtes-vous sûr de vouloir supprimer le patch note <strong>"{{ target?.title }}"</strong> ?
         </span>
-        <br>
+        <br />
         <span class="irreversible-warning">Cette action est irréversible.</span>
       </v-card-text>
 
@@ -60,7 +65,9 @@ export default {
   emits: ['update:modelValue', 'confirm'],
   computed: {
     title() {
-      return this.type === 'user' ? 'Confirmer la suppression de l\'utilisateur' : 'Confirmer la suppression'
+      return this.type === 'user'
+        ? "Confirmer la suppression de l'utilisateur"
+        : 'Confirmer la suppression'
     },
     iconColor() {
       return this.type === 'user' ? 'warning' : 'error'
@@ -75,7 +82,7 @@ export default {
 <style scoped>
 .delete-dialog-card {
   /* Couleur de fond modifiée pour un bleu nuit plus clair */
-  background: #2a344f !important; 
+  background: #2a344f !important;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -83,7 +90,7 @@ export default {
 .delete-dialog-title {
   /* Ajout de marges et autorisation du retour à la ligne */
   padding: 24px 24px 16px 24px !important;
-  white-space: normal !important; 
+  white-space: normal !important;
   word-break: break-word;
   line-height: 1.4;
 }

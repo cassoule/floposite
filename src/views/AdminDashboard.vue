@@ -1,7 +1,6 @@
 <template>
   <v-layout class="w-100">
     <v-main class="w-100" style="position: relative; min-height: 100vh">
-
       <HomeBtn />
 
       <template v-if="!loading">
@@ -11,42 +10,42 @@
 
           <!-- Stats Cards -->
           <div class="mx-4 mx-md-8">
-            <AdminStatsRow
-              :users-count="users.length"
-              :patch-notes-count="patchNotes.length"
-            />
+            <AdminStatsRow :users-count="users.length" :patch-notes-count="patchNotes.length" />
           </div>
 
           <!-- Tabs -->
           <div class="tabs-container mx-4 mx-md-8 mt-6">
-            <v-tabs
-              v-model="tab"
-              color="primary"
-              grow
-              class="modern-tabs"
-            >
-             <v-tab value="users" class="modern-tab">
-  <div class="d-flex align-center justify-center w-100 h-100" style="gap: 6px">
-    <v-icon>mdi-account-group</v-icon>
-    <span>Utilisateurs</span>
-    <v-chip size="x-small" color="primary" class="tab-count ma-0">{{ users.length }}</v-chip>
-  </div>
-</v-tab>
+            <v-tabs v-model="tab" color="primary" grow class="modern-tabs">
+              <v-tab value="users" class="modern-tab">
+                <div class="d-flex align-center justify-center w-100 h-100" style="gap: 6px">
+                  <v-icon>mdi-account-group</v-icon>
+                  <span>Utilisateurs</span>
+                  <v-chip size="x-small" color="primary" class="tab-count ma-0">{{
+                    users.length
+                  }}</v-chip>
+                </div>
+              </v-tab>
 
-<v-tab value="notes" class="modern-tab">
-  <div class="d-flex align-center justify-center w-100 h-100" style="gap: 6px">
-    <v-icon>mdi-note-text-outline</v-icon>
-    <span>Patch Notes</span>
-    <v-chip v-if="patchNotes.length" size="x-small" color="primary" class="tab-count ma-0">{{ patchNotes.length }}</v-chip>
-  </div>
-</v-tab>
+              <v-tab value="notes" class="modern-tab">
+                <div class="d-flex align-center justify-center w-100 h-100" style="gap: 6px">
+                  <v-icon>mdi-note-text-outline</v-icon>
+                  <span>Patch Notes</span>
+                  <v-chip
+                    v-if="patchNotes.length"
+                    size="x-small"
+                    color="primary"
+                    class="tab-count ma-0"
+                    >{{ patchNotes.length }}</v-chip
+                  >
+                </div>
+              </v-tab>
 
-<v-tab value="stats" class="modern-tab">
-  <div class="d-flex align-center justify-center w-100 h-100" style="gap: 6px">
-    <v-icon>mdi-chart-box-outline</v-icon>
-    <span>Statistiques</span>
-  </div>
-</v-tab>
+              <v-tab value="stats" class="modern-tab">
+                <div class="d-flex align-center justify-center w-100 h-100" style="gap: 6px">
+                  <v-icon>mdi-chart-box-outline</v-icon>
+                  <span>Statistiques</span>
+                </div>
+              </v-tab>
             </v-tabs>
           </div>
 
@@ -101,30 +100,17 @@
         />
 
         <!-- User Edit Dialog -->
-        <AdminUserEditDialog
-          v-model="editDialog"
-          :user="editingUser"
-          @saved="handleUserSaved"
-        />
+        <AdminUserEditDialog v-model="editDialog" :user="editingUser" @saved="handleUserSaved" />
 
         <!-- User View Dialog -->
-        <AdminUserViewDialog
-          v-model="viewDialog"
-          :user="viewingUser"
-        />
-
+        <AdminUserViewDialog v-model="viewDialog" :user="viewingUser" />
       </template>
 
       <!-- Loading State -->
       <template v-else>
         <div class="w-100 d-flex justify-center pa-16">
           <div class="loading-container">
-            <v-progress-circular
-              :size="60"
-              :width="8"
-              color="primary"
-              indeterminate
-            />
+            <v-progress-circular :size="60" :width="8" color="primary" indeterminate />
             <p class="mt-4 text-grey">Chargement du panneau d'administration...</p>
           </div>
         </div>
@@ -302,7 +288,8 @@ export default {
         this.closePatchNoteForm()
       } catch (e) {
         console.error('Save patch note error:', e)
-        this.patchNoteError = e.response?.data?.error || 'Erreur lors de la sauvegarde du patch note.'
+        this.patchNoteError =
+          e.response?.data?.error || 'Erreur lors de la sauvegarde du patch note.'
       } finally {
         this.savingPatchNote = false
       }

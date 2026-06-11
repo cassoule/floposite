@@ -62,7 +62,6 @@ const routes = [
   { path: '/crash', component: Crash },
   { path: '/admin', component: AdminDashboard },
   { path: '/maintenance', name: 'Maintenance', component: Maintenance },
-
 ]
 
 const router = createRouter({
@@ -81,10 +80,9 @@ router.beforeEach((to, from, next) => {
 
   if (maintenanceStore.active && !allowedDuringMaintenance.includes(to.name ?? '')) {
     next({ name: 'Maintenance' })
-  } 
-  else if (!maintenanceStore.active && to.name === 'Maintenance') {
+  } else if (!maintenanceStore.active && to.name === 'Maintenance') {
     next({ path: '/' })
-  } 
+  }
   // 3. Dans tous les autres cas, on laisse la navigation se faire normalement
   else {
     next()

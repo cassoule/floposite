@@ -16,13 +16,7 @@
       </div>
       <v-spacer />
       <div class="d-flex align-center">
-        <v-btn
-          icon
-          variant="text"
-          size="small"
-          color="grey"
-          class="user-card-menu"
-        >
+        <v-btn icon variant="text" size="small" color="grey" class="user-card-menu">
           <v-icon>mdi-dots-vertical</v-icon>
         </v-btn>
       </div>
@@ -128,7 +122,6 @@ export default {
   transition: opacity 0.3s ease;
 }
 
-
 .user-card-header {
   display: flex;
   align-items: center;
@@ -145,7 +138,6 @@ export default {
   border: 2px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
 }
-
 
 .user-card-info {
   min-width: 0;

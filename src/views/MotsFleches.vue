@@ -89,9 +89,9 @@
                     />
                     <input
                       type="text"
-                      maxlength="1"
                       class="mf-input"
-                      :class="{ 'mf-error': isError(r, c) }"
+                      :class="{ 'mf-error': isError(r, c), 'mf-revealed': isRevealed(r, c) }"
+                      :readonly="isRevealed(r, c)"
                       :data-r="r"
                       :data-c="c"
                       :value="filledGrid[r] && filledGrid[r][c]"
@@ -110,16 +110,30 @@
                 <v-icon class="mdi mdi-timer-outline mr-1" />
                 {{ formatTimer() }}
               </div>
-              <v-btn
-                variant="flat"
-                color="primary"
-                rounded="lg"
-                class="text-none px-8"
-                :disabled="!isComplete"
-                @click="handleSubmit"
-              >
-                Valider
-              </v-btn>
+              <div class="d-flex flex-wrap justify-center align-center" style="gap: 0.75em">
+                <v-btn
+                  variant="flat"
+                  color="white"
+                  rounded="lg"
+                  class="text-none"
+                  :disabled="!canHint"
+                  :loading="hintLoading"
+                  @click="handleHint"
+                >
+                  <v-icon class="mdi mdi-lightbulb-on-outline mr-1" />
+                  Indice<span v-if="gameState.isSOTD" class="ml-1">· 100&nbsp;Flopos</span>
+                </v-btn>
+                <v-btn
+                  variant="flat"
+                  color="primary"
+                  rounded="lg"
+                  class="text-none px-8"
+                  :disabled="!isComplete"
+                  @click="requestSubmit"
+                >
+                  Valider
+                </v-btn>
+              </div>
             </div>
           </div>
         </div>
@@ -174,17 +188,13 @@
                   style="max-height: 190px; overflow-y: auto; scrollbar-width: auto"
                 >
                   <v-list
-                    v-if="
-                      archive.filter((e) => e.date !== new Date().toISOString().slice(0, 10)).length
-                    "
+                    v-if="archivedGrids.length"
                     density="compact"
                     class="mf-archive-list"
                     bg-color="transparent"
                   >
                     <v-list-item
-                      v-for="entry in archive.filter(
-                        (e) => e.date !== new Date().toISOString().slice(0, 10),
-                      )"
+                      v-for="entry in archivedGrids"
                       :key="entry.date"
                       :title="entry.date"
                       :subtitle="`${entry.wordCount} mots · ${entry.rows}×${entry.cols}${entry.hasPlayed ? ' · joué' : ''}`"
@@ -328,6 +338,9 @@
           <v-card-title>Erreurs</v-card-title>
           <v-card-text>
             {{ errors.length }} case(s) incorrecte(s). Les erreurs sont surlignées en rouge.
+            <p v-if="gameState?.isSOTD" class="text-medium-emphasis text-caption mt-2">
+              Chaque validation échouée retire 1000 points au score de la grille du jour.
+            </p>
           </v-card-text>
           <v-card-actions>
             <v-spacer />
@@ -337,6 +350,47 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <v-dialog v-model="confirmDialog" max-width="460">
+        <v-card rounded="lg">
+          <v-card-title>Valider la grille ?</v-card-title>
+          <v-card-text>
+            <p>
+              Si une seule case est incorrecte, la validation échoue et ajoute un malus de
+              <strong>1000 points</strong> au score (les cases fausses sont surlignées).
+            </p>
+            <div v-if="penaltySummary.total" class="mf-malus-recap mt-3">
+              <div>Malus déjà accumulés :</div>
+              <div v-if="penaltySummary.hints">
+                {{ penaltySummary.hints }} indice(s) · −{{ penaltySummary.hintsPts }} pts
+              </div>
+              <div v-if="penaltySummary.fails">
+                {{ penaltySummary.fails }} essai(s) raté(s) · −{{ penaltySummary.failsPts }} pts
+              </div>
+              <div class="font-weight-bold">Total : −{{ penaltySummary.total }} pts</div>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" rounded="lg" class="text-none" @click="confirmDialog = false">
+              Annuler
+            </v-btn>
+            <v-btn
+              variant="flat"
+              color="primary"
+              rounded="lg"
+              class="text-none"
+              @click="confirmSubmit"
+            >
+              Valider quand même
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <v-snackbar v-model="hintSnackbar" :timeout="3500" color="amber-darken-3" rounded="lg">
+        {{ hintMessage }}
+      </v-snackbar>
 
       <!-- Mobile: full definition text on tap (no hover available on touch) -->
       <v-bottom-sheet v-model="defSheetOpen">
@@ -359,6 +413,23 @@
       color="#ddd"
       @click="gameState ? handleReset() : $router.push('/dashboard')"
     />
+
+    <!-- Running tally of score penalties (grid of the day only). -->
+    <div v-if="gameState && gameState.isSOTD" class="mf-malus">
+      <div class="mf-malus-title">Malus du score</div>
+      <div class="mf-malus-row">
+        <span>Indices ({{ penaltySummary.hints }})</span>
+        <span>−{{ penaltySummary.hintsPts }}</span>
+      </div>
+      <div class="mf-malus-row">
+        <span>Essais ratés ({{ penaltySummary.fails }})</span>
+        <span>−{{ penaltySummary.failsPts }}</span>
+      </div>
+      <div class="mf-malus-row mf-malus-total">
+        <span>Total</span>
+        <span>−{{ penaltySummary.total }}</span>
+      </div>
+    </div>
   </v-layout>
 </template>
 
@@ -400,11 +471,22 @@ export default {
       focused: null,
       defSheetOpen: false,
       defSheetClues: [],
+      hintLoading: false,
+      hintSnackbar: false,
+      hintMessage: '',
+      failedAttempts: 0,
+      confirmDialog: false,
     }
   },
   computed: {
     userName() {
       return localStorage.getItem('discordUsername') || 'joueur'
+    },
+    todayParis() {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date())
+    },
+    archivedGrids() {
+      return this.archive.filter((e) => e.date !== this.todayParis)
     },
     isComplete() {
       if (!this.gameState) return false
@@ -523,6 +605,19 @@ export default {
       const cells = this.wordAt[key]?.[this.activeDir]?.cells
       return new Set(cells || [])
     },
+    canHint() {
+      if (!this.focused || !this.gameState || this.gameState.isDone || this.hintLoading) {
+        return false
+      }
+      return !this.isRevealed(this.focused.r, this.focused.c)
+    },
+    penaltySummary() {
+      const hints = this.gameState?.hintsUsed || 0
+      const fails = this.failedAttempts || 0
+      const hintsPts = hints * 500
+      const failsPts = fails * 1000
+      return { hints, fails, hintsPts, failsPts, total: hintsPts + failsPts }
+    },
   },
   async mounted() {
     this.userId = localStorage.getItem('discordId')
@@ -542,7 +637,10 @@ export default {
   },
   beforeUnmount() {
     if (this.timerInterval) clearInterval(this.timerInterval)
-    if (this.saveTimeout) clearTimeout(this.saveTimeout)
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout)
+      if (this.gameState && !this.gameState.isDone) this.saveProgress()
+    }
     if (this.socket && this._onUpdate) {
       this.socket.off('motsFleches:update', this._onUpdate)
     }
@@ -589,8 +687,18 @@ export default {
 
     initFilledGrid() {
       const { rows, cols } = this.gameState
-      this.filledGrid = Array.from({ length: rows }, () => Array(cols).fill(''))
+      const saved = this.gameState.filledGrid
+      if (Array.isArray(saved) && saved.length === rows) {
+        this.filledGrid = Array.from({ length: rows }, (_, r) => {
+          const row = Array.isArray(saved[r]) ? saved[r] : []
+          return Array.from({ length: cols }, (__, c) => row[c] || '')
+        })
+      } else {
+        this.filledGrid = Array.from({ length: rows }, () => Array(cols).fill(''))
+      }
       this.errors = []
+      this.failedAttempts = this.gameState.failedAttempts || 0
+      if (!this.gameState.revealed) this.gameState.revealed = {}
     },
 
     getDefClues(r, c) {
@@ -655,26 +763,91 @@ export default {
       return this.errors.some((e) => e.r === r && e.c === c)
     },
 
+    isRevealed(r, c) {
+      return !!this.gameState?.revealed?.[`${r},${c}`]
+    },
+
+    showHintMessage(msg) {
+      this.hintMessage = msg
+      this.hintSnackbar = true
+    },
+
+    async handleHint() {
+      if (!this.canHint) return
+      const { r, c } = this.focused
+      if (this.gameState.blackMask[r][c] || this.getDefClues(r, c)) return
+      if (this.gameState.isSOTD && !this.userId) {
+        this.showHintMessage('Connecte-toi pour utiliser un indice sur la grille du jour.')
+        return
+      }
+
+      this.hintLoading = true
+      try {
+        const res = await api.hintMotsFleches(r, c, this.gameId)
+        const letter = res.data.letter
+        if (!this.filledGrid[r]) this.filledGrid[r] = []
+        this.filledGrid[r][c] = letter
+        this.errors = this.errors.filter((e) => !(e.r === r && e.c === c))
+        if (!this.gameState.revealed) this.gameState.revealed = {}
+        this.gameState.revealed[`${r},${c}`] = true
+        if (typeof res.data.hintsUsed === 'number') this.gameState.hintsUsed = res.data.hintsUsed
+        this.saveProgress()
+        if (res.data.cost) this.showHintMessage(`Indice révélé · −${res.data.cost} FlopoCoins`)
+      } catch (e) {
+        this.showHintMessage(e?.response?.data?.error || "Indice indisponible pour l'instant.")
+      } finally {
+        this.hintLoading = false
+      }
+    },
+
+    setCell(r, c, ch) {
+      if (this.isRevealed(r, c)) return
+      if (!this.filledGrid[r]) this.filledGrid[r] = []
+      this.filledGrid[r][c] = ch
+      this.errors = this.errors.filter((e) => !(e.r === r && e.c === c))
+      this.scheduleSave()
+    },
+
     onInput(ev, r, c) {
-      const raw = ev.target.value || ''
-      const ch = raw
+      if (this.isRevealed(r, c)) {
+        ev.target.value = (this.filledGrid[r] && this.filledGrid[r][c]) || ''
+        return
+      }
+      const source = ev.data != null ? ev.data : ev.target.value || ''
+      const ch = source
         .toUpperCase()
         .replace(/[^A-Z]/g, '')
         .slice(-1)
-      if (!this.filledGrid[r]) this.filledGrid[r] = []
-      this.filledGrid[r][c] = ch
+      this.setCell(r, c, ch)
       ev.target.value = ch
-      this.errors = this.errors.filter((e) => !(e.r === r && e.c === c))
-      this.scheduleSave()
       if (ch) this.focusNext(r, c)
     },
 
     onKey(ev, r, c) {
-      if (ev.key === 'Backspace' && !this.filledGrid[r][c]) {
+      if (
+        ev.key &&
+        ev.key.length === 1 &&
+        /^[a-zA-Z]$/.test(ev.key) &&
+        !ev.ctrlKey &&
+        !ev.metaKey &&
+        !ev.altKey
+      ) {
         ev.preventDefault()
-        this.focusPrev(r, c)
+        this.setCell(r, c, ev.key.toUpperCase())
+        this.focusNext(r, c)
         return
       }
+
+      if (ev.key === 'Backspace') {
+        ev.preventDefault()
+        if (!this.isRevealed(r, c) && this.filledGrid[r] && this.filledGrid[r][c]) {
+          this.setCell(r, c, '')
+        } else {
+          this.focusPrev(r, c)
+        }
+        return
+      }
+
       if (ev.key === 'ArrowRight') {
         ev.preventDefault()
         this.activeDir = 'H'
@@ -715,11 +888,9 @@ export default {
         }
       }
       this.focused = { r, c }
-      // The click that produced this focus must not be treated as a toggle.
       this._suppressToggleClick = true
     },
 
-    // Re-clicking the already-focused cell flips H↔V (manual override at crossings).
     onCellClick(r, c) {
       if (this._suppressToggleClick) {
         this._suppressToggleClick = false
@@ -734,21 +905,21 @@ export default {
     focusNext(r, c) {
       const dr = this.activeDir === 'V' ? 1 : 0
       const dc = this.activeDir === 'H' ? 1 : 0
-      this.focusOffset(r, c, dr, dc)
+      this.focusOffset(r, c, dr, dc, true)
     },
 
     focusPrev(r, c) {
       const dr = this.activeDir === 'V' ? -1 : 0
       const dc = this.activeDir === 'H' ? -1 : 0
-      this.focusOffset(r, c, dr, dc)
+      this.focusOffset(r, c, dr, dc, true)
     },
 
-    focusOffset(r, c, dr, dc) {
+    focusOffset(r, c, dr, dc, skipRevealed = false) {
       const { rows, cols, blackMask } = this.gameState
       let nr = r + dr
       let nc = c + dc
       while (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-        if (!blackMask[nr][nc]) {
+        if (!blackMask[nr][nc] && !(skipRevealed && this.isRevealed(nr, nc))) {
           const tr = nr
           const tc = nc
           this.$nextTick(() => {
@@ -887,6 +1058,19 @@ export default {
       await this.fetchRankings()
     },
 
+    requestSubmit() {
+      if (this.gameState?.isSOTD) {
+        this.confirmDialog = true
+      } else {
+        this.handleSubmit()
+      }
+    },
+
+    confirmSubmit() {
+      this.confirmDialog = false
+      this.handleSubmit()
+    },
+
     async handleSubmit() {
       this.isLoading = true
       try {
@@ -904,6 +1088,9 @@ export default {
           }
         } else {
           this.errors = res.data.errors || []
+          if (typeof res.data.failedAttempts === 'number') {
+            this.failedAttempts = res.data.failedAttempts
+          }
           this.errorDialog = true
         }
       } catch (e) {
@@ -938,7 +1125,7 @@ export default {
 }
 .mf-layout {
   width: 100%;
-  max-width: 720px;
+  max-width: min(1100px, calc((100vh - 240px) * 11 / 9));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -972,7 +1159,7 @@ export default {
 }
 .mf-def {
   background: #5218f644;
-  font-size: clamp(0.4rem, 0.9vw, 0.6rem);
+  font-size: clamp(0.45rem, 0.95vw, 0.65rem);
   padding: 2px;
   line-height: normal;
   overflow: hidden;
@@ -1034,8 +1221,7 @@ export default {
   background: #ffb3b3 !important;
   color: #8b0000;
 }
-/* Arrows are rendered on the FIRST INPUT cell of each word,
-   pointing INTO the cell from the side where the def cell sits. */
+
 .mf-arrow {
   position: absolute;
   pointer-events: none;
@@ -1139,9 +1325,7 @@ export default {
   background: #ffb3b3 !important;
   color: #8b0000;
 }
-/* Active word highlight — lighter than the focused cell so the writing
-   direction is visible. The focus rule is declared last (equal specificity)
-   so the current cell stays the most prominent. */
+
 .mf-input-wrap.mf-active .mf-input {
   background: #e7eefc;
 }
@@ -1173,6 +1357,59 @@ export default {
   color: white;
   font-variant-numeric: tabular-nums;
 }
+
+.mf-revealed {
+  background: #ffe9a8 !important;
+  color: #7a5200 !important;
+}
+.mf-input-wrap .mf-revealed:focus {
+  background: #ffe08a !important;
+}
+.mf-malus {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 5;
+  min-width: 175px;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(20, 12, 40, 0.85);
+  border: 1px solid #ddd;
+  color: #aaa;
+  font-size: 0.78rem;
+  backdrop-filter: blur(4px);
+}
+.mf-malus-title {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  color: #ddd;
+}
+.mf-malus-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.mf-malus-total {
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid #aaaaaa77;
+  font-weight: 700;
+  color: #eee;
+}
+.mf-malus-recap {
+  font-size: 0.85rem;
+  color: #777;
+}
+@media (max-width: 730px) {
+  .mf-malus {
+    min-width: 0;
+    font-size: 0.7rem;
+    padding: 0.45rem 0.55rem;
+    opacity: 0.92;
+  }
+}
 .mf-archive-list {
   max-height: 240px;
   overflow-y: auto;
@@ -1195,6 +1432,9 @@ export default {
 @media (max-width: 730px) {
   .menu {
     flex-direction: column;
+  }
+  .mf-layout {
+    max-width: 100%;
   }
 }
 </style>
