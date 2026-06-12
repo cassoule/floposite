@@ -17,7 +17,16 @@
             style="place-items: center; gap: 0.5em"
           >
             <v-icon class="mdi mdi-archive-outline mr-2" />
-            <h1 style="font-size: 1.8rem">Mots Fléchés · Archive {{ gameState.date }}</h1>
+            <h1 style="font-size: 1.8rem">
+              Mots Fléchés · Archive du
+              {{
+                new Date(gameState.date).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })
+              }}
+            </h1>
           </div>
           <p v-if="!gameState || gameState?.isSOTD" class="font-weight-medium">
             {{ timeLeft() }}
@@ -71,7 +80,6 @@
                       </span>
                     </div>
                   </div>
-                  <!-- Black cell (no clue) -->
                   <div v-else-if="gameState.blackMask[r][c]" class="mf-cell mf-black"></div>
                   <!-- Input cell -->
                   <div
@@ -179,35 +187,67 @@
                 color="white"
                 style="flex-basis: 50%; gap: 0.5em"
               >
-                <v-card-title class="pb-0 mb-0">
-                  <v-icon class="mdi mdi-archive-outline" />
-                  Archives
-                </v-card-title>
-                <v-card-text
-                  class="pt-0 mt-0"
-                  style="max-height: 190px; overflow-y: auto; scrollbar-width: auto"
-                >
-                  <v-list
-                    v-if="archivedGrids.length"
-                    density="compact"
-                    class="mf-archive-list"
-                    bg-color="transparent"
-                  >
-                    <v-list-item
-                      v-for="entry in archivedGrids"
-                      :key="entry.date"
-                      :title="entry.date"
-                      :subtitle="`${entry.wordCount} mots · ${entry.rows}×${entry.cols}${entry.hasPlayed ? ' · joué' : ''}`"
-                      rounded="lg"
-                      @click="handleStartArchive(entry.date)"
+                <v-card-text class="pt-0 mt-0 pb-0 mb-0">
+                  <v-locale-provider locale="fr">
+                    <v-date-picker
+                      v-model="archiveDate"
+                      color="primary"
+                      class="bg-transparent w-100 pb-0 mb-0"
+                      weekday-format="narrow"
+                      :first-day-of-week="1"
+                      :show-adjacent-months="true"
+                      :max="maxDate"
+                      hide-header
+                      :allowed-dates="allowedDates"
                     >
-                      <template #append>
-                        <v-icon class="mdi mdi-play-circle-outline" />
+                      <template #controls="{ disabled, nextMonth, prevMonth, monthYearText }">
+                        <div class="w-100 d-flex align-center text-dark rounded-xl bg-white px-1">
+                          <v-btn
+                            :disabled="disabled.includes('prev-month')"
+                            color="primary"
+                            icon="$prev"
+                            @click="prevMonth"
+                          ></v-btn>
+                          <v-spacer></v-spacer>
+                          <div class="text-center my-1">
+                            <div class="text-body-small my-n1 pt-1 text-primary">
+                              {{ monthYearText.split(' ')[1] }}
+                            </div>
+                            <div class="text-body-large">{{ monthYearText.split(' ')[0] }}</div>
+                          </div>
+                          <v-spacer></v-spacer>
+                          <v-btn
+                            :disabled="disabled.includes('next-month')"
+                            color="primary"
+                            icon="$next"
+                            @click="nextMonth"
+                          ></v-btn>
+                        </div>
                       </template>
-                    </v-list-item>
-                  </v-list>
-                  <p v-else class="text-white">Aucune grille archivée pour l'instant.</p>
+                      <template #day="{ props: dayProps, item }">
+                        <div class="mf-day-wrap">
+                          <v-btn
+                            v-bind="dayProps"
+                            :class="{ 'mf-day-available': hasGrid(item) && !item.isSelected }"
+                            :title="isPlayedDay(item) ? 'joué' : null"
+                          >
+                            {{ item.localized }}
+                          </v-btn>
+                          <span
+                            v-if="isPlayedDay(item)"
+                            class="mf-day-played"
+                            :class="{ 'mf-day-played--selected': item.isSelected }"
+                            title="Joué"
+                            aria-label="Joué"
+                          ></span>
+                        </div>
+                      </template>
+                    </v-date-picker>
+                  </v-locale-provider>
                 </v-card-text>
+                <v-card-subtitle class="pb-3 mx-4">
+                  Jouez les grilles archivées des derniers jours.
+                </v-card-subtitle>
               </v-card>
             </div>
           </v-alert>
@@ -414,9 +454,8 @@
       @click="gameState ? handleReset() : $router.push('/dashboard')"
     />
 
-    <!-- Running tally of score penalties (grid of the day only). -->
     <div v-if="gameState && gameState.isSOTD" class="mf-malus">
-      <div class="mf-malus-title">Malus du score</div>
+      <div class="mf-malus-title">Malus</div>
       <div class="mf-malus-row">
         <span>Indices ({{ penaltySummary.hints }})</span>
         <span>−{{ penaltySummary.hintsPts }}</span>
@@ -476,6 +515,7 @@ export default {
       hintMessage: '',
       failedAttempts: 0,
       confirmDialog: false,
+      archiveDate: null,
     }
   },
   computed: {
@@ -487,6 +527,16 @@ export default {
     },
     archivedGrids() {
       return this.archive.filter((e) => e.date !== this.todayParis)
+    },
+    gridDates() {
+      return new Set(this.archivedGrids.map((e) => e.date))
+    },
+    maxDate() {
+      const [y, m, d] = this.todayParis.split('-').map(Number)
+      return new Date(y, m - 1, d)
+    },
+    playedDates() {
+      return new Set(this.archive.filter((e) => e.hasPlayed).map((e) => e.date))
     },
     isComplete() {
       if (!this.gameState) return false
@@ -619,6 +669,15 @@ export default {
       return { hints, fails, hintsPts, failsPts, total: hintsPts + failsPts }
     },
   },
+  watch: {
+    archiveDate(val) {
+      const key = this.toDateKey(val)
+      if (!key) return
+      if (this.archivedGrids.some((e) => e.date === key)) {
+        this.handleStartArchive(key)
+      }
+    },
+  },
   async mounted() {
     this.userId = localStorage.getItem('discordId')
 
@@ -652,6 +711,25 @@ export default {
         if (payload?.userId === this.userId) window.location.reload()
       }
       this.socket.on('motsFleches:update', this._onUpdate)
+    },
+
+    toDateKey(d) {
+      if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    },
+
+    allowedDates(val) {
+      return this.gridDates.has(this.toDateKey(val))
+    },
+
+    hasGrid(item) {
+      return this.gridDates.has(this.toDateKey(item?.date))
+    },
+    isPlayedDay(item) {
+      return this.playedDates.has(this.toDateKey(item?.date))
     },
 
     async claimPendingSubmission() {
@@ -1373,7 +1451,6 @@ export default {
   min-width: 175px;
   padding: 0.6rem 0.75rem;
   border-radius: 12px;
-  background: rgba(20, 12, 40, 0.85);
   border: 1px solid #ddd;
   color: #aaa;
   font-size: 0.78rem;
@@ -1413,6 +1490,33 @@ export default {
 .mf-archive-list {
   max-height: 240px;
   overflow-y: auto;
+}
+.mf-day-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.mf-day-available {
+  font-weight: 700;
+}
+.mf-day-available:hover {
+  background-color: rgba(var(--v-theme-primary), 0.18) !important;
+}
+.mf-day-wrap .v-btn--disabled {
+  opacity: 0.22 !important;
+}
+.mf-day-played {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgb(var(--v-theme-primary));
+  pointer-events: none;
+}
+.mf-day-played--selected {
+  background: #fff;
 }
 .loading-overlay {
   display: flex;
